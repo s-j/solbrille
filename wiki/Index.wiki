@@ -1,3 +1,13 @@
 #summary Index
 
 Link til brille: http://www.idi.ntnu.no/~trulsamu/brille.tar.gz
+
+    * buffer manager ala Brille
+    * custom ArrayList, String, StringBuffer, etc.
+    * inverted lists (skiplists/impact ordered lists/filtering?)
+    * full multithreading
+    * cache lists and top results
+    * stemming, stopword removal
+    * crawler for wiki/NTNU
+    * BM25
+    * a dedicated workstation to play with 
