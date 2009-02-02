@@ -9,5 +9,5 @@ Link til brille: http://www.idi.ntnu.no/~trulsamu/brille.tar.gz
     * cache lists and top results
     * stemming, stopword removal
     * crawler for wiki/NTNU
-    * BM25
+    * BM25 http://en.wikipedia.org/wiki/Probabilistic_relevance_model_(BM25)
     * a dedicated workstation to play with 
