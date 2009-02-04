@@ -11,3 +11,6 @@ Link til brille: http://www.idi.ntnu.no/~trulsamu/brille.tar.gz
     * crawler for wiki/NTNU
     * BM25 http://en.wikipedia.org/wiki/Probabilistic_relevance_model_(BM25)
     * a dedicated workstation to play with 
+
+Hvis vi har lyst til å slippe å lage en crawler:
+http://www.dotnetdotcom.org
