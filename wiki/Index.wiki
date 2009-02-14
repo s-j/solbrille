@@ -14,3 +14,7 @@ Link til brille: http://www.idi.ntnu.no/~trulsamu/brille.tar.gz
 
 Hvis vi har lyst til å slippe å lage en crawler:
 http://www.dotnetdotcom.org
+
+Bra slides om søkemotor. Mye fokus på komprimering osv. 
+http://medialab.di.unipi.it/web/Search+QA/Indexing.ppt
+
