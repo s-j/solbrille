@@ -7,13 +7,13 @@ Solbrille has a O(1) buffer manager. It's based on java.nio direct-memory byte b
 
 = Details =
 
-When a buffer pool is created the number of buffers should be specified and the block size. 
+When a buffer pool is created the number of buffers and the block size should be specified. 
 
 {{{
 public BufferPool(int numberOfBuffers, int bufferSize)
 }}}
 
-To be able to perform buffered IO against some file the file has to be added to the buffer pool. When a file is added to the pool a file number is returned. This file number uniquely identifies the file. 
+To be able to perform buffered IO against some file the file has to be added to the buffer pool. When a file is added to the pool, a file number is returned. This file number uniquely identifies the file within the buffer pool. 
 
 {{{
 /**
@@ -81,5 +81,3 @@ public ReentrantReadWriteLock.ReadLock getReadLock()
   */
 public ReentrantReadWriteLock.WriteLock getWriteLock()
 }}}
-
-
