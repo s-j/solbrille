@@ -20,7 +20,7 @@ public class PunctuationRemover extends  AbstractDocumentProcessor{
     public void process(Struct document) {
         String content = document.getField(getInputField()).getValue();
 
-        Pattern pattern = Pattern.compile("\\p{Punct}+");
+        Pattern pattern = Pattern.compile("[^a-zA-Z0-9]+");
         Matcher matcher = pattern.matcher(content);
         String output = matcher.replaceAll(" ");
         document.setField(getOutputField(),output);
