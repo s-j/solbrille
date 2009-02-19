@@ -18,7 +18,8 @@ public class FeederTest  extends TestCase{
 
         Feeder feeder = new DefaultFeeder();
         try {
-           
+
+            
             FileReader fr = new FileReader("utils/test/com/ntnu/solbrille/feeder/test/test.html");
             StringBuilder sb = new StringBuilder();
             BufferedReader br = new BufferedReader(fr);
