@@ -48,11 +48,17 @@ public class Buffer {
                     || blockPointer == null) {
                 return;
             }
-            buffer.clear();
-            fileInfo.getChannel().read(buffer, blockPointer.getSegment() * blockSize);
-            buffer.flip();
-            buffer.limit(blockSize);
-            bufferedBlock = blockPointer;
+            readerWriterLock.writeLock().lock();
+            try {
+                buffer.clear();
+                fileInfo.getChannel().read(buffer, blockPointer.getSegment() * blockSize);
+                buffer.flip();
+                buffer.limit(blockSize);
+                bufferedBlock = blockPointer;
+            }
+            finally {
+                readerWriterLock.writeLock().unlock();
+            }
         }
     }
 
@@ -66,10 +72,12 @@ public class Buffer {
             if (dirty) {
                 readerWriterLock.readLock().lock();
                 try {
+                    int oldPos = buffer.position();
                     buffer.position(0); // flush entire buffer
                     buffer.limit(blockSize);
                     fileInfo.getChannel().write(buffer, blockPointer.getSegment() * blockSize);
                     buffer.clear();
+                    buffer.position(oldPos);
                 }
                 finally {
                     readerWriterLock.readLock().unlock();
