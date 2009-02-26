@@ -57,7 +57,8 @@ public class LinkExtractor extends AbstractDocumentProcessor{
     public void process(Struct document) {
         try {
 
-            Parser parser = new Parser(document.getField(getInputField()).getValue());
+            Parser parser = new Parser();
+            parser.setInputHTML(document.getField(getInputField()).getValue());
             URI baseUri;
             try {
                 baseUri = new URI(document.getField("uri").getValue());
