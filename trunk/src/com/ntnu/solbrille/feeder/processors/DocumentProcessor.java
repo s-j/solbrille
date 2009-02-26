@@ -7,5 +7,5 @@ import com.ntnu.solbrille.feeder.Struct;
  * @version $Id $.
  */
 public interface DocumentProcessor {
-    public void process(Struct document);
+    public void process(Struct document) throws Exception;
 }
