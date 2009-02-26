@@ -29,9 +29,14 @@ public class FeederTest  extends TestCase{
                 sb.append(line);
             }
 
-            feeder.feed(new URI("http://www.slashdot.org/"),sb.toString());
-            
-            
+            feeder.feed(new URI("http://www.slashdot.org/"));
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+
+
         } catch (URISyntaxException e) {
             fail();
         } catch (IOException e) {
