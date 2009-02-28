@@ -23,7 +23,7 @@ public class ResultSplicer {
     // TODO: Not entirely finished.
     public List<Object> match(List<List> resultSets)
     {
-        if (resultSets.size() == 1) {
+        if (resultSets.size() < 2) {
             throw new IllegalArgumentException("Must have atleast two result sets to match");
         }
 
