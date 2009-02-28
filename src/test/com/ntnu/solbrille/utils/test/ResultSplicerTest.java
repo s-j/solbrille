@@ -1,7 +1,7 @@
-package test.com.ntnu.solbrille.utils.test;
+package com.ntnu.solbrille.utils.test;
 
-import main.com.ntnu.solbrille.utils.ResultSplicer;
-import main.com.ntnu.solbrille.utils.Heap;
+import com.ntnu.solbrille.utils.ResultSplicer;
+import com.ntnu.solbrille.utils.Heap;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
