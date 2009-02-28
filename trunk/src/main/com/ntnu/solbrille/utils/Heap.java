@@ -1,4 +1,4 @@
-package main.com.ntnu.solbrille.utils;
+package com.ntnu.solbrille.utils;
 /**
  * An implementation of PriorityQueue in case we might need specialized functionality. Used by <ResultSplicer>
  *

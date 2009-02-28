@@ -1,4 +1,4 @@
-package main.com.ntnu.solbrille.utils;
+package com.ntnu.solbrille.utils;
 
 import java.util.ArrayList;
 import java.util.List;
