@@ -4,11 +4,13 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.AbstractQueue;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A O(1) blocking linked list implementation. Backed by a linked hash map to allow O(1) removal of
@@ -20,21 +22,19 @@ import java.util.concurrent.TimeUnit;
 public class LookupBlockingFifoQueue<V>
         extends AbstractQueue<V> implements BlockingQueue<V> {
 
-    private static final class LookupBlockingLinkedListMutex {
-    }
+    private final Object mutex;
 
-    private final Object mutex = new LookupBlockingLinkedListMutex();
-
-    private Map<V, V> backingHashMap;
+    private AtomicReference<Map<V, V>> backingHashMap;
 
 
-    public LookupBlockingFifoQueue() {
+    public LookupBlockingFifoQueue(Object mutex) {
+        this.mutex = mutex;
         resetBackingMap();
     }
 
     private void resetBackingMap() {
         synchronized (mutex) {
-            backingHashMap = new LinkedHashMap<V, V>();
+            backingHashMap = new AtomicReference<Map<V, V>>(Collections.synchronizedMap(new LinkedHashMap<V, V>()));
         }
     }
 
@@ -50,7 +50,7 @@ public class LookupBlockingFifoQueue<V>
 
     public void put(V e) throws InterruptedException {
         synchronized (mutex) {
-            backingHashMap.put(e, e);
+            backingHashMap.get().put(e, e);
             mutex.notifyAll();
         }
     }
@@ -61,12 +61,12 @@ public class LookupBlockingFifoQueue<V>
 
     public V take() throws InterruptedException {
         synchronized (mutex) {
-            while (backingHashMap.size() < 1) {
+            while (backingHashMap.get().size() < 1) {
                 mutex.wait();
             }
             V elem = safeGetFirst();
             assert elem != null;
-            backingHashMap.remove(elem);
+            backingHashMap.get().remove(elem);
             return elem;
         }
     }
@@ -88,29 +88,27 @@ public class LookupBlockingFifoQueue<V>
         synchronized (mutex) {
             V elem = safeGetFirst();
             if (elem != null) {
-                backingHashMap.remove(elem);
+                backingHashMap.get().remove(elem);
             }
             return elem;
         }
     }
 
     public V peek() {
-        synchronized (mutex) {
-            return safeGetFirst();
-        }
+        return safeGetFirst();
     }
 
     @Override
     public boolean remove(Object o) {
         synchronized (mutex) {
-            return backingHashMap.remove(o) != null;
+            return backingHashMap.get().remove(o) != null;
         }
     }
 
     @Override
     public boolean contains(Object o) {
         synchronized (mutex) {
-            return backingHashMap.containsKey(o);
+            return backingHashMap.get().containsKey(o);
         }
     }
 
@@ -120,14 +118,16 @@ public class LookupBlockingFifoQueue<V>
      * @return The oldest element in the map (ornull if empty)
      */
     private V safeGetFirst() {
-        Iterator<Map.Entry<V, V>> it = backingHashMap.entrySet().iterator();
-        return it.hasNext() ? it.next().getKey() : null;
+        synchronized (mutex) {
+            Iterator<Map.Entry<V, V>> it = backingHashMap.get().entrySet().iterator();
+            return it.hasNext() ? it.next().getKey() : null;
+        }
     }
 
     @Override
     public int size() {
         synchronized (mutex) {
-            return backingHashMap.size();
+            return backingHashMap.get().size();
         }
     }
 
@@ -136,11 +136,7 @@ public class LookupBlockingFifoQueue<V>
     }
 
     public int drainTo(Collection<? super V> c) {
-        Map<V, V> copy;
-        synchronized (mutex) { // reallocation chaper than locking for entire iteration 
-            copy = backingHashMap;
-            resetBackingMap();
-        }
+        Map<V, V> copy = backingHashMap.getAndSet(Collections.synchronizedMap(new LinkedHashMap<V, V>()));
         int count = 0;
         for (Map.Entry<V, V> entry : copy.entrySet()) {
             c.add(entry.getKey());

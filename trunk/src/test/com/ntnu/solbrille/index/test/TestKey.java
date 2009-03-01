@@ -1,5 +1,6 @@
 package com.ntnu.solbrille.index.test;
 
+import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.index.IndexKeyEntry;
 
 import java.nio.ByteBuffer;
@@ -25,7 +26,7 @@ public class TestKey implements IndexKeyEntry<TestKey> {
     }
 
     public int getSeralizedLength() {
-        return 4;
+        return Constants.INT_SIZE;
     }
 
     public void serializeToByteBuffer(ByteBuffer buffer) {

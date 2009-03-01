@@ -5,25 +5,33 @@ package com.ntnu.solbrille.buffering;
  * @version $Id $.
  */
 public class FileBlockPointer {
-    private final int fileId;
-    private final long segment;
+    private final int fileNumber;
+    private final long blockNumber;
 
-    public FileBlockPointer(int fileId, long segment) {
-        this.fileId = fileId;
-        this.segment = segment;
+    public FileBlockPointer(int fileNumber, long blockNumber) {
+        this.fileNumber = fileNumber;
+        this.blockNumber = blockNumber;
+    }
+
+    public FileBlockPointer next() {
+        return new FileBlockPointer(fileNumber, blockNumber + 1);
+    }
+
+    public FileBlockPointer previous() {
+        return new FileBlockPointer(fileNumber, blockNumber - 1);
     }
 
     public int getFileNumber() {
-        return fileId;
+        return fileNumber;
     }
 
-    public long getSegment() {
-        return segment;
+    public long getBlockNumber() {
+        return blockNumber;
     }
 
     @Override
     public int hashCode() {
-        return fileId ^ (int) (segment % (long) Integer.MAX_VALUE);
+        return fileNumber ^ (int) (blockNumber % (long) Integer.MAX_VALUE);
     }
 
     @Override
@@ -34,7 +42,12 @@ public class FileBlockPointer {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return fileNumber + " " + blockNumber;
+    }
+
     public boolean equals(FileBlockPointer other) {
-        return other != null && other.fileId == fileId && other.segment == segment;
+        return other != null && other.fileNumber == fileNumber && other.blockNumber == blockNumber;
     }
 }

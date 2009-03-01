@@ -1,5 +1,6 @@
 package com.ntnu.solbrille.index;
 
+import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.buffering.Buffer;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.buffering.FileBlockPointer;
@@ -16,8 +17,6 @@ import java.util.Map;
  * @version $Id $.
  */
 class MapIndexHelper {
-
-    private static final int INT_SIZE = 4;
 
     public static <K extends IndexKeyEntry, V extends IndexEntry> void initializeFromFile(
             Map<K, V> index,
@@ -40,7 +39,7 @@ class MapIndexHelper {
             throws IOException, InterruptedException {
 
         Buffer buffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, blockOffset));
-        assert buffer.getByteBuffer().capacity() > byteOffset + INT_SIZE;
+        assert buffer.getByteBuffer().capacity() > byteOffset + Constants.INT_SIZE;
         buffer.getByteBuffer().position(byteOffset);
         buffer.getReadLock().lock();
         try {
@@ -84,11 +83,12 @@ class MapIndexHelper {
             long blockOffset,
             int byteOffset) throws IOException, InterruptedException {
         Buffer firstBuffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, blockOffset));
-        assert firstBuffer.getByteBuffer().capacity() > byteOffset + INT_SIZE;
+        assert firstBuffer.getByteBuffer().capacity() > byteOffset + Constants.INT_SIZE;
         firstBuffer.getByteBuffer().position(byteOffset);
         firstBuffer.getWriteLock().lock();
         try {
             ByteBuffer byteBuffer = firstBuffer.getByteBuffer();
+            firstBuffer.setIsDirty(true);
             byteBuffer.putInt(0); // placeholder for afterwards when we know how big the file is.
             Iterator<Map.Entry<K, V>> entryIterator = index.entrySet().iterator();
             long currentBlock = blockOffset;
@@ -101,6 +101,7 @@ class MapIndexHelper {
                 while (entry != null) { // need to write a new block
                     buffer.getWriteLock().lock();
                     try {
+                        buffer.setIsDirty(true);
                         int blockStartPosition = byteBuffer.position();
                         byteBuffer.putInt(0); // place holder for block count.
                         int blockCount = 0;
