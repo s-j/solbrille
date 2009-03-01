@@ -8,6 +8,7 @@ import junit.framework.TestCase;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,10 +59,10 @@ public class BufferPoolTest extends TestCase {
             Buffer buff10 = tryPinExtra.get();
 
             assertEquals(buff10.getBlockPointer(), new FileBlockPointer(fileNumber, 10));
-
+            ByteBuffer buf = buff10.getByteBuffer();
             for (int i = 0; i < 100; i++) {
-                assertTrue(buff10.getByteBuffer().remaining() > 4);
-                buff10.getByteBuffer().putInt(i);
+                assertTrue(buf.remaining() > 4);
+                buf.putInt(i);
             }
             buff10.setIsDirty(true);
             pool.unPinBuffer(buff10);
@@ -70,9 +71,9 @@ public class BufferPoolTest extends TestCase {
             BufferPool pool1 = new BufferPool(1, 16 * 1024);
             int fileNumber2 = pool1.registerFile(channel, file);
             Buffer buffer = pool1.pinBuffer(new FileBlockPointer(fileNumber2, 10));
-
+            buf = buffer.getByteBuffer();
             for (int i = 0; i < 100; i++) {
-                assertEquals(i, buffer.getByteBuffer().getInt());
+                assertEquals(i, buf.getInt());
             }
             pool1.unPinBuffer(buffer);
             pool1.stopPool();

@@ -13,7 +13,7 @@ import java.util.List;
 public class LookupBlockingFifoQueueTest extends TestCase {
 
     public void testQueuing() throws InterruptedException {
-        LookupBlockingFifoQueue<Integer> queue = new LookupBlockingFifoQueue<Integer>();
+        LookupBlockingFifoQueue<Integer> queue = new LookupBlockingFifoQueue<Integer>(new Object());
         for (int i : new int[]{1, 2, 3, 4, 5}) {
             queue.offer(i);
         }

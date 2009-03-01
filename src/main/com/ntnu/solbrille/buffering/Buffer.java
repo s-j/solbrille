@@ -51,7 +51,7 @@ public class Buffer {
             readerWriterLock.writeLock().lock();
             try {
                 buffer.clear();
-                fileInfo.getChannel().read(buffer, blockPointer.getSegment() * blockSize);
+                fileInfo.getChannel().read(buffer, blockPointer.getBlockNumber() * blockSize);
                 buffer.flip();
                 buffer.limit(blockSize);
                 bufferedBlock = blockPointer;
@@ -75,7 +75,7 @@ public class Buffer {
                     int oldPos = buffer.position();
                     buffer.position(0); // flush entire buffer
                     buffer.limit(blockSize);
-                    fileInfo.getChannel().write(buffer, blockPointer.getSegment() * blockSize);
+                    fileInfo.getChannel().write(buffer, blockPointer.getBlockNumber() * blockSize);
                     buffer.clear();
                     buffer.position(oldPos);
                 }
@@ -88,11 +88,12 @@ public class Buffer {
 
     /**
      * Returns the underlying byte buffer for modification and redaing. The caller is responsible for synchronization.
+     * The position, mark and limit of the buffer is independend of other buffers returned from this method.
      *
      * @return The byte buffer underlying this buffer.
      */
     public ByteBuffer getByteBuffer() {
-        return buffer;
+        return buffer.duplicate();
     }
 
     /**

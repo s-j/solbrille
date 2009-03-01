@@ -23,9 +23,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class BufferPool {
 
-    private static final int FLUSHER_THREAD_PERIOD_SECONDS = 2;
+    private static final int FLUSHER_THREAD_PERIOD_MILLI_SECONDS = 200;
 
     private static final class DeleteMarker {
+
         private int deletedFileNumber;
         private Set<FileBlockPointer> deletedBuffers;
 
@@ -49,9 +50,11 @@ public class BufferPool {
         public void setBuffers(Set<FileBlockPointer> buffers) {
             deletedBuffers = buffers;
         }
+
     }
 
     private final class FlusherCommand implements Runnable {
+
         public void run() {
             try {
                 Collection<Buffer> dirty = new ArrayList<Buffer>();
@@ -77,7 +80,6 @@ public class BufferPool {
                     cleanBuffers.put(buffer);
                 }
 
-
             } catch (InterruptedException e) {
                 System.out.println("Flusher command was interrupted.");
                 e.printStackTrace();
@@ -86,37 +88,46 @@ public class BufferPool {
                 System.out.println("Flusher command could not flush.");
                 e.printStackTrace();
                 System.exit(1);
+            } catch (Exception e) {
+                System.out.println("Some error occured in the flusher command.");
+                e.printStackTrace();
+                System.exit(0);
             }
-
         }
+
     }
 
     // Maps file pointers to buffers
     private final Map<FileBlockPointer, Buffer> buffers = new HashMap<FileBlockPointer, Buffer>();
     private final Map<Integer, Set<FileBlockPointer>> buffersReverse = new HashMap<Integer, Set<FileBlockPointer>>();
 
-    private final LookupBlockingFifoQueue<Buffer> dirtyBuffers = new LookupBlockingFifoQueue<Buffer>();
-    private final LookupBlockingFifoQueue<Buffer> cleanBuffers = new LookupBlockingFifoQueue<Buffer>();
-    private final BlockingQueue<DeleteMarker> deleted = new LookupBlockingFifoQueue<DeleteMarker>();
+    private final LookupBlockingFifoQueue<Buffer> dirtyBuffers;
+    private final LookupBlockingFifoQueue<Buffer> cleanBuffers;
+    private final BlockingQueue<DeleteMarker> deleted;
 
     // Holds the active files, index by file number
     private final AtomicInteger fileNumber = new AtomicInteger();
     private final Map<Integer, FileInfo> files = new HashMap<Integer, FileInfo>();
+    private final int bufferSize;
 
-    // Use a special class to make profiling / debuging easier 
+    // Use a special class to make profiling / debuging easier
     private static final class BufferPoolMutex {
+
     }
 
     private final Object mutex = new BufferPoolMutex();
+    private final ScheduledExecutorService flushExecutor = new ScheduledThreadPoolExecutor(5);
 
-
-    private final ScheduledExecutorService flushExecutor = new ScheduledThreadPoolExecutor(1);
 
     public BufferPool(int numberOfBuffers, int bufferSize) {
-        flushExecutor.scheduleAtFixedRate(new FlusherCommand(), 0L, (long) BufferPool.FLUSHER_THREAD_PERIOD_SECONDS, TimeUnit.SECONDS);
+        this.bufferSize = bufferSize;
+        cleanBuffers = new LookupBlockingFifoQueue<Buffer>(mutex);
+        dirtyBuffers = new LookupBlockingFifoQueue<Buffer>(mutex);
+        deleted = new LookupBlockingFifoQueue<DeleteMarker>(mutex);
         for (int i = 0; i < numberOfBuffers; i++) {
             cleanBuffers.offer(new Buffer(bufferSize));
         }
+        flushExecutor.scheduleAtFixedRate(new FlusherCommand(), 0L, (long) BufferPool.FLUSHER_THREAD_PERIOD_MILLI_SECONDS, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -126,6 +137,11 @@ public class BufferPool {
         flushExecutor.shutdown();
         new FlusherCommand().run();
     }
+
+    public int getBufferSize() {
+        return bufferSize;
+    }
+
 
     /**
      * Pins a buffer for the supplied location.

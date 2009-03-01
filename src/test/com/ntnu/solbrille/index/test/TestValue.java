@@ -1,5 +1,6 @@
 package com.ntnu.solbrille.index.test;
 
+import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.index.IndexEntry;
 
 import java.nio.ByteBuffer;
@@ -9,8 +10,6 @@ import java.nio.ByteBuffer;
  * @version $Id $.
  */
 public class TestValue implements IndexEntry {
-    private static final int INT_SIZE = 4;
-    private static final int CHAR_SIZE = 2;
 
     public static class TestValueDescriptor implements IndexEntryDescriptor<TestValue> {
         public TestValue readIndexEntryDescriptor(ByteBuffer buffer) {
@@ -51,7 +50,7 @@ public class TestValue implements IndexEntry {
     }
 
     public int getSeralizedLength() {
-        return INT_SIZE + value.length() * CHAR_SIZE;
+        return Constants.INT_SIZE + value.length() * Constants.CHAR_SIZE;
     }
 
     public void serializeToByteBuffer(ByteBuffer buffer) {
