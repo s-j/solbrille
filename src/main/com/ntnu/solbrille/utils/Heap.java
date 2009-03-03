@@ -8,12 +8,19 @@ package com.ntnu.solbrille.utils;
  * Time: 11:21:22 AM
  */
 
+import java.util.Comparator;
 import java.util.PriorityQueue;
 
-public class Heap extends PriorityQueue {
+public class Heap<T> extends PriorityQueue<T> {
 
-    public Heap()
-    {
-        super();
+    public Heap() {
+    }
+
+    public Heap(Comparator<T> comparator) {
+        super(16, comparator);
+    }
+
+    public void headChanged() {
+        offer(poll());
     }
 }
