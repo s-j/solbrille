@@ -1,12 +1,12 @@
 package com.ntnu.solbrille.query;
 
 public class ProcessedQueryResult implements Comparable<ProcessedQueryResult>{
-	private long documentId;
 	private float score;
+	private UnprocessedQueryResult result;
 	
-	public ProcessedQueryResult(long documentID, float score){
-		this.documentId=documentID;
+	public ProcessedQueryResult(long documentID, float score, UnprocessedQueryResult result){
 		this.score=score;
+		this.result=result;
 	}
 	
 	public float getScore(){
@@ -14,7 +14,11 @@ public class ProcessedQueryResult implements Comparable<ProcessedQueryResult>{
 	}
 	
 	public long getDocumentId(){
-		return documentId;
+		return result.gedocumentId;
+	}
+	
+	public UnprocessedQueryResult getUnprocessedResult(){
+		return result;
 	}
 	
 	public int compareTo(ProcessedQueryResult result){

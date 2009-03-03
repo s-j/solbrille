@@ -17,6 +17,10 @@ public class UnprocessedQueryResult implements Comparable<UnprocessedQueryResult
     	positionLists.put(term, occs);
     }
     
+    public long getDocumentId(){
+    	return documentId;
+    }
+    
     public IntArray getOccurrences(DictionaryTerm term){
     	return positionLists.get(term);
     }
