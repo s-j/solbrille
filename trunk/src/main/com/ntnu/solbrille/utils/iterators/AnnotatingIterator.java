@@ -1,4 +1,6 @@
-package com.ntnu.solbrille.utils;
+package com.ntnu.solbrille.utils.iterators;
+
+import com.ntnu.solbrille.utils.Pair;
 
 import java.util.Iterator;
 

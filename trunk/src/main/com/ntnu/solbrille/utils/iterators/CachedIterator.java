@@ -1,4 +1,4 @@
-package com.ntnu.solbrille.utils;
+package com.ntnu.solbrille.utils.iterators;
 
 import java.util.Iterator;
 
@@ -8,7 +8,7 @@ import java.util.Iterator;
  */
 public class CachedIterator<T> implements Iterator<T>, Comparable<CachedIterator<T>> {
 
-    private Iterator<T> wrapped;
+    private final Iterator<T> wrapped;
     private T current;
 
     public CachedIterator(Iterator<T> wrapped) {
@@ -40,6 +40,6 @@ public class CachedIterator<T> implements Iterator<T>, Comparable<CachedIterator
         if (current instanceof Comparable<?>) {
             return ((Comparable<T>) current).compareTo(o.current);
         }
-        return o.current == null ? (current == null ? -1 : 0) : (current == null ? 0 : 1);
+        return o.current == null ? current == null ? -1 : 0 : current == null ? 0 : 1;
     }
 }
