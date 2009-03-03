@@ -13,8 +13,6 @@ import java.util.Iterator;
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
- *          <p/>
- *          TODO: Read entire file in a iterator for merging.
  */
 public class InvertedListReader {
 
@@ -215,7 +213,7 @@ public class InvertedListReader {
         return new InvertedListIterator(first.getFirst(), first.getSecond());
     }
 
-    private Pair<InvertedListPointer, Long> getFirstTermPointerAndTermCount() throws IOException, InterruptedException {
+    Pair<InvertedListPointer, Long> getFirstTermPointerAndTermCount() throws IOException, InterruptedException {
         Buffer buffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, startBlock));
         try {
             ByteBuffer byteBuffer = buffer.getByteBuffer();

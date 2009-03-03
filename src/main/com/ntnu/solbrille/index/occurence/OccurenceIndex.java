@@ -20,8 +20,8 @@ public class OccurenceIndex {
             new DictionaryTerm.DictionaryTermDescriptor(),
             new DictionaryEntry.DictionaryEntryDescriptor());
 
-    private final InvertedList oddInvertedList = new InvertedList();
-    private final InvertedList evenInvertedList = new InvertedList();
+    private final DiskInvertedList oddInvertedList = new DiskInvertedList();
+    private final DiskInvertedList evenInvertedList = new DiskInvertedList();
 
     private final int dictionaryFileNumber, oddInvertedListFileNumber, evenInvertedListFileNumber;
 
@@ -39,7 +39,7 @@ public class OccurenceIndex {
         oddInvertedList.initializeFromFile(bufferPool, oddInvertedListFileNumber, 0);
     }
 
-    InvertedList getActiveList() {
+    DiskInvertedList getActiveList() {
         if (indexPhase.get() % 2 > 0) {
             return oddInvertedList;
         } else {
@@ -47,7 +47,7 @@ public class OccurenceIndex {
         }
     }
 
-    InvertedList getInactiveList() {
+    DiskInvertedList getInactiveList() {
         if (indexPhase.get() % 2 > 0) {
             return evenInvertedList;
         } else {
