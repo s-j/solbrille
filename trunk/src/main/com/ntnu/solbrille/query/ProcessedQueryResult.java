@@ -14,7 +14,7 @@ public class ProcessedQueryResult implements Comparable<ProcessedQueryResult>{
 	}
 	
 	public long getDocumentId(){
-		return result.gedocumentId;
+		return result.getDocumentId();
 	}
 	
 	public UnprocessedQueryResult getUnprocessedResult(){
