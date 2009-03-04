@@ -8,7 +8,7 @@ import java.util.List;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class DocumentOccurence {
+public class DocumentOccurence implements Comparable<DocumentOccurence> {
     private final long documentId;
     private final IntArray positionList = new IntArray(1);
 
@@ -26,5 +26,9 @@ public class DocumentOccurence {
 
     public void addPosition(int position) {
         positionList.add(position);
+    }
+
+    public int compareTo(DocumentOccurence o) {
+        return Long.valueOf(documentId).compareTo(o.documentId);
     }
 }

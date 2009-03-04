@@ -3,8 +3,16 @@ package com.ntnu.solbrille.index.occurence;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.index.BasicNavigableKeyValueIndex;
 import com.ntnu.solbrille.index.NavigableKeyValueIndex;
+import com.ntnu.solbrille.utils.Pair;
+import com.ntnu.solbrille.utils.iterators.CachedIterator;
+import com.ntnu.solbrille.utils.iterators.CachedIteratorAdapter;
+import com.ntnu.solbrille.utils.iterators.SkipAdaptor;
+import com.ntnu.solbrille.utils.iterators.SkippableIterator;
+import com.ntnu.solbrille.utils.iterators.VoidIterator;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -39,6 +47,27 @@ public class OccurenceIndex {
         oddInvertedList.initializeFromFile(bufferPool, oddInvertedListFileNumber, 0);
     }
 
+    public SkippableIterator<DocumentOccurence> lookup(String term) throws IOException, InterruptedException {
+        return lookup(new DictionaryTerm(term));
+    }
+
+    public SkippableIterator<DocumentOccurence> lookup(DictionaryTerm term) throws IOException, InterruptedException {
+        InvertedListPointer pointer = dictionaryLookup(term);
+        return new SkipAdaptor<DocumentOccurence>(pointer == null
+                ? new VoidIterator<DocumentOccurence>()
+                : getActiveList().lookupTerm(term, pointer));
+    }
+
+    private InvertedListPointer dictionaryLookup(DictionaryTerm term) {
+        DictionaryEntry entry = dictionary.get(term);
+        if (entry == null) {
+            return null;
+        }
+        return indexPhase.get() % 2 > 0 ? entry.getOddPointer() : entry.getEvenPointer();
+    }
+
+    // package private methods used while updating the index.
+
     DiskInvertedList getActiveList() {
         if (indexPhase.get() % 2 > 0) {
             return oddInvertedList;
@@ -56,25 +85,51 @@ public class OccurenceIndex {
     }
 
     /**
-     * Registers a dictionary entry. This must be done when the inverted list of the term has been built.
-     * This way each dictionary entry is update once per indexing phase.
+     * Merges the new pointers into the dictionary. Probably faster than updating
+     * one term at the time.
+     * <p/>
+     * Maks the new index active when the merge is done.
      *
-     * @param term  The term to be updated/created.
-     * @param entry The new entry.
-     * @return True if the term is a new one. False if a old entry were updated.
+     * @param newPointers Iterator with the new inverted list pointers.
      */
-    public boolean registerDictionaryEntry(DictionaryTerm term, DictionaryEntry entry) {
-        DictionaryEntry oldEntry = dictionary.get(term);
-        if (oldEntry != null) {
-            if (entry.getEvenPointer() == null) { // next phase is odd.
-                oldEntry.setOddPointer(entry.getOddPointer());
-            } else { // next phase is even
-                oldEntry.setEvenPointer(entry.getEvenPointer());
+    void updateDictionaryEntries(Iterator<Pair<DictionaryTerm, InvertedListPointer>> newPointers) {
+        CachedIterator<Map.Entry<DictionaryTerm, DictionaryEntry>> entries
+                = new CachedIteratorAdapter<Map.Entry<DictionaryTerm, DictionaryEntry>>(dictionary.entrySet().iterator());
+        CachedIterator<Pair<DictionaryTerm, InvertedListPointer>> updates
+                = new CachedIteratorAdapter<Pair<DictionaryTerm, InvertedListPointer>>(newPointers);
+        while (entries.hasNext() && updates.hasNext()) {
+            entries.next();
+            DictionaryTerm updateTerm = updates.next().getFirst();
+            while (entries.getCurrent().getKey().compareTo(updateTerm) < 0 && entries.hasNext()) {
+                entries.next();
             }
-        } else {
-            dictionary.put(term, entry);
-            return true;
+            if (entries.getCurrent().getKey().equals(updateTerm)) { // do update
+                updateDictionaryEntry(entries.getCurrent().getValue(), updates.getCurrent().getSecond());
+            } else if (entries.getCurrent().getKey().compareTo(updateTerm) > 0) { // insert
+                dictionary.put(updateTerm, buildDictionaryEntry(updates.getCurrent().getSecond()));
+            }
         }
-        return false;
+        while (updates.hasNext()) {
+            DictionaryTerm term = updates.next().getFirst();
+            dictionary.put(term, buildDictionaryEntry(updates.getCurrent().getSecond()));
+        }
+
+        indexPhase.incrementAndGet(); // next index phase
+    }
+
+    private DictionaryEntry buildDictionaryEntry(InvertedListPointer pointer) {
+        if (indexPhase.get() % 2 > 0) {
+            return new DictionaryEntry(pointer, null);
+        } else {
+            return new DictionaryEntry(null, pointer);
+        }
+    }
+
+    private void updateDictionaryEntry(DictionaryEntry entry, InvertedListPointer pointer) {
+        if (indexPhase.get() % 2 > 0) {
+            entry.setEvenPointer(pointer);
+        } else {
+            entry.setOddPointer(pointer);
+        }
     }
 }

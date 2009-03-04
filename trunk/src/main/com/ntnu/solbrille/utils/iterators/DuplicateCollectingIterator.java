@@ -13,7 +13,7 @@ import java.util.List;
 public class DuplicateCollectingIterator<T> implements Iterator<Collection<T>> {
 
     private final Comparator<T> comparator;
-    private final CachedIterator<T> wrapped;
+    private final CachedIteratorAdapter<T> wrapped;
 
     private T current;
 
@@ -23,7 +23,7 @@ public class DuplicateCollectingIterator<T> implements Iterator<Collection<T>> {
 
     public DuplicateCollectingIterator(Comparator<T> comparator, Iterator<T> wrapped) {
         this.comparator = comparator;
-        this.wrapped = new CachedIterator<T>(wrapped);
+        this.wrapped = new CachedIteratorAdapter<T>(wrapped);
         if (this.wrapped.hasNext()) {
             this.wrapped.next();
         }
