@@ -5,7 +5,10 @@ import java.util.Iterator;
 
 import com.ntnu.solbrille.query.ProcessedQueryResult;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
-
+/**
+ * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
+ * @version $Id $.
+ */
 public class Filters implements Iterator<ProcessedQueryResult> {
 	private ProcessedQueryResult current = null;
 	private ScoreCombiner sc;

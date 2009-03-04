@@ -12,7 +12,10 @@ import com.ntnu.solbrille.query.scoring.ScoreCombiner;
 import com.ntnu.solbrille.query.scoring.Scorer;
 import com.ntnu.solbrille.utils.Heap;
 import com.sun.tools.javac.util.List;
-
+/**
+ * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
+ * @version $Id $.
+ */
 public class QueryProcessor {
 	private List<QueryPreprocessor> preprocessors;
 	private Matcher queryMatcher;
@@ -42,7 +45,9 @@ public class QueryProcessor {
 		//do some init
 	}
 	
-	public ProcessedQueryResult[] processQuery(PreparedQuery query, int start, int end){
+	public ProcessedQueryResult[] processQuery(String strquery, int start, int end){
+		PreparedQuery query = prepareQuery(strquery);
+		
 		int rescnt = start - end;
 		assert rescnt > 0;
 		
@@ -59,6 +64,10 @@ public class QueryProcessor {
 		}
 		
 		ProcessedQueryResult[] res = (ProcessedQueryResult[]) results.toArray();
+		
+		if (start > res.length) return null;
+		else if (end > res.length) rescnt = start - res.length;
+		
 		ProcessedQueryResult[] ret = new ProcessedQueryResult[rescnt]; 
 		for (int i=0; i<rescnt; i++) ret[i] = res[end - i - 1];
 		
