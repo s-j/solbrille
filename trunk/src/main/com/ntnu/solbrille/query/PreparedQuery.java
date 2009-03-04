@@ -4,6 +4,10 @@ import java.util.HashMap;
 
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 
+/**
+ * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
+ * @version $Id $.
+ */
 public class PreparedQuery {
 	public static enum Modifier{AND, OR, NAND};
 	

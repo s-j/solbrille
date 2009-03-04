@@ -1,15 +1,12 @@
 package com.ntnu.solbrille.query.scoring;
 
-import java.util.ArrayList;
-
-import com.ntnu.solbrille.feeder.processors.DocumentProcessor;
 import com.ntnu.solbrille.query.*;
 import com.ntnu.solbrille.query.matching.Matcher;
-import com.ntnu.solbrille.utils.Pair;
-import com.ntnu.solbrille.utils.iterators.IteratorMerger;
-import com.sun.tools.javac.util.List;
 
-
+/**
+ * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
+ * @version $Id $.
+ */
 public class SingleScoreCombiner implements ScoreCombiner{
 	private Matcher src;
 	private Scorer scorer;

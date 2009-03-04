@@ -4,7 +4,10 @@ import java.util.HashMap;
 import java.util.Set;
 
 import com.ntnu.solbrille.query.PreparedQuery.Modifier;
-
+/**
+ * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
+ * @version $Id $.
+ */
 public class UnPreparedQuery {
 	private HashMap<String, Modifier> terms;
 	

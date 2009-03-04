@@ -4,7 +4,10 @@ import java.util.HashMap;
 
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.utils.IntArray;
-
+/**
+ * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
+ * @version $Id $.
+ */
 public class UnprocessedQueryResult implements Comparable<UnprocessedQueryResult>{
     private final long documentId;
     private final HashMap<DictionaryTerm, IntArray> positionLists = new HashMap<DictionaryTerm, IntArray>();

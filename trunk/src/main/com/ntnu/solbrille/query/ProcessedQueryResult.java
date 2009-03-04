@@ -1,5 +1,8 @@
 package com.ntnu.solbrille.query;
-
+/**
+ * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
+ * @version $Id $.
+ */
 public class ProcessedQueryResult implements Comparable<ProcessedQueryResult>{
 	private float score;
 	private UnprocessedQueryResult result;

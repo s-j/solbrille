@@ -6,7 +6,10 @@ import com.ntnu.solbrille.query.*;
 import com.ntnu.solbrille.query.matching.Matcher;
 import com.ntnu.solbrille.utils.Pair;
 
-
+/**
+ * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
+ * @version $Id $.
+ */
 public class SimpleScoreCombiner implements ScoreCombiner{
 	private Matcher src;
 	
