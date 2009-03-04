@@ -49,7 +49,7 @@ public class IteratorMerger<T> implements Iterator<T> {
     public IteratorMerger(Comparator<T> comparator, Iterable<T>... inputs) {
         heap = new Heap<CachedIterator<T>>(new CachedIteratorComparaer<T>(comparator));
         for (Iterable<T> input : inputs) {
-            CachedIterator<T> iterator = new CachedIterator<T>(input.iterator());
+            CachedIteratorAdapter<T> iterator = new CachedIteratorAdapter<T>(input.iterator());
             if (iterator.hasNext()) {
                 iterator.next();
                 heap.add(iterator);
@@ -64,7 +64,7 @@ public class IteratorMerger<T> implements Iterator<T> {
     public IteratorMerger(Comparator<T> comparator, Iterator<T>... inputs) {
         heap = new Heap<CachedIterator<T>>(new CachedIteratorComparaer<T>(comparator));
         for (Iterator<T> input : inputs) {
-            CachedIterator<T> iterator = new CachedIterator<T>(input);
+            CachedIteratorAdapter<T> iterator = new CachedIteratorAdapter<T>(input);
             if (iterator.hasNext()) {
                 iterator.next();
                 heap.add(iterator);
