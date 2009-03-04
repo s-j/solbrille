@@ -1,4 +1,4 @@
-package com.ntnu.solbrille.query.processor;
+package com.ntnu.solbrille.query.processing;
 
 import com.ntnu.solbrille.query.PreparedQuery;
 import com.ntnu.solbrille.query.ProcessedQueryResult;
