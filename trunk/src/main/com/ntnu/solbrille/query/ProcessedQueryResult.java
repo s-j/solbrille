@@ -13,6 +13,10 @@ public class ProcessedQueryResult implements Comparable<ProcessedQueryResult>{
 		return score;
 	}
 	
+	public void setScore(float score){
+		this.score = score;
+	}
+	
 	public long getDocumentId(){
 		return result.getDocumentId();
 	}
