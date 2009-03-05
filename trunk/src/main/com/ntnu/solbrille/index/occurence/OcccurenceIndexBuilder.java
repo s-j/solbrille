@@ -251,7 +251,7 @@ public class OcccurenceIndexBuilder {
                 occurence.addPosition(position);
                 invertedDocument.put(term, occurence);
             }
-            position += token.length();
+            position++;
         }
 
         return invertedDocument;

@@ -34,7 +34,7 @@ public class IndexLookupTest extends TestCase {
         int inv1FileNumber = pool.registerFile(inv1Channel, inv1File);
 
         File inv2File = new File("inv2.bin");
-        inv1File.createNewFile();
+        inv2File.createNewFile();
         FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
         int inv2FileNumber = pool.registerFile(inv2Channel, inv2File);
         OccurenceIndex occurenceIndex = new OccurenceIndex(pool, dictFileNumber, inv1FileNumber, inv2FileNumber);
