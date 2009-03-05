@@ -90,6 +90,13 @@ public class InvertedListReader {
             return null;*/
         }
 
+        public void close() {
+            if (currentBuffer != null) {
+                bufferPool.unPinBuffer(currentBuffer);
+                currentBuffer = null;
+            }
+        }
+
         private int readNextPosition() throws IOException, InterruptedException {
             assert remainingPositionsInCurrentDocument > 0;
             if (currentByteBuffer.position() > currentBlockLastElementStart) {
@@ -98,7 +105,6 @@ public class InvertedListReader {
             remainingPositionsInCurrentDocument--;
             return currentByteBuffer.getInt();
         }
-
     }
 
     private class TermIterator implements Iterator<DocumentOccurence> {
