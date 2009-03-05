@@ -47,6 +47,7 @@ public class InvertedListReader {
             }
             remainingDocumentsInCurrentTerm = currentByteBuffer.getLong();
             currentByteBuffer.getLong(); // skip number of occurences
+            currentByteBuffer.position(currentByteBuffer.position() + Constants.LONG_SIZE + Constants.INT_SIZE);
             if (currentByteBuffer.position() > currentBlockLastElementStart) {
                 moveNextBlock();
             }
@@ -70,7 +71,7 @@ public class InvertedListReader {
             assert currentBuffer.getBlockPointer().getBlockNumber() == nextDocumentBlock;
             assert currentByteBuffer.position() == nextDocumentByteOffset;
             currentDocumentId = currentByteBuffer.getLong();
-            remainingPositionsInCurrentDocument = currentByteBuffer.getLong() - 1;
+            remainingPositionsInCurrentDocument = currentByteBuffer.getLong();
             nextDocumentBlock = currentByteBuffer.getLong();
             nextDocumentByteOffset = currentByteBuffer.getInt();
             //try {
@@ -194,13 +195,11 @@ public class InvertedListReader {
     private final BufferPool bufferPool;
     private final int fileNumber;
     private final long startBlock;
-    private final int startByteOffset;
 
     public InvertedListReader(BufferPool bufferPool, int fileNumber, long startBlock) {
         this.bufferPool = bufferPool;
         this.fileNumber = fileNumber;
         this.startBlock = startBlock;
-        startByteOffset = 0; // for now
     }
 
     public Iterator<DocumentOccurence> iterateTerm(DictionaryTerm term, InvertedListPointer pointer)
