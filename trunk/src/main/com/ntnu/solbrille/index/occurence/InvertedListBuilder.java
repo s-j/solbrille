@@ -94,6 +94,7 @@ public class InvertedListBuilder {
         activeByteBuffer.putLong(0L); // next term block placeholder
         activeByteBuffer.putInt(0);   // next term block offset placeholder
         currentBuffer.setIsDirty(true);
+
         return new InvertedListPointer(currentTermStartBlock, currentTermStartByteOffset);
     }
 
@@ -131,12 +132,11 @@ public class InvertedListBuilder {
         currentDocumentId = documentId;
         currentDocumentStartBlock = currentBuffer.getBlockPointer().getBlockNumber();
         currentDocumentStartByteOffset = activeByteBuffer.position();
-        occurensesInDocument = 1L;
+        occurensesInDocument = 0L;
         blockLastElementStart = activeByteBuffer.position();
         activeByteBuffer.putLong(documentId);
-        activeByteBuffer.putLong(0L); // occurenses in document placeholder
-        activeByteBuffer.putLong(0L); // next document block placeholder
-        activeByteBuffer.putInt(0);   // next document byte offset
+        // placeholders for number of occurences (long), block addres for next doc (long) and byte addres for next doc (int)
+        activeByteBuffer.position(activeByteBuffer.position() + 2 * Constants.LONG_SIZE + Constants.INT_SIZE);
         currentBuffer.setIsDirty(true);
         documentsInTerm++;
         return new InvertedListPointer(currentDocumentStartBlock, currentDocumentStartByteOffset);

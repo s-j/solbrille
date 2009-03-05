@@ -37,8 +37,8 @@ public class OcccurenceIndexBuilder {
      *
      * @param documentId The document id to be added
      * @param document   The document content
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws IOException          On IO error
+     * @throws InterruptedException If submitting thread were interupted.
      */
     public void addDocument(long documentId, String document) throws IOException, InterruptedException {
         Map<DictionaryTerm, DocumentOccurence> invertedDocument
@@ -65,7 +65,7 @@ public class OcccurenceIndexBuilder {
     }
 
     private static class MemoryInvertedList implements InvertedList {
-        private NavigableMap<DictionaryTerm, List<DocumentOccurence>> invertedList;
+        private final NavigableMap<DictionaryTerm, List<DocumentOccurence>> invertedList;
 
         private MemoryInvertedList(NavigableMap<DictionaryTerm, List<DocumentOccurence>> invertedList) {
             this.invertedList = invertedList;
@@ -162,8 +162,23 @@ public class OcccurenceIndexBuilder {
                 = new DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>(TERM_MERGE_COMP, mergedTermIterators);
         return new Iterator<Pair<DictionaryTerm, InvertedListPointer>>() {
 
+            private boolean closed = false;
+
             public boolean hasNext() {
-                return collectedTerms.hasNext();
+                boolean hasNext = collectedTerms.hasNext();
+                if (!hasNext && !closed) {
+                    try {
+                        output.finishFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.exit(0);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        System.exit(0);
+                    }
+                    closed = true;
+                }
+                return hasNext;
             }
 
             public Pair<DictionaryTerm, InvertedListPointer> next() {
@@ -201,13 +216,16 @@ public class OcccurenceIndexBuilder {
         InvertedList[] phaseLists = new InvertedList[2 + state.partialListsOnDisk.size()];
         phaseLists[position++] = activeIndex;
         phaseLists[position++] = new MemoryInvertedList(state.aggregateState);
+        for (InvertedList disk : state.partialListsOnDisk) {
+            phaseLists[position++] = disk;
+        }
         Iterator<Pair<DictionaryTerm, InvertedListPointer>> result
                 = mergeInvertedLists(inactiveIndex.getOverwriteBuilder(), phaseLists);
         index.updateDictionaryEntries(result);
     }
 
     private boolean shouldUpdateIndex() {
-        return false;  //To change body of created methods use File | Settings | File Templates.
+        return false;
     }
 
     // TODO: implement disk flushing and merging

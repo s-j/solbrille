@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -13,9 +12,7 @@ import java.util.List;
 public class DuplicateCollectingIterator<T> implements Iterator<Collection<T>> {
 
     private final Comparator<T> comparator;
-    private final CachedIteratorAdapter<T> wrapped;
-
-    private T current;
+    private CachedIterator<T> wrapped;
 
     public DuplicateCollectingIterator(Iterator<T> wrapped) {
         this(null, wrapped);
@@ -26,16 +23,18 @@ public class DuplicateCollectingIterator<T> implements Iterator<Collection<T>> {
         this.wrapped = new CachedIteratorAdapter<T>(wrapped);
         if (this.wrapped.hasNext()) {
             this.wrapped.next();
+        } else {
+            this.wrapped = null;
         }
     }
 
     public boolean hasNext() {
-        return wrapped.hasNext();
+        return wrapped != null;
     }
 
     public Collection<T> next() {
-        List<T> group = new ArrayList<T>();
-        current = wrapped.getCurrent();
+        Collection<T> group = new ArrayList<T>();
+        T current = wrapped.getCurrent();
         group.add(current);
         while (wrapped.hasNext()) {
             wrapped.next();
@@ -45,15 +44,14 @@ public class DuplicateCollectingIterator<T> implements Iterator<Collection<T>> {
                 break;
             }
         }
+        if (isEqual(wrapped.getCurrent(), current)) {
+            wrapped = null;
+        }
         return group;
     }
 
     private boolean isEqual(T o1, T o2) {
-        if (comparator == null) {
-            return o1.equals(o2);
-        } else {
-            return comparator.compare(o1, o2) == 0;
-        }
+        return comparator == null ? o1.equals(o2) : comparator.compare(o1, o2) == 0;
     }
 
     public void remove() {
