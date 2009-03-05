@@ -2,17 +2,18 @@ package com.ntnu.solbrille.query.scoring;
 
 import com.ntnu.solbrille.query.*;
 import com.ntnu.solbrille.query.matching.Matcher;
+import com.ntnu.solbrille.query.preprocessing.QueryProcessingComponent;
 
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
  * @version $Id $.
  */
 public class SingleScoreCombiner implements ScoreCombiner{
-	private Matcher src;
+	private QueryProcessingComponent src;
 	private Scorer scorer;
+	private QueryRequest query = null;
 
-	public SingleScoreCombiner(Matcher src, Scorer scorer){
-		this.src = src;
+	public SingleScoreCombiner(Scorer scorer){
 		this.scorer = scorer;
 	}
 
@@ -22,11 +23,11 @@ public class SingleScoreCombiner implements ScoreCombiner{
 	}
 
 	@Override
-	public ProcessedQueryResult next() {
+	public QueryResult next() {
 		assert src.hasNext();
-		UnprocessedQueryResult unpresult = src.next();
-		ProcessedQueryResult procresult = scorer.getScore(unpresult);
-		return procresult;
+		QueryResult next = src.next();
+		next.setScore(scorer.getScore(next));
+		return next;
 	}
 
 	@Override
@@ -34,4 +35,14 @@ public class SingleScoreCombiner implements ScoreCombiner{
 	     throw new UnsupportedOperationException();	
 	}
 	
+	@Override
+	public void addSource(QueryProcessingComponent source) {
+		src = source;	
+	}
+
+	@Override
+	public boolean loadQuery(QueryRequest query) {
+		this.query = query;
+		return src.loadQuery(query);
+	}
 }

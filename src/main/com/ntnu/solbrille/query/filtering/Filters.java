@@ -3,19 +3,23 @@ package com.ntnu.solbrille.query.filtering;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.ntnu.solbrille.query.ProcessedQueryResult;
+import com.ntnu.solbrille.query.QueryRequest;
+import com.ntnu.solbrille.query.QueryResult;
+import com.ntnu.solbrille.query.preprocessing.QueryProcessingComponent;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
+
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
  * @version $Id $.
  */
-public class Filters implements Iterator<ProcessedQueryResult> {
-	private ProcessedQueryResult current = null;
-	private ScoreCombiner sc;
+
+public class Filters implements QueryProcessingComponent{
+	private QueryResult current = null;
+	private QueryProcessingComponent src = null;
+	private QueryRequest query = null;
 	private ArrayList<Filter> filters = new ArrayList<Filter>();
 	
-	public Filters(ScoreCombiner sc){
-		this.sc = sc;
+	public Filters(){
 	}
 	
 	public void addFilter(Filter f){
@@ -24,12 +28,13 @@ public class Filters implements Iterator<ProcessedQueryResult> {
 	
 	@Override
 	public boolean hasNext() {
-		if (filters.size() == 0) return sc.hasNext();
+		assert src != null;
+		if (filters.size() == 0) return src.hasNext();
 		
 		if (current != null) return true;
 		else {
-			while (sc.hasNext()){
-				current = sc.next();
+			while (src.hasNext()){
+				current = src.next();
 				boolean trip = true;
 				for (Filter filter : filters) {
 					trip &= filter.filter(current);
@@ -42,10 +47,11 @@ public class Filters implements Iterator<ProcessedQueryResult> {
 	}
 
 	@Override
-	public ProcessedQueryResult next() {
-		if (filters.size() == 0) return sc.next();
+	public QueryResult next() {
+		assert src!= null;
+		if (filters.size() == 0) return src.next();
 		
-		ProcessedQueryResult ret = current;
+		QueryResult ret = current;
 		current = null;
 		return ret;
 	}
@@ -53,6 +59,19 @@ public class Filters implements Iterator<ProcessedQueryResult> {
 	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void addSource(QueryProcessingComponent source) {
+		src = source;
+		
+	}
+
+	@Override
+	public boolean loadQuery(QueryRequest query) {
+		this.query = query;
+		assert src!= null;
+		return src.loadQuery(query);
 	}
 	
 

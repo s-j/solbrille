@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.ntnu.solbrille.query.*;
 import com.ntnu.solbrille.query.matching.Matcher;
+import com.ntnu.solbrille.query.preprocessing.QueryProcessingComponent;
 import com.ntnu.solbrille.utils.Pair;
 
 /**
@@ -11,15 +12,13 @@ import com.ntnu.solbrille.utils.Pair;
  * @version $Id $.
  */
 public class SimpleScoreCombiner implements ScoreCombiner{
-	private Matcher src;
-	
+	private QueryProcessingComponent src = null;
 	private ArrayList<Pair<Scorer, Float>> scorers = new ArrayList<Pair<Scorer, Float>>();
-    
+    private QueryRequest query = null;
 	private boolean normalize = false;
 	private float totalWeight = 0.0f;
 	
-	public SimpleScoreCombiner(Matcher src, boolean normalize){
-		this.src = src;
+	public SimpleScoreCombiner(boolean normalize){
 		this.normalize = normalize;
 	}
 	
@@ -31,29 +30,41 @@ public class SimpleScoreCombiner implements ScoreCombiner{
 
 	@Override
 	public boolean hasNext() {
+		assert src != null;
 		return src.hasNext();
 	}
 
 	@Override
-	public ProcessedQueryResult next() {
+	public QueryResult next() {
+		assert src != null;
 		assert src.hasNext();
 		
-		UnprocessedQueryResult unpresult = src.next();
-		ProcessedQueryResult procresult = null;
+		QueryResult next = src.next();
+		float accscore = (float) 0.0;
 		
 		for (Pair<Scorer,Float> scorerpair : scorers) {
-			ProcessedQueryResult partresult = scorerpair.getFirst().getScore(unpresult);
-			if (procresult == null) procresult = partresult;
-			else procresult.setScore( procresult.getScore() + partresult.getScore() * scorerpair.getSecond());
+			accscore += scorerpair.getFirst().getScore(next) * scorerpair.getSecond();
 		}
-		if (normalize) procresult.setScore(procresult.getScore()/totalWeight);
 		
-		return procresult;
+		next.setScore(normalize ? accscore/totalWeight : accscore);
+		return next;
 	}
 
 	@Override
 	public void remove() {
 	     throw new UnsupportedOperationException();	
+	}
+
+	@Override
+	public void addSource(QueryProcessingComponent source) {
+		src = source;
+		
+	}
+
+	@Override
+	public boolean loadQuery(QueryRequest query) {
+		this.query = query;
+		return src.loadQuery(query);
 	}
 	
 }

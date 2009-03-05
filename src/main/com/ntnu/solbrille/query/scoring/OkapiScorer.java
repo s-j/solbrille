@@ -1,7 +1,6 @@
 package com.ntnu.solbrille.query.scoring;
 
-import com.ntnu.solbrille.query.ProcessedQueryResult;
-import com.ntnu.solbrille.query.UnprocessedQueryResult;
+import com.ntnu.solbrille.query.QueryResult;
 
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
@@ -10,9 +9,9 @@ import com.ntnu.solbrille.query.UnprocessedQueryResult;
 public class OkapiScorer implements Scorer{
 
 	@Override
-	public ProcessedQueryResult getScore(UnprocessedQueryResult result) {
+	public float getScore(QueryResult result) {
 		// TODO Auto-generated method stub
-		return null;
+		return (float) 0.0;
 	}
 
 }

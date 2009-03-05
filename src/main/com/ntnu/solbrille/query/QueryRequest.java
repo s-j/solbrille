@@ -3,16 +3,20 @@ package com.ntnu.solbrille.query;
 import java.util.HashMap;
 import java.util.Set;
 
-import com.ntnu.solbrille.query.PreparedQuery.Modifier;
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
  * @version $Id $.
  */
-public class UnPreparedQuery {
-	private HashMap<String, Modifier> terms;
+public class QueryRequest {
+	public static enum Modifier{AND, OR, NAND};
 	
-	public UnPreparedQuery(String query){
-		String tokens[] = query.split(" ");
+	private String strquery; 
+	private HashMap<String, Modifier> terms;
+	//TODO: could be nice to add a list of term modifications in each of queries
+	
+	public QueryRequest(String strquery){
+		this.strquery = strquery;
+		String tokens[] = strquery.split(" ");
 		for (String token : tokens) {
 			Modifier mod = Modifier.OR;
 			if ( token.charAt(0) == '+'){
@@ -41,5 +45,9 @@ public class UnPreparedQuery {
 	
 	public Modifier getModifier(String term){
 		return terms.get(term);
+	}
+	
+	public String getQueryString(){
+		return strquery;
 	}
 }
