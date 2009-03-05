@@ -5,7 +5,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
 import com.ntnu.solbrille.buffering.BufferPool;
-import com.ntnu.solbrille.index.occurence.InvertedListReader;
+import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.query.filtering.Filter;
 import com.ntnu.solbrille.query.filtering.Filters;
 import com.ntnu.solbrille.query.filtering.NonNegativeFilter;
@@ -23,26 +23,41 @@ public class TestQueryProcessor {
 	
 	
 	public void testProcessing() throws Exception{
-		BufferPool pool = new BufferPool(100, 6400);
-	    File file = new File("test.bin");
-	    file.createNewFile();
-	    FileChannel channel = new RandomAccessFile(file, "r").getChannel();
-	    int fileNumber = pool.registerFile(channel, file);
-		InvertedListReader reader = new InvertedListReader(pool,fileNumber,0);
+        BufferPool pool = new BufferPool(10, 128); // really small buffers, just to be evil
+        File dictFile = new File("dictionary.bin");
+        dictFile.createNewFile();
+        FileChannel dictChannel = new RandomAccessFile(dictFile, "rw").getChannel();
+        int dictFileNumber = pool.registerFile(dictChannel, dictFile);
+
+        File inv1File = new File("inv1.bin");
+        inv1File.createNewFile();
+        FileChannel inv1Channel = new RandomAccessFile(inv1File, "rw").getChannel();
+        int inv1FileNumber = pool.registerFile(inv1Channel, inv1File);
+
+        File inv2File = new File("inv2.bin");
+        inv1File.createNewFile();
+        FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
+        int inv2FileNumber = pool.registerFile(inv2Channel, inv2File);
+        OccurenceIndex occurenceIndex = new OccurenceIndex(pool, dictFileNumber, inv1FileNumber, inv2FileNumber);
 		
+		Matcher qm = new Matcher(occurenceIndex);
 		
-		Matcher qm = new Matcher(reader);
 		//TODO: provide enough information to okapi scorer
+		//something like StatisticIndex
 		Scorer okapiscorer = new OkapiScorer();
-		ScoreCombiner scm = new SingleScoreCombiner(qm, okapiscorer);
+		ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
 		
-		Filters fs = new Filters(scm);
+		Filters fs = new Filters();
 		Filter f = new NonNegativeFilter();
 		fs.addFilter(f);
 		
-		//TODO: provide query preprocessors
-		QueryProcessor qproc = new QueryProcessor(qm, scm, fs); 
+		scm.addSource(qm);
+		fs.addSource(scm);
 		
+		QueryProcessor qproc = new QueryProcessor(fs); 
+		
+		
+		//TODO: provide query preprocessors
 		qproc.processQuery("+Pretty Vacant", 0, 100);
 	}
 }
