@@ -6,17 +6,16 @@ import java.util.Iterator;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class CachedIteratorAdapter<T> implements Iterator<T>, Comparable<CachedIterator<T>>, CachedIterator<T> {
+public class CachedIteratorAdapter<T> extends AbstractWrappingIterator<T, Iterator<T>> implements Comparable<CachedIterator<T>>, CachedIterator<T> {
 
-    private final Iterator<T> wrapped;
     private T current;
 
     public CachedIteratorAdapter(Iterator<T> wrapped) {
-        this.wrapped = wrapped;
+        super(wrapped);
     }
 
     public boolean hasNext() {
-        return wrapped.hasNext();
+        return getWrapped().hasNext();
     }
 
     public T getCurrent() {
@@ -24,12 +23,12 @@ public class CachedIteratorAdapter<T> implements Iterator<T>, Comparable<CachedI
     }
 
     public T next() {
-        current = wrapped.next();
+        current = getWrapped().next();
         return current;
     }
 
     public void remove() {
-        wrapped.remove();
+        getWrapped().remove();
         current = null;
     }
 

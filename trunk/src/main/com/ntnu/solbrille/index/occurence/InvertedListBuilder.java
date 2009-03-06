@@ -4,6 +4,7 @@ import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.buffering.Buffer;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.buffering.FileBlockPointer;
+import com.ntnu.solbrille.utils.Closable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,7 +15,7 @@ import java.nio.ByteBuffer;
  *          <p/>
  *          TODO: Gap encoded and compressed position lists.
  */
-public class InvertedListBuilder {
+public class InvertedListBuilder implements Closable {
     private BufferPool bufferPool;
     private int fileNumber;
     private Buffer currentBuffer;
@@ -183,23 +184,33 @@ public class InvertedListBuilder {
         activeByteBuffer.position(Constants.INT_SIZE);
     }
 
-    public void finishFile() throws IOException, InterruptedException {
-        finishCurrentDocument();
-        finishCurrentTerm();
-        activeByteBuffer.putInt(0, blockLastElementStart);
-        currentBuffer.setIsDirty(true);
-        activeByteBuffer = null;
-        bufferPool.unPinBuffer(currentBuffer);
-        currentBuffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, firstBlockOffset));
-        activeByteBuffer = currentBuffer.getByteBuffer();
-        activeByteBuffer.position(firstByteOffset);
-        activeByteBuffer.putLong(totalTerms);
-        activeByteBuffer.putLong(totalOccurences);
-        activeByteBuffer.putLong(firstTermBlockOffset);
-        activeByteBuffer.putInt(firstTermByteOffset);
-        currentBuffer.setIsDirty(true);
-        bufferPool.unPinBuffer(currentBuffer);
-        currentBuffer = null;
-        activeByteBuffer = null;
+    public void close() {
+        try {
+            finishCurrentDocument();
+            finishCurrentTerm();
+            activeByteBuffer.putInt(0, blockLastElementStart);
+            currentBuffer.setIsDirty(true);
+            activeByteBuffer = null;
+            bufferPool.unPinBuffer(currentBuffer);
+            currentBuffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, firstBlockOffset));
+            activeByteBuffer = currentBuffer.getByteBuffer();
+            activeByteBuffer.position(firstByteOffset);
+            activeByteBuffer.putLong(totalTerms);
+            activeByteBuffer.putLong(totalOccurences);
+            activeByteBuffer.putLong(firstTermBlockOffset);
+            activeByteBuffer.putInt(firstTermByteOffset);
+            currentBuffer.setIsDirty(true);
+            bufferPool.unPinBuffer(currentBuffer);
+            currentBuffer = null;
+            activeByteBuffer = null;
+            bufferPool = null; // make it impossible to pin buffers
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
+
     }
 }
