@@ -8,11 +8,9 @@ import java.util.Iterator;
  */
 public class SkipAdaptor<T extends Comparable<T>> extends CachedIteratorAdapter<T> implements SkippableIterator<T> {
 
-    CachedIteratorAdapter<T> wrapped;
-
     public SkipAdaptor(Iterator<T> wrapped) {
         super(wrapped);
-        this.wrapped = new CachedIteratorAdapter<T>(wrapped);
+        setWrapped(new CachedIteratorAdapter<T>(wrapped));
     }
 
     public void skipTo(T target) {
@@ -24,23 +22,12 @@ public class SkipAdaptor<T extends Comparable<T>> extends CachedIteratorAdapter<
     }
 
     private void skip(T target, SkipType skipType) {
-        while (skipType.shouldContinue(target, wrapped.getCurrent()) && wrapped.hasNext()) {
-            wrapped.next();
+        while (skipType.shouldContinue(target, getCurrent()) && hasNext()) {
+            next();
         }
     }
 
-    public boolean hasNext() {
-        return wrapped.hasNext();
-    }
-
-    public T next() {
-        return wrapped.next();
-    }
-
-    public void remove() {
-        wrapped.remove();
-    }
-
+    @Override
     public int compareTo(CachedIterator<T> o) {
         return getCurrent().compareTo(o.getCurrent());
     }

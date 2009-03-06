@@ -21,10 +21,10 @@ import java.util.Map;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class TestInvertedListReadingWriting extends TestCase {
+public class InvertedListReadingWritingTest extends TestCase {
 
-    private static String[] terms = new String[]{"bar", "car", "tsar", "very", "world", "xylofon"};
-    private static int[][][] termDocOcc = {
+    private static final String[] terms = {"bar", "car", "tsar", "very", "world", "xylofon"};
+    private static final int[][][] termDocOcc = {
             new int[][]{ // bar occurenses
                     new int[]{11, 89, 90, 76}, // doc 0
                     new int[]{12, 200}, // doc 1
@@ -122,7 +122,7 @@ public class TestInvertedListReadingWriting extends TestCase {
                 }
             }
         }
-        builder.finishFile();
+        builder.close();
         return new Pair<Map<Integer, InvertedListPointer>, Map<DictionaryTerm, InvertedListPointer>>(termRankToPointer, termToPointer);
     }
 

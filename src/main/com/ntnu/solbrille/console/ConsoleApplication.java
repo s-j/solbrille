@@ -22,11 +22,12 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ConsoleApplication {
 
 
-    private static abstract class Action {
+    private abstract static class Action {
         abstract void execute(String argument) throws Exception;
     }
 
     private static class Feed extends Action {
+        @Override
         void execute(String argument) throws Exception {
             long docId = docIdGenerator.incrementAndGet();
             builder.addDocument(docId, argument);
@@ -35,6 +36,7 @@ public class ConsoleApplication {
     }
 
     private static class Flush extends Action {
+        @Override
         void execute(String argument) throws Exception {
             builder.flush();
             System.out.println("Flushed!");
@@ -42,6 +44,7 @@ public class ConsoleApplication {
     }
 
     private static class Lookup extends Action {
+        @Override
         void execute(String argument) throws Exception {
             Iterator<DocumentOccurence> occs = index.lookup(argument);
             int count = 0;
@@ -50,22 +53,24 @@ public class ConsoleApplication {
                 DocumentOccurence occ = occs.next();
                 StringBuilder posList = new StringBuilder("[");
                 for (int pos : occ.getPositionList()) {
-                    posList.append(pos).append(",");
+                    posList.append(pos).append(',');
                 }
-                posList.append("]");
-                System.out.println(occ.getDocumentId() + ": " + posList.toString());
+                posList.append(']');
+                System.out.println(occ.getDocumentId() + ": " + posList);
             }
             System.out.println("Total number of results: " + count);
         }
     }
 
     private static class Help extends Action {
+        @Override
         void execute(String argument) throws Exception {
             help();
         }
     }
 
     private static class Exit extends Action {
+        @Override
         void execute(String argument) throws Exception {
             pool.stopPool();
             System.exit(0);
@@ -101,7 +106,7 @@ public class ConsoleApplication {
     public static void main(String[] args) throws Exception {
         System.out.println("---- Sample console application for the SOLbRille search engine");
         help();
-        pool = new BufferPool(1000, 128); // really small buffers, just to be evil
+        pool = new BufferPool(10, 128); // really small buffers, just to be evil
         File dictFile = new File("dictionary.bin");
         if (dictFile.createNewFile()) {
             System.out.println("Dictionary created at: " + dictFile.getAbsolutePath());

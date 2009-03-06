@@ -1,6 +1,7 @@
 package com.ntnu.solbrille.index.occurence;
 
 import com.ntnu.solbrille.utils.Pair;
+import com.ntnu.solbrille.utils.iterators.AbstractWrappingIterator;
 import com.ntnu.solbrille.utils.iterators.AnnotatingIterator;
 import com.ntnu.solbrille.utils.iterators.DuplicateCollectingIterator;
 import com.ntnu.solbrille.utils.iterators.IteratorMerger;
@@ -137,6 +138,49 @@ public class OcccurenceIndexBuilder {
         }
     };
 
+    private static class LazyMergedInvertedListWriterIterator extends
+            AbstractWrappingIterator<Pair<DictionaryTerm, InvertedListPointer>,
+                    DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>> {
+        private final InvertedListBuilder output;
+
+        private LazyMergedInvertedListWriterIterator(
+                DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> wrapped,
+                InvertedListBuilder output) {
+            super(wrapped);
+            this.output = output;
+        }
+
+        public boolean hasNext() {
+            return getWrapped().hasNext();
+        }
+
+        public Pair<DictionaryTerm, InvertedListPointer> next() {
+            Collection<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> terms = getWrapped().next();
+            DictionaryTerm term = terms.iterator().next().getFirst().getFirst(); // always at least one term
+            try {
+                InvertedListPointer pointer = writeToInvertedList(term, output, terms.toArray(new Pair[terms.size()]));
+                return new Pair<DictionaryTerm, InvertedListPointer>(term, pointer);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+            return null;
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void close() {
+            output.close();
+            super.close();
+        }
+    }
+
     /**
      * Merges a number of inverted lists and puts the output in another. This method is lazy, teh reslting
      * iterator will run the computation when consumed.
@@ -148,59 +192,19 @@ public class OcccurenceIndexBuilder {
      * @throws IOException          On error writing to output.
      * @throws InterruptedException If the calling thread is blocked.
      */
-    private static Iterator<Pair<DictionaryTerm, InvertedListPointer>> mergeInvertedLists(
-            final InvertedListBuilder output,
+    private Iterator<Pair<DictionaryTerm, InvertedListPointer>> mergeInvertedLists(
+            InvertedListBuilder output,
             InvertedList... inputs) throws IOException, InterruptedException {
-        Iterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>[] listIterators = new Iterator[inputs.length];
+        AnnotatingIterator<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>[] listIterators = new AnnotatingIterator[inputs.length];
         int position = 0;
         for (InvertedList list : inputs) {
             listIterators[position++] = new AnnotatingIterator<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>(list.getTermIterator(), list);
         }
-        Iterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> mergedTermIterators
+        IteratorMerger<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> mergedTermIterators
                 = new IteratorMerger<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>(TERM_MERGE_COMP, listIterators);
-        final Iterator<Collection<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>> collectedTerms
+        DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> collectedTerms
                 = new DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>(TERM_MERGE_COMP, mergedTermIterators);
-        return new Iterator<Pair<DictionaryTerm, InvertedListPointer>>() {
-
-            private boolean closed = false;
-
-            public boolean hasNext() {
-                boolean hasNext = collectedTerms.hasNext();
-                if (!hasNext && !closed) {
-                    try {
-                        output.finishFile();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        System.exit(0);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        System.exit(0);
-                    }
-                    closed = true;
-                }
-                return hasNext;
-            }
-
-            public Pair<DictionaryTerm, InvertedListPointer> next() {
-                Collection<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> terms = collectedTerms.next();
-                DictionaryTerm term = terms.iterator().next().getFirst().getFirst(); // always at least one term
-                try {
-                    InvertedListPointer pointer = writeToInvertedList(term, output, terms.toArray(new Pair[terms.size()]));
-                    return new Pair<DictionaryTerm, InvertedListPointer>(term, pointer);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
-                return null;
-            }
-
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
+        return new LazyMergedInvertedListWriterIterator(collectedTerms, output);
     }
 
     private final AtomicReference<IndexPhaseState> activeIndexPhase

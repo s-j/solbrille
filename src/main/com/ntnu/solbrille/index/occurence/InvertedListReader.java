@@ -4,6 +4,7 @@ import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.buffering.Buffer;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.buffering.FileBlockPointer;
+import com.ntnu.solbrille.utils.Closable;
 import com.ntnu.solbrille.utils.Pair;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ public class InvertedListReader {
 
     private static final DictionaryTerm.DictionaryTermDescriptor TERM_DESCRIPTOR = new DictionaryTerm.DictionaryTermDescriptor();
 
-    private class Reader {
+    private class Reader implements Closable {
         private Buffer currentBuffer;
         private ByteBuffer currentByteBuffer;
 
@@ -107,7 +108,7 @@ public class InvertedListReader {
         }
     }
 
-    private class TermIterator implements Iterator<DocumentOccurence> {
+    private class TermIterator implements Iterator<DocumentOccurence>, Closable {
 
         private final Reader reader = new Reader();
 
@@ -137,9 +138,12 @@ public class InvertedListReader {
             throw new UnsupportedOperationException();
         }
 
+        public void close() {
+            reader.close();
+        }
     }
 
-    private class InvertedListIterator implements Iterator<Pair<DictionaryTerm, InvertedListPointer>> {
+    private class InvertedListIterator implements Iterator<Pair<DictionaryTerm, InvertedListPointer>>, Closable {
 
         InvertedListPointer nextTerm;
         long numberOfTerms;
@@ -195,6 +199,10 @@ public class InvertedListReader {
 
         public void remove() {
             throw new UnsupportedOperationException();
+        }
+
+        public void close() {
+            // No cleanup required at the moment.
         }
     }
 

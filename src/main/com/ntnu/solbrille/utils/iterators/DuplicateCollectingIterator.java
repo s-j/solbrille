@@ -9,43 +9,42 @@ import java.util.Iterator;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class DuplicateCollectingIterator<T> implements Iterator<Collection<T>> {
+public class DuplicateCollectingIterator<T> extends AbstractWrappingIterator<Collection<T>, CachedIterator<T>> {
 
     private final Comparator<T> comparator;
-    private CachedIterator<T> wrapped;
 
     public DuplicateCollectingIterator(Iterator<T> wrapped) {
         this(null, wrapped);
     }
 
     public DuplicateCollectingIterator(Comparator<T> comparator, Iterator<T> wrapped) {
+        super(new CachedIteratorAdapter<T>(wrapped));
         this.comparator = comparator;
-        this.wrapped = new CachedIteratorAdapter<T>(wrapped);
-        if (this.wrapped.hasNext()) {
-            this.wrapped.next();
+        if (getWrapped().hasNext()) {
+            getWrapped().next();
         } else {
-            this.wrapped = null;
+            setWrapped(null);
         }
     }
 
     public boolean hasNext() {
-        return wrapped != null;
+        return getWrapped() != null;
     }
 
     public Collection<T> next() {
         Collection<T> group = new ArrayList<T>();
-        T current = wrapped.getCurrent();
+        T current = getWrapped().getCurrent();
         group.add(current);
-        while (wrapped.hasNext()) {
-            wrapped.next();
-            if (isEqual(wrapped.getCurrent(), current)) {
-                group.add(wrapped.getCurrent());
+        while (getWrapped().hasNext()) {
+            getWrapped().next();
+            if (isEqual(getWrapped().getCurrent(), current)) {
+                group.add(getWrapped().getCurrent());
             } else {
                 break;
             }
         }
-        if (isEqual(wrapped.getCurrent(), current)) {
-            wrapped = null;
+        if (isEqual(getWrapped().getCurrent(), current)) {
+            setWrapped(null);
         }
         return group;
     }

@@ -1,5 +1,6 @@
 package com.ntnu.solbrille.utils.iterators;
 
+import com.ntnu.solbrille.utils.Closable;
 import com.ntnu.solbrille.utils.Heap;
 
 import java.util.Comparator;
@@ -11,18 +12,13 @@ import java.util.Iterator;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class IteratorMerger<T> implements Iterator<T> {
-
-    private static final class CachedIteratorComparaer<T> implements Comparator<CachedIterator<T>> {
+public class IteratorMerger<T> implements Iterator<T>, Closable {
+    private static final class CachedIteratorComparer<T> implements Comparator<CachedIterator<T>> {
 
         private final Comparator<T> comp;
 
-        private CachedIteratorComparaer(Comparator<T> comp) {
-            if (comp != null) {
-                this.comp = comp;
-            } else {
-                this.comp = new DefaultComparator<T>();
-            }
+        private CachedIteratorComparer(Comparator<T> comp) {
+            this.comp = comp != null ? comp : new DefaultComparator<T>();
         }
 
         public int compare(CachedIterator<T> o1, CachedIterator<T> o2) {
@@ -33,7 +29,7 @@ public class IteratorMerger<T> implements Iterator<T> {
 
             public int compare(T o1, T o2) {
                 if (o1 instanceof Comparable<?>) {
-                    return ((Comparable<T>) o1).compareTo((T) o2);
+                    return ((Comparable<T>) o1).compareTo(o2);
                 }
                 return 0;
             }
@@ -47,9 +43,9 @@ public class IteratorMerger<T> implements Iterator<T> {
     }
 
     public IteratorMerger(Comparator<T> comparator, Iterable<T>... inputs) {
-        heap = new Heap<CachedIterator<T>>(new CachedIteratorComparaer<T>(comparator));
+        heap = new Heap<CachedIterator<T>>(new CachedIteratorComparer<T>(comparator));
         for (Iterable<T> input : inputs) {
-            CachedIteratorAdapter<T> iterator = new CachedIteratorAdapter<T>(input.iterator());
+            CachedIterator<T> iterator = new CachedIteratorAdapter<T>(input.iterator());
             if (iterator.hasNext()) {
                 iterator.next();
                 heap.add(iterator);
@@ -62,9 +58,9 @@ public class IteratorMerger<T> implements Iterator<T> {
     }
 
     public IteratorMerger(Comparator<T> comparator, Iterator<T>... inputs) {
-        heap = new Heap<CachedIterator<T>>(new CachedIteratorComparaer<T>(comparator));
+        heap = new Heap<CachedIterator<T>>(new CachedIteratorComparer<T>(comparator));
         for (Iterator<T> input : inputs) {
-            CachedIteratorAdapter<T> iterator = new CachedIteratorAdapter<T>(input);
+            CachedIterator<T> iterator = new CachedIteratorAdapter<T>(input);
             if (iterator.hasNext()) {
                 iterator.next();
                 heap.add(iterator);
@@ -84,11 +80,23 @@ public class IteratorMerger<T> implements Iterator<T> {
             heap.headChanged();
         } else {
             heap.poll();
+            if (head instanceof Closable) {
+                ((Closable) head).close();
+            }
         }
         return next;
     }
 
     public void remove() {
         throw new UnsupportedOperationException();
+    }
+
+    public void close() {
+        for (CachedIterator<T> input : heap) {
+            if (input instanceof Closable) {
+                ((Closable) input).close();
+            }
+        }
+        heap.clear();
     }
 }
