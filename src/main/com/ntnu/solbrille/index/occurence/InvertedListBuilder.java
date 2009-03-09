@@ -4,7 +4,7 @@ import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.buffering.Buffer;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.buffering.FileBlockPointer;
-import com.ntnu.solbrille.utils.Closable;
+import com.ntnu.solbrille.utils.Closeable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
  *          <p/>
  *          TODO: Gap encoded and compressed position lists.
  */
-public class InvertedListBuilder implements Closable {
+public class InvertedListBuilder implements Closeable {
     private BufferPool bufferPool;
     private int fileNumber;
     private Buffer currentBuffer;

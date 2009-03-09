@@ -1,6 +1,6 @@
 package com.ntnu.solbrille.utils.iterators;
 
-import com.ntnu.solbrille.utils.Closable;
+import com.ntnu.solbrille.utils.Closeable;
 import com.ntnu.solbrille.utils.Heap;
 
 import java.util.Comparator;
@@ -12,7 +12,7 @@ import java.util.Iterator;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class IteratorMerger<T> implements Iterator<T>, Closable {
+public class IteratorMerger<T> implements Iterator<T>, Closeable {
     private static final class CachedIteratorComparer<T> implements Comparator<CachedIterator<T>> {
 
         private final Comparator<T> comp;
@@ -80,8 +80,8 @@ public class IteratorMerger<T> implements Iterator<T>, Closable {
             heap.headChanged();
         } else {
             heap.poll();
-            if (head instanceof Closable) {
-                ((Closable) head).close();
+            if (head instanceof Closeable) {
+                ((Closeable) head).close();
             }
         }
         return next;
@@ -93,8 +93,8 @@ public class IteratorMerger<T> implements Iterator<T>, Closable {
 
     public void close() {
         for (CachedIterator<T> input : heap) {
-            if (input instanceof Closable) {
-                ((Closable) input).close();
+            if (input instanceof Closeable) {
+                ((Closeable) input).close();
             }
         }
         heap.clear();

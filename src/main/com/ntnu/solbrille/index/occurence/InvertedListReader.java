@@ -4,7 +4,7 @@ import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.buffering.Buffer;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.buffering.FileBlockPointer;
-import com.ntnu.solbrille.utils.Closable;
+import com.ntnu.solbrille.utils.Closeable;
 import com.ntnu.solbrille.utils.Pair;
 
 import java.io.IOException;
@@ -19,14 +19,18 @@ public class InvertedListReader {
 
     private static final DictionaryTerm.DictionaryTermDescriptor TERM_DESCRIPTOR = new DictionaryTerm.DictionaryTermDescriptor();
 
-    private class Reader implements Closable {
+    Reader getNewReader() {
+        return new Reader();
+    }
+
+    class Reader implements Closeable {
         private Buffer currentBuffer;
         private ByteBuffer currentByteBuffer;
 
         private int currentBlockLastElementStart;
         private DictionaryTerm currentTerm = null;
 
-        private long remainingDocumentsInCurrentTerm;
+        long remainingDocumentsInCurrentTerm;
         private long currentDocumentId = -1;
         private long remainingPositionsInCurrentDocument;
         private long nextDocumentBlock = -1;
@@ -108,42 +112,7 @@ public class InvertedListReader {
         }
     }
 
-    private class TermIterator implements Iterator<DocumentOccurence>, Closable {
-
-        private final Reader reader = new Reader();
-
-        private TermIterator(DictionaryTerm term, InvertedListPointer termPointer) throws IOException, InterruptedException {
-            reader.initializeOnTerm(term, termPointer);
-        }
-
-        public boolean hasNext() {
-            return reader.remainingDocumentsInCurrentTerm > 0;
-        }
-
-        public DocumentOccurence next() {
-            assert hasNext();
-            try {
-                return reader.readNextDocument();
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.exit(-1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                System.exit(-1);
-            }
-            return null;
-        }
-
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-
-        public void close() {
-            reader.close();
-        }
-    }
-
-    private class InvertedListIterator implements Iterator<Pair<DictionaryTerm, InvertedListPointer>>, Closable {
+    private class InvertedListIterator implements Iterator<Pair<DictionaryTerm, InvertedListPointer>>, Closeable {
 
         InvertedListPointer nextTerm;
         long numberOfTerms;
@@ -216,9 +185,9 @@ public class InvertedListReader {
         this.startBlock = startBlock;
     }
 
-    public Iterator<DocumentOccurence> iterateTerm(DictionaryTerm term, InvertedListPointer pointer)
+    public TermIterator iterateTerm(DictionaryTerm term, InvertedListPointer pointer)
             throws IOException, InterruptedException {
-        return new TermIterator(term, pointer);
+        return new TermIterator(this, term, pointer);
     }
 
     public Iterator<Pair<DictionaryTerm, InvertedListPointer>> getFileIterator() throws IOException, InterruptedException {

@@ -38,7 +38,7 @@ public class DiskInvertedList implements Index, InvertedList {
         //TODO: Write file to supplied file. 
     }
 
-    public Iterator<DocumentOccurence> lookupTerm(DictionaryTerm term, InvertedListPointer pointer) throws IOException, InterruptedException {
+    public TermIterator lookupTerm(DictionaryTerm term, InvertedListPointer pointer) throws IOException, InterruptedException {
         return reader.iterateTerm(term, pointer);
     }
 
