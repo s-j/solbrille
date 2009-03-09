@@ -43,10 +43,10 @@ public class IndexLookupTest extends TestCase {
             for (long i = 0; i < documents.length; i++) {
                 occIndexBuilder.addDocument(i, documents[(int) i]);
             }
-            assertFalse(occurenceIndex.lookup("nissefar").hasNext());
-            assertFalse(occurenceIndex.lookup("max").hasNext()); // may change if we adopt dynamic flush strategy
+            assertFalse(occurenceIndex.lookup("nissefar").getIterator().hasNext());
+            assertFalse(occurenceIndex.lookup("max").getIterator().hasNext()); // may change if we adopt dynamic flush strategy
             occIndexBuilder.flush();
-            SkippableIterator<DocumentOccurence> maxLookup = occurenceIndex.lookup("max");
+            SkippableIterator<DocumentOccurence> maxLookup = occurenceIndex.lookup("max").getIterator();
             assertTrue(maxLookup.hasNext());
             assertEquals(1, maxLookup.next().getDocumentId());
             assertTrue(maxLookup.hasNext());

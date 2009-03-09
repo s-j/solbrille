@@ -7,7 +7,6 @@ import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.iterators.CachedIterator;
 import com.ntnu.solbrille.utils.iterators.CachedIteratorAdapter;
 import com.ntnu.solbrille.utils.iterators.SkipAdaptor;
-import com.ntnu.solbrille.utils.iterators.SkippableIterator;
 import com.ntnu.solbrille.utils.iterators.VoidIterator;
 
 import java.io.IOException;
@@ -47,15 +46,24 @@ public class OccurenceIndex {
         oddInvertedList.initializeFromFile(bufferPool, oddInvertedListFileNumber, 0);
     }
 
-    public SkippableIterator<DocumentOccurence> lookup(String term) throws IOException, InterruptedException {
+    public LookupResult lookup(String term) throws IOException, InterruptedException {
         return lookup(new DictionaryTerm(term));
     }
 
-    public SkippableIterator<DocumentOccurence> lookup(DictionaryTerm term) throws IOException, InterruptedException {
+    public LookupResult lookup(DictionaryTerm term) throws IOException, InterruptedException {
         InvertedListPointer pointer = dictionaryLookup(term);
-        return new SkipAdaptor<DocumentOccurence>(pointer == null
-                ? new VoidIterator<DocumentOccurence>()
-                : getActiveList().lookupTerm(term, pointer));
+        LookupResult result;
+        if (pointer == null) {
+            result = new LookupResult(0, new SkipAdaptor<DocumentOccurence>(new VoidIterator<DocumentOccurence>()));
+        } else {
+            TermIterator occs = getActiveList().lookupTerm(term, pointer);
+            result = new LookupResult(occs.getNumberOfDocuments(), occs);
+        }
+        return result;
+    }
+
+    public long getDictionaryTermCount() {
+        return dictionary.size();
     }
 
     private InvertedListPointer dictionaryLookup(DictionaryTerm term) {

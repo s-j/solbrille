@@ -1,6 +1,6 @@
 package com.ntnu.solbrille.utils.iterators;
 
-import com.ntnu.solbrille.utils.Closable;
+import com.ntnu.solbrille.utils.Closeable;
 
 import java.util.Iterator;
 
@@ -8,7 +8,7 @@ import java.util.Iterator;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public abstract class AbstractWrappingIterator<T, TIter extends Iterator<?>> implements Closable, Iterator<T> {
+public abstract class AbstractWrappingIterator<T, TIter extends Iterator<?>> implements Closeable, Iterator<T> {
     private TIter wrapped;
 
     protected AbstractWrappingIterator(TIter wrapped) {
@@ -16,8 +16,8 @@ public abstract class AbstractWrappingIterator<T, TIter extends Iterator<?>> imp
     }
 
     public void close() {
-        if (wrapped instanceof Closable) {
-            ((Closable) wrapped).close();
+        if (wrapped instanceof Closeable) {
+            ((Closeable) wrapped).close();
         }
     }
 

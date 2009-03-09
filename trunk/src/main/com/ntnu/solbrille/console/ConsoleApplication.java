@@ -2,6 +2,7 @@ package com.ntnu.solbrille.console;
 
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
+import com.ntnu.solbrille.index.occurence.LookupResult;
 import com.ntnu.solbrille.index.occurence.OcccurenceIndexBuilder;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 
@@ -46,11 +47,12 @@ public class ConsoleApplication {
     private static class Lookup extends Action {
         @Override
         void execute(String argument) throws Exception {
-            Iterator<DocumentOccurence> occs = index.lookup(argument);
+            LookupResult occs = index.lookup(argument);
             int count = 0;
-            while (occs.hasNext()) {
+            Iterator<DocumentOccurence> it = occs.getIterator();
+            while (it.hasNext()) {
                 count++;
-                DocumentOccurence occ = occs.next();
+                DocumentOccurence occ = it.next();
                 StringBuilder posList = new StringBuilder("[");
                 for (int pos : occ.getPositionList()) {
                     posList.append(pos).append(',');
@@ -108,6 +110,9 @@ public class ConsoleApplication {
         help();
         pool = new BufferPool(10, 128); // really small buffers, just to be evil
         File dictFile = new File("dictionary.bin");
+        if (dictFile.exists()) {
+            dictFile.delete();
+        }
         if (dictFile.createNewFile()) {
             System.out.println("Dictionary created at: " + dictFile.getAbsolutePath());
         }
@@ -115,6 +120,9 @@ public class ConsoleApplication {
         int dictFileNumber = pool.registerFile(dictChannel, dictFile);
 
         File inv1File = new File("inv1.bin");
+        if (inv1File.exists()) {
+            inv1File.delete();
+        }
         if (inv1File.createNewFile()) {
             System.out.println("Inverted list 1 created at: " + inv1File.getAbsolutePath());
         }
@@ -122,8 +130,11 @@ public class ConsoleApplication {
         int inv1FileNumber = pool.registerFile(inv1Channel, inv1File);
 
         File inv2File = new File("inv2.bin");
+        if (inv2File.exists()) {
+            inv2File.delete();
+        }
         if (inv2File.createNewFile()) {
-            System.out.println("Inverted list 2 created at: " + inv1File.getAbsolutePath());
+            System.out.println("Inverted list 2 created at: " + inv2File.getAbsolutePath());
         }
         FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
         int inv2FileNumber = pool.registerFile(inv2Channel, inv2File);
