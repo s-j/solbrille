@@ -18,15 +18,26 @@ public class QueryRequest {
 	private String strquery; 
 	
 	private HashMap<DictionaryTerm, Pair<IntArray, IntArray>> terms;
-	private ArrayList<ArrayList<DictionaryTerm>> phrases = new ArrayList<ArrayList<DictionaryTerm>>(); //pairs of start,endpos..
+	private ArrayList<ArrayList<DictionaryTerm>> phrases; //pairs of start,endpos..
 	
 	//TODO: could be nice to add a list of term modifications in each of queries
-	public QueryRequest(){
-		
+	public QueryRequest(String strquery){
+		this.strquery = strquery;
+		terms = new HashMap<DictionaryTerm, Pair<IntArray,IntArray>>();
+		phrases = new ArrayList<ArrayList<DictionaryTerm>>();
 	}
 
 	public Pair<IntArray, IntArray> addTerm(DictionaryTerm term, IntArray occs, IntArray flags){
 		return terms.put(term, new Pair<IntArray, IntArray>(occs, flags));
+	}
+	
+	public void addTermOccurence(DictionaryTerm term, int pos, Modifier flag){
+		Pair<IntArray, IntArray> cur = terms.get(term);
+		if (cur == null) {
+			cur = new Pair<IntArray, IntArray>(new IntArray(), new IntArray());
+		}
+		cur.getFirst().add(pos);
+		cur.getSecond().add(flag.ordinal());
 	}
 	
 	public Set<DictionaryTerm> getTerms(){
