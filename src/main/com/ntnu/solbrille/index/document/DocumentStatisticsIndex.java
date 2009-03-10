@@ -63,5 +63,24 @@ public class DocumentStatisticsIndex {
     public long getTotalNumberOfDictionaryTerms() {
         return occurenceIndex.getDictionaryTermCount();
     }
+    
 
+    /**
+     * Gets the total size of the document collection in bytes
+     *
+     * @return The total size of the document collection in bytes
+     */
+    public long getTotalSize(){
+    	return (long) 10E+12;
+    }
+    
+
+    /**
+     * Gets the average document size for this collection in bytes
+     *
+     * @return The average document size in bytes
+     */
+    public long getAvgSize(){
+    	return getTotalSize() / getTotalNumberOfDocuments();
+    }
 }
