@@ -43,7 +43,7 @@ public class SimpleScoreCombiner implements ScoreCombiner{
 		float accscore = (float) 0.0;
 		
 		for (Pair<Scorer,Float> scorerpair : scorers) {
-			accscore += scorerpair.getFirst().getScore(next) * scorerpair.getSecond();
+			accscore += scorerpair.getFirst().getScore(next, query) * scorerpair.getSecond();
 		}
 		
 		next.setScore(normalize ? accscore/totalWeight : accscore);

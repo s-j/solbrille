@@ -1,6 +1,7 @@
 package com.ntnu.solbrille.query;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
@@ -28,6 +29,10 @@ public class QueryResult implements Comparable<QueryResult>{
 	
 	public long getDocumentId(){
 		return documentId;
+	}
+	
+	public Set<DictionaryTerm> getTerms(){
+		return positionLists.keySet();
 	}
 	
     public DocumentOccurence getOccurences(DictionaryTerm term){

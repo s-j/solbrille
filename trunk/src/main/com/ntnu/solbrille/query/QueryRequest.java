@@ -3,6 +3,9 @@ package com.ntnu.solbrille.query;
 import java.util.HashMap;
 import java.util.Set;
 
+import com.ntnu.solbrille.index.occurence.DictionaryTerm;
+import com.sun.tools.javac.util.List;
+
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
  * @version $Id $.
@@ -50,4 +53,13 @@ public class QueryRequest {
 	public String getQueryString(){
 		return strquery;
 	}
+	
+	public long getDocumentCount(DictionaryTerm term){
+		return 1;
+	}
+	
+	public List<Integer> getQueryOccurrences(DictionaryTerm term){
+		return null;
+	}
+	
 }
