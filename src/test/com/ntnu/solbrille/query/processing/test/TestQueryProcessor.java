@@ -5,6 +5,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
 import com.ntnu.solbrille.buffering.BufferPool;
+import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.query.filtering.Filter;
 import com.ntnu.solbrille.query.filtering.Filters;
@@ -38,13 +39,15 @@ public class TestQueryProcessor {
         inv1File.createNewFile();
         FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
         int inv2FileNumber = pool.registerFile(inv2Channel, inv2File);
+        
         OccurenceIndex occurenceIndex = new OccurenceIndex(pool, dictFileNumber, inv1FileNumber, inv2FileNumber);
+		DocumentStatisticsIndex statisticsIndex = new DocumentStatisticsIndex(occurenceIndex);
 		
 		Matcher qm = new Matcher(occurenceIndex);
 		
 		//TODO: provide enough information to okapi scorer
 		//something like StatisticIndex
-		Scorer okapiscorer = new OkapiScorer();
+		Scorer okapiscorer = new OkapiScorer(statisticsIndex, occurenceIndex);
 		ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
 		
 		Filters fs = new Filters();

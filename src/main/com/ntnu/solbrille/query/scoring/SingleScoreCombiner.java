@@ -26,7 +26,7 @@ public class SingleScoreCombiner implements ScoreCombiner{
 	public QueryResult next() {
 		assert src.hasNext();
 		QueryResult next = src.next();
-		next.setScore(scorer.getScore(next));
+		next.setScore(scorer.getScore(next, query));
 		return next;
 	}
 
