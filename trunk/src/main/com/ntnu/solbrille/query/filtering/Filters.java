@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 import com.ntnu.solbrille.query.QueryRequest;
 import com.ntnu.solbrille.query.QueryResult;
-import com.ntnu.solbrille.query.preprocessing.QueryProcessingComponent;
+import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
 
 /**

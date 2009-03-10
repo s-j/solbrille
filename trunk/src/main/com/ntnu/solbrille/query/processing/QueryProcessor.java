@@ -3,7 +3,6 @@ package com.ntnu.solbrille.query.processing;
 import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.QueryRequest;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
-import com.ntnu.solbrille.query.preprocessing.QueryProcessingComponent;
 import com.ntnu.solbrille.utils.Heap;
 import com.sun.tools.javac.util.List;
 /**
@@ -19,7 +18,8 @@ public class QueryProcessor {
 	}
 	
 	public QueryRequest prepareQuery(String strquery){
-		QueryRequest query = new QueryRequest(strquery);
+		QueryRequest query = new QueryRequest();
+		//FIXME
 		for (QueryPreprocessor preprocessor : preprocessors) {
 			preprocessor.preprocess(query);
 		}

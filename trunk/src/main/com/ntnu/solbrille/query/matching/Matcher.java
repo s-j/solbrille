@@ -3,7 +3,7 @@ package com.ntnu.solbrille.query.matching;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.query.QueryRequest;
 import com.ntnu.solbrille.query.QueryResult;
-import com.ntnu.solbrille.query.preprocessing.QueryProcessingComponent;
+import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
  * @version $Id $.
