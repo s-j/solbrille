@@ -18,12 +18,13 @@ public class QueryProcessor {
 	}
 	
 	public QueryRequest prepareQuery(String strquery){
-		QueryRequest query = new QueryRequest();
+		//QueryRequest query = new QueryRequest(strquery);
 		//FIXME
 		for (QueryPreprocessor preprocessor : preprocessors) {
-			preprocessor.preprocess(query);
+			//preprocessor.preprocess(query);
 		}
-		return query;
+	//	return query;
+		return null;
 	}
 	
 	public void init(){
