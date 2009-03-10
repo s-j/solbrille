@@ -1,4 +1,4 @@
-package com.ntnu.solbrille.query.preprocessing;
+package com.ntnu.solbrille.query.processing;
 
 import java.util.Iterator;
 

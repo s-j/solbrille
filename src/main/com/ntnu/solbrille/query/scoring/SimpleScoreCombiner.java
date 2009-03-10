@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import com.ntnu.solbrille.query.*;
 import com.ntnu.solbrille.query.matching.Matcher;
-import com.ntnu.solbrille.query.preprocessing.QueryProcessingComponent;
+import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
 import com.ntnu.solbrille.utils.Pair;
 
 /**

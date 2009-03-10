@@ -1,9 +1,12 @@
 package com.ntnu.solbrille.query;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
+import com.ntnu.solbrille.utils.IntArray;
+import com.ntnu.solbrille.utils.Pair;
 import com.sun.tools.javac.util.List;
 
 /**
@@ -12,42 +15,44 @@ import com.sun.tools.javac.util.List;
  */
 public class QueryRequest {
 	public static enum Modifier{AND, OR, NAND};
-	
 	private String strquery; 
-	private HashMap<String, Modifier> terms;
-	//TODO: could be nice to add a list of term modifications in each of queries
 	
-	public QueryRequest(String strquery){
-		this.strquery = strquery;
-		String tokens[] = strquery.split(" ");
-		for (String token : tokens) {
-			Modifier mod = Modifier.OR;
-			if ( token.charAt(0) == '+'){
-				mod = Modifier.AND;
-				token = token.substring(1);
-			} else if (token.charAt(0) == '-'){
-				mod = Modifier.NAND;
-				token = token.substring(1);
-			}
-			//just use the last occurrence of this term
-			terms.put(token, mod);
-		}
+	private HashMap<DictionaryTerm, Pair<IntArray, IntArray>> terms;
+	private ArrayList<ArrayList<DictionaryTerm>> phrases = new ArrayList<ArrayList<DictionaryTerm>>(); //pairs of start,endpos..
+	
+	//TODO: could be nice to add a list of term modifications in each of queries
+	public QueryRequest(){
+		
+	}
+
+	public Pair<IntArray, IntArray> addTerm(DictionaryTerm term, IntArray occs, IntArray flags){
+		return terms.put(term, new Pair<IntArray, IntArray>(occs, flags));
 	}
 	
-	public Set<String> getTerms(){
+	public Set<DictionaryTerm> getTerms(){
 		return terms.keySet();
 	}
 	
-	public void updateTerm(String oldterm, String newterm){
+	public QueryTermOccurence getOccurence(DictionaryTerm term){
+		Pair<IntArray, IntArray> tmp = terms.get(term);
+		return new QueryTermOccurence(tmp.getFirst(), tmp.getSecond());
+	}
+	
+	public void addPhrase(ArrayList<DictionaryTerm> phrase){
+		phrases.add(phrase);
+	}
+	
+	//TODO: change to a better type
+	public ArrayList<ArrayList<DictionaryTerm>> getPhrases(){
+		return phrases;
+	}
+	
+	public void updateTerm(DictionaryTerm oldterm, DictionaryTerm newterm){
 		terms.put(newterm, terms.remove(oldterm));
 	}
 	
-	public void deleteTerm(String term){
-		terms.remove(term);
-	}
-	
-	public Modifier getModifier(String term){
-		return terms.get(term);
+	public Pair<IntArray, IntArray> deleteTerm(DictionaryTerm term){
+		return terms.remove(term);
 	}
 	
 	public String getQueryString(){
@@ -58,7 +63,7 @@ public class QueryRequest {
 		return 1;
 	}
 	
-	public List<Integer> getQueryOccurrences(DictionaryTerm term){
+	public List<Integer> getQueryOccurences(DictionaryTerm term){
 		return null;
 	}
 	
