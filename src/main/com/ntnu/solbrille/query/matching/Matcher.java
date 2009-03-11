@@ -107,7 +107,7 @@ public class Matcher implements QueryProcessingComponent{
     	return qs;
     }
 	
-    public boolean hasNext(){
+    public boolean hasNext() {
     	//TODO: Each AND-iterator needs to have a next.
 		return false;
 	}
@@ -145,6 +145,8 @@ public class Matcher implements QueryProcessingComponent{
     }
 
     private boolean isEqual(List<SkippableIterator> iteratorList) {
+        if (iteratorList.size() < 1) return false;
+
         // I don't like this way of accessing the element (regarding hard-coded the index), any suggestions?
         long value = ((DocumentOccurence)iteratorList.get(0).getCurrent()).getDocumentId();
         for (SkippableIterator si : iteratorList) {
