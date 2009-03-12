@@ -18,12 +18,14 @@ public class QueryRequest {
 	private String strquery; 
 	
 	private HashMap<DictionaryTerm, Pair<IntArray, IntArray>> terms;
+	private HashMap<DictionaryTerm, Long> termstats;
 	private ArrayList<ArrayList<DictionaryTerm>> phrases; //pairs of start,endpos..
 	
 	//TODO: could be nice to add a list of term modifications in each of queries
 	public QueryRequest(String strquery){
 		this.strquery = strquery;
 		terms = new HashMap<DictionaryTerm, Pair<IntArray,IntArray>>();
+		termstats = new HashMap<DictionaryTerm, Long>();
 		phrases = new ArrayList<ArrayList<DictionaryTerm>>();
 	}
 
@@ -39,6 +41,17 @@ public class QueryRequest {
 		cur.getFirst().add(pos);
 		cur.getSecond().add(flag.ordinal());
 	}
+	
+	public void setDocumentCount(DictionaryTerm term, long count){
+		termstats.put(term, new Long(count));
+	}
+	
+	public long getDocumentCount(DictionaryTerm term){
+		Long v = termstats.get(term);
+		if (v!=null) return v.longValue();
+		else return 0;
+	}
+	
 	
 	public Set<DictionaryTerm> getTerms(){
 		return terms.keySet();
@@ -62,20 +75,24 @@ public class QueryRequest {
 		terms.put(newterm, terms.remove(oldterm));
 	}
 	
-	public Pair<IntArray, IntArray> deleteTerm(DictionaryTerm term){
-		return terms.remove(term);
+	public QueryTermOccurence deleteTerm(DictionaryTerm term){
+		Pair<IntArray, IntArray> termlists = terms.remove(term);
+		return new QueryTermOccurence(termlists.getFirst(), termlists.getSecond());
 	}
 	
 	public String getQueryString(){
 		return strquery;
 	}
 	
-	public long getDocumentCount(DictionaryTerm term){
-		return 1;
+	public long getQueryOccurenceCount(DictionaryTerm term){
+		Pair<IntArray, IntArray> termlists = terms.get(term);
+		return termlists.getFirst().size();
+		
 	}
 	
-	public List<Integer> getQueryOccurences(DictionaryTerm term){
-		return null;
+	public QueryTermOccurence getQueryOccurences(DictionaryTerm term){
+		Pair<IntArray, IntArray> termlists = terms.get(term);
+		return new QueryTermOccurence(termlists.getFirst(), termlists.getSecond());
 	}
 	
 }

@@ -10,33 +10,19 @@ import com.sun.tools.javac.util.List;
  * @version $Id $.
  */
 public class QueryProcessor {
-	private List<QueryPreprocessor> preprocessors;
+	private QueryPreprocessor preprocessor;
 	private QueryProcessingComponent src;
 	
-	public QueryProcessor(QueryProcessingComponent source){
+	public QueryProcessor(QueryProcessingComponent source, QueryPreprocessor preprocessor){
 		src = source;
-	}
-	
-	public QueryRequest prepareQuery(String strquery){
-		//QueryRequest query = new QueryRequest(strquery);
-		//FIXME
-		for (QueryPreprocessor preprocessor : preprocessors) {
-			//preprocessor.preprocess(query);
-		}
-	//	return query;
-		return null;
-	}
-	
-	public void init(){
-		//do some init
+		this.preprocessor = preprocessor;
 	}
 	
 	public QueryResult[] processQuery(String strquery, int start, int end){
-		QueryRequest query = prepareQuery(strquery);
-		assert src.loadQuery(query);
-		
+		QueryRequest query = preprocessor.preprocess(strquery);
 		int rescnt = start - end;
-		assert rescnt > 0;
+		
+		if (!src.loadQuery(query) || (rescnt <= 0)) return new QueryResult[0];
 		
 		Heap<QueryResult> results = new Heap<QueryResult>();
 		
