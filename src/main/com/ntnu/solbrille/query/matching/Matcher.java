@@ -1,31 +1,32 @@
 package com.ntnu.solbrille.query.matching;
 
-import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
+import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.query.QueryRequest;
+import com.ntnu.solbrille.query.QueryRequest.Modifier;
 import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
-import com.ntnu.solbrille.query.QueryRequest.Modifier;
+import com.ntnu.solbrille.utils.iterators.CachedIterator;
 import com.ntnu.solbrille.utils.iterators.SkippableIterator;
 
-import java.util.List;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author <a href="mailto:janmaxim@idi.ntnu.no">Jan Maximilian Winther Kristiansen</a>
  * @version $Id $.
  */
-public class Matcher implements QueryProcessingComponent{
-	private QueryRequest query;
-	private OccurenceIndex index;
+public class Matcher implements QueryProcessingComponent, CachedIterator<QueryResult> {
+    private QueryRequest query;
+    private OccurenceIndex index;
 
     private long currentDocumentId;
 
     private HashMap<Modifier, List<SkippableIterator>> queryTermMap;
-	
-	public Matcher(OccurenceIndex index){
-		this.index = index;
+
+    public Matcher(OccurenceIndex index) {
+        this.index = index;
 
         this.currentDocumentId = 0;
 
@@ -33,12 +34,12 @@ public class Matcher implements QueryProcessingComponent{
         this.queryTermMap.put(Modifier.AND, new ArrayList<SkippableIterator>());
         this.queryTermMap.put(Modifier.NAND, new ArrayList<SkippableIterator>());
         this.queryTermMap.put(Modifier.OR, new ArrayList<SkippableIterator>());
-	}
-	
-	public void remove() {
+    }
+
+    public void remove() {
         throw new UnsupportedOperationException();
     }
-	
+
     public QueryResult next() {
         boolean andMatch = false;
         boolean nandMatch = false;
@@ -46,7 +47,7 @@ public class Matcher implements QueryProcessingComponent{
         while (!match) {
 
             // Matches the AND-terms. If all iterators are at the same docId, we have a match.
-            while(!andMatch) {
+            while (!andMatch) {
 
                 // If an iterator is at the end and there is no match yet, it exists no matches.
                 if (!hasNext()) {
@@ -54,7 +55,7 @@ public class Matcher implements QueryProcessingComponent{
                     break;
                 }
 
-                if(!isEqual(queryTermMap.get(Modifier.AND))) {
+                if (!isEqual(queryTermMap.get(Modifier.AND))) {
                     // If not all iterators are at the same DocId, find the maximum DocID and skip to it.
                     long maximum = maximumCurrentDocId(queryTermMap.get(Modifier.AND));
                     for (SkippableIterator si : queryTermMap.get(Modifier.AND)) {
@@ -63,7 +64,7 @@ public class Matcher implements QueryProcessingComponent{
                 } else {
                     // If all iterators are at the same DocId, there is an AND-match.
                     // I don't like this way of accessing the element (regarding the index), any suggestions?
-                    currentDocumentId = ((DocumentOccurence)queryTermMap.get(Modifier.AND).get(0).getCurrent()).getDocumentId();
+                    currentDocumentId = ((DocumentOccurence) queryTermMap.get(Modifier.AND).get(0).getCurrent()).getDocumentId();
                     andMatch = true;
                     break;
                 }
@@ -74,10 +75,7 @@ public class Matcher implements QueryProcessingComponent{
             // Checks if the currently matched document has any NAND-terms in it, if there is an AND-match.
             for (SkippableIterator si : queryTermMap.get(Modifier.NAND)) {
                 si.skipTo(currentDocumentId);
-            }
-
-            for (SkippableIterator si : queryTermMap.get(Modifier.NAND)) {
-                if (((DocumentOccurence)si.getCurrent()).getDocumentId() == currentDocumentId) {
+                if (((DocumentOccurence) si.getCurrent()).getDocumentId() == currentDocumentId) {
                     nandMatch = true;
                     break;
                 }
@@ -104,20 +102,20 @@ public class Matcher implements QueryProcessingComponent{
         // TODO: Needs to be properly handled and populated. a match -> populated queryset with AND and OR matches. !match -> null.
         QueryResult qs = (match) ? new QueryResult(currentDocumentId) : null;
 
-    	return qs;
+        return qs;
     }
-	
+
     public boolean hasNext() {
-    	//TODO: Each AND-iterator needs to have a next.
-		return false;
-	}
+        //TODO: Each AND-iterator needs to have a next.
+        return false;
+    }
 
-	public void addSource(QueryProcessingComponent source) {
-		throw new UnsupportedOperationException();
-	}
+    public void addSource(QueryProcessingComponent source) {
+        throw new UnsupportedOperationException();
+    }
 
-	public boolean loadQuery(QueryRequest query) {
-		this.query = query;
+    public boolean loadQuery(QueryRequest query) {
+        this.query = query;
         /*
         for (DictionaryTerm dt : this.query.getTerms()) {
             // a Query has no way of accessing its Modifier?
@@ -131,16 +129,17 @@ public class Matcher implements QueryProcessingComponent{
 
         }
         */
-        
-		return true;
-	}
+
+        return true;
+    }
 
     private long maximumCurrentDocId(List<SkippableIterator> iteratorList) {
         long maximum = Long.MIN_VALUE;
         for (SkippableIterator si : iteratorList) {
-            if (((DocumentOccurence)si.getCurrent()).getDocumentId() > maximum) maximum = ((DocumentOccurence)si.getCurrent()).getDocumentId();
+            if (((DocumentOccurence) si.getCurrent()).getDocumentId() > maximum)
+                maximum = ((DocumentOccurence) si.getCurrent()).getDocumentId();
         }
-        
+
         return maximum;
     }
 
@@ -148,13 +147,17 @@ public class Matcher implements QueryProcessingComponent{
         if (iteratorList.size() < 1) return false;
 
         // I don't like this way of accessing the element (regarding hard-coded the index), any suggestions?
-        long value = ((DocumentOccurence)iteratorList.get(0).getCurrent()).getDocumentId();
+        long value = ((DocumentOccurence) iteratorList.get(0).getCurrent()).getDocumentId();
         for (SkippableIterator si : iteratorList) {
-            if (((DocumentOccurence)si.getCurrent()).getDocumentId() != value) {
+            if (((DocumentOccurence) si.getCurrent()).getDocumentId() != value) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    public QueryResult getCurrent() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }
