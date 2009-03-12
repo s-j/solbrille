@@ -11,6 +11,7 @@ import com.ntnu.solbrille.query.filtering.Filter;
 import com.ntnu.solbrille.query.filtering.Filters;
 import com.ntnu.solbrille.query.filtering.NonNegativeFilter;
 import com.ntnu.solbrille.query.matching.Matcher;
+import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
 import com.ntnu.solbrille.query.processing.QueryProcessor;
 import com.ntnu.solbrille.query.scoring.OkapiScorer;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
@@ -57,7 +58,8 @@ public class TestQueryProcessor {
 		scm.addSource(qm);
 		fs.addSource(scm);
 		
-		QueryProcessor qproc = new QueryProcessor(fs); 
+		QueryPreprocessor preproc = new QueryPreprocessor();
+		QueryProcessor qproc = new QueryProcessor(fs, preproc); 
 		
 		
 		//TODO: provide query preprocessors

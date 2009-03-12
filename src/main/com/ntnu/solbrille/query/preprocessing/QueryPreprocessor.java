@@ -27,25 +27,25 @@ public class QueryPreprocessor {
 		String curr;
 		
 		ArrayList<String> out = new ArrayList<String>();
-		out.add(in);
 		
 		curr = in.toLowerCase();
-		out.add(curr);
 		  
-        stemmer.setCurrent(curr);
-        stemmer.stem();
-        curr = stemmer.getCurrent();
-		out.add(curr);
+		Pattern pattern = Pattern.compile("[\\p{P}]+");
+	    Matcher matcher = pattern.matcher(curr);
+	    curr = matcher.replaceAll(" ");
+		
+	    for (String sub : curr.split(" ")) {
+	    	stemmer.setCurrent(sub);
+	        stemmer.stem();
+	        String sout = stemmer.getCurrent();
+	        if (sout.length() > 0) out.add(sout);
+		}
         
 		return out;
 	}
 	
 	public QueryRequest preprocess(String query){
-	   Pattern pattern = Pattern.compile("[\\p{P}&&[^\"+-]]+");
-       Matcher matcher = pattern.matcher(query);
-       String unpquery = matcher.replaceAll(" ");
-       
-       unpquery = unpquery.replaceAll("\"", " \" ");
+       String unpquery = query.replaceAll("\"", " \" ");
        //FIXME + and - inside a string
       
        StringTokenizer st = new StringTokenizer(unpquery);
@@ -95,30 +95,33 @@ public class QueryPreprocessor {
             }
             
             if (next.length() == 0){
-            	skiplast = true;
+            	skiplast = false;
             	continue;
             }
             
+            
             ArrayList<String> processed = processTerm(next);
             
-            String last = processed.get(processed.size()-1);
-            
-            DictionaryTerm lt = new DictionaryTerm(last);
-            
-            System.out.println("Found term: " + lt + " : " + pos + " : " + curmod);
-            request.addTermOccurence(lt, pos, curmod);
-            
-            if (phrase){
-            	currphrase.add(lt);
-            	skiplast = true;
-            }
-            pos++;
+            for (String last : processed) {
+                DictionaryTerm lt = new DictionaryTerm(last);
+                
+                System.out.println("Found term: " + lt + " : " + pos + " : " + curmod);
+                request.addTermOccurence(lt, pos, curmod);
+                
+                if (phrase){
+                	currphrase.add(lt);
+                	skiplast = true;
+                } else {
+                	skiplast = false;
+                }
+                pos++;	
+			}
         }
 		return request;
 	}
 	
 	public static void main(String args[]){
-		String test = " lazy, dog +jump over -quick +\"hello dolly\"";
+		String test = " lazy, dog +jump over -quick +\"hello dolly\" -foxy moo +bar +--kaa-boom-pang! +moo-cow";
 		QueryPreprocessor pre = new QueryPreprocessor();
 		pre.preprocess(test);
 	}
