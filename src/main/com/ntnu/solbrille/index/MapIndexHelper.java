@@ -4,6 +4,7 @@ import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.buffering.Buffer;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.buffering.FileBlockPointer;
+import com.ntnu.solbrille.utils.Pair;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,19 +17,19 @@ import java.util.Map;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-class MapIndexHelper {
+public class MapIndexHelper {
 
-    public static <K extends IndexKeyEntry, V extends IndexEntry> void initializeFromFile(
+    public static <K extends IndexKeyEntry, V extends IndexEntry> Pair<Long, Integer> initializeFromFile(
             Map<K, V> index,
             IndexEntry.IndexEntryDescriptor<K> keyDescriptor,
             IndexEntry.IndexEntryDescriptor<V> valueDescriptor,
             BufferPool bufferPool,
             int fileNumber,
             long blockOffset) throws IOException, InterruptedException {
-        initializeFromFile(index, keyDescriptor, valueDescriptor, bufferPool, fileNumber, blockOffset, 0);
+        return initializeFromFile(index, keyDescriptor, valueDescriptor, bufferPool, fileNumber, blockOffset, 0);
     }
 
-    public static <K extends IndexKeyEntry, V extends IndexEntry> void initializeFromFile(
+    public static <K extends IndexKeyEntry, V extends IndexEntry> Pair<Long, Integer> initializeFromFile(
             Map<K, V> index,
             IndexEntry.IndexEntryDescriptor<K> keyDescriptor,
             IndexEntry.IndexEntryDescriptor<V> valueDescriptor,
@@ -42,8 +43,9 @@ class MapIndexHelper {
         assert buffer.getByteBuffer().capacity() > byteOffset + Constants.INT_SIZE;
         buffer.getByteBuffer().position(byteOffset);
         buffer.getReadLock().lock();
+        ByteBuffer byteBuffer;
         try {
-            ByteBuffer byteBuffer = buffer.getByteBuffer();
+            byteBuffer = buffer.getByteBuffer();
             int remaining = byteBuffer.getInt();
             while (remaining > 0) {
                 int blockEntries = byteBuffer.getInt();
@@ -65,18 +67,20 @@ class MapIndexHelper {
         finally {
             buffer.getReadLock().unlock();
         }
+        FileBlockPointer lastBuffer = buffer.getBlockPointer();
         bufferPool.unPinBuffer(buffer);
+        return new Pair<Long, Integer>(lastBuffer.getBlockNumber(), byteBuffer.position());
     }
 
-    public static <K extends IndexKeyEntry, V extends IndexEntry> void dumpToFile(
+    public static <K extends IndexKeyEntry, V extends IndexEntry> Pair<Long, Integer> dumpToFile(
             Map<K, V> index,
             BufferPool bufferPool,
             int fileNumber,
             long blockOffset) throws IOException, InterruptedException {
-        dumpToFile(index, bufferPool, fileNumber, blockOffset, 0);
+        return dumpToFile(index, bufferPool, fileNumber, blockOffset, 0);
     }
 
-    public static <K extends IndexKeyEntry, V extends IndexEntry> void dumpToFile(
+    public static <K extends IndexKeyEntry, V extends IndexEntry> Pair<Long, Integer> dumpToFile(
             Map<K, V> index,
             BufferPool bufferPool,
             int fileNumber,
@@ -86,53 +90,56 @@ class MapIndexHelper {
         assert firstBuffer.getByteBuffer().capacity() > byteOffset + Constants.INT_SIZE;
         firstBuffer.getByteBuffer().position(byteOffset);
         firstBuffer.getWriteLock().lock();
+        firstBuffer.setIsDirty(true);
+        int lastByteOffset = byteOffset;
+        long currentBlock;
         try {
             ByteBuffer byteBuffer = firstBuffer.getByteBuffer();
             firstBuffer.setIsDirty(true);
             byteBuffer.putInt(0); // placeholder for afterwards when we know how big the file is.
             Iterator<Map.Entry<K, V>> entryIterator = index.entrySet().iterator();
-            long currentBlock = blockOffset;
+            currentBlock = blockOffset;
             Buffer buffer = bufferPool.pinBuffer(firstBuffer.getBlockPointer());
+            buffer.getWriteLock().lock();
             int written = 0;
             if (entryIterator.hasNext()) {
                 Map.Entry<K, V> entry = entryIterator.next();
                 int size = entry.getKey().getSeralizedLength() + entry.getValue().getSeralizedLength();
                 int remainingCapacity = byteBuffer.remaining();
                 while (entry != null) { // need to write a new block
-                    buffer.getWriteLock().lock();
-                    try {
-                        buffer.setIsDirty(true);
-                        int blockStartPosition = byteBuffer.position();
-                        byteBuffer.putInt(0); // place holder for block count.
-                        int blockCount = 0;
-                        while (entry != null && size < remainingCapacity) { // write records to block while remaining
-                            entry.getKey().serializeToByteBuffer(byteBuffer);
-                            entry.getValue().serializeToByteBuffer(byteBuffer);
-                            remainingCapacity -= size;
-                            blockCount++;
-                            if (entryIterator.hasNext()) {
-                                entry = entryIterator.next();
-                                written++;
-                                size = entry.getKey().getSeralizedLength() + entry.getValue().getSeralizedLength();
-                            } else {
-                                entry = null;
-                            }
-                        }
-                        // write number of items in block. 
-                        byteBuffer.position(blockStartPosition);
-                        byteBuffer.putInt(blockCount);
-                        if (entry != null) { // do we need a new block
-                            bufferPool.unPinBuffer(buffer);
-                            buffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, ++currentBlock));
+                    buffer.setIsDirty(true);
+                    int blockStartPosition = byteBuffer.position();
+                    byteBuffer.putInt(0); // place holder for block count.
+                    remainingCapacity = byteBuffer.remaining();
+                    int blockCount = 0;
+                    while (entry != null && size <= remainingCapacity) { // write records to block while remaining
+                        entry.getKey().serializeToByteBuffer(byteBuffer);
+                        entry.getValue().serializeToByteBuffer(byteBuffer);
+                        remainingCapacity -= size;
+                        written++;
+                        blockCount++;
+                        if (entryIterator.hasNext()) {
+                            entry = entryIterator.next();
+                            size = entry.getKey().getSeralizedLength() + entry.getValue().getSeralizedLength();
+                        } else {
+                            entry = null;
                         }
                     }
-                    finally {
+                    // write number of items in block.
+                    lastByteOffset = byteBuffer.position();
+                    byteBuffer.position(blockStartPosition);
+                    byteBuffer.putInt(blockCount);
+                    if (entry != null) { // do we need a new block
                         buffer.getWriteLock().unlock();
+                        bufferPool.unPinBuffer(buffer);
+                        buffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, ++currentBlock));
+                        buffer.getWriteLock().lock();
+                        byteBuffer = buffer.getByteBuffer();
                     }
-
                 }
             }
-
+            buffer.getWriteLock().unlock();
+            bufferPool.unPinBuffer(buffer);
             ByteBuffer firstByteBuffer = firstBuffer.getByteBuffer();
             firstByteBuffer.position(byteOffset);
             firstByteBuffer.putInt(written);
@@ -141,5 +148,6 @@ class MapIndexHelper {
             firstBuffer.getWriteLock().unlock();
         }
         bufferPool.unPinBuffer(firstBuffer);
+        return new Pair<Long, Integer>(currentBlock, lastByteOffset);
     }
 }

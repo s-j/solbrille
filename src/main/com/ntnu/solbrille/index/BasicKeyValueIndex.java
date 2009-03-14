@@ -1,6 +1,7 @@
 package com.ntnu.solbrille.index;
 
 import com.ntnu.solbrille.buffering.BufferPool;
+import com.ntnu.solbrille.utils.Pair;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,10 +25,12 @@ public class BasicKeyValueIndex<K extends IndexKeyEntry<K>, V extends IndexEntry
     }
 
     public void initializeFromFile(BufferPool bufferPool, int fileNumber, long blockOffset) throws IOException, InterruptedException {
+        clear();
         MapIndexHelper.initializeFromFile(this, keyDescriptor, valueDescriptor, bufferPool, fileNumber, blockOffset);
     }
 
     public void initializeFromFile(BufferPool bufferPool, int fileNumber, long blockOffset, int byteOffset) throws IOException, InterruptedException {
+        clear();
         MapIndexHelper.initializeFromFile(this, keyDescriptor, valueDescriptor, bufferPool, fileNumber, blockOffset, byteOffset);
     }
 
@@ -37,6 +40,10 @@ public class BasicKeyValueIndex<K extends IndexKeyEntry<K>, V extends IndexEntry
 
     public void writeToFile(BufferPool bufferPool, int fileNumber, long blockOffset, int byteOffset) throws IOException, InterruptedException {
         MapIndexHelper.dumpToFile(this, bufferPool, fileNumber, blockOffset, byteOffset);
+    }
+
+    public Pair<Long, Integer> getOnDiskSize() {
+        return null;
     }
 
 

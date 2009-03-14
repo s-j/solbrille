@@ -66,7 +66,7 @@ public class BufferPoolTest extends TestCase {
             }
             buff10.setIsDirty(true);
             pool.unPinBuffer(buff10);
-            pool.stopPool();
+            pool.stop();
 
             BufferPool pool1 = new BufferPool(1, 16 * 1024);
             int fileNumber2 = pool1.registerFile(channel, file);
@@ -76,7 +76,7 @@ public class BufferPoolTest extends TestCase {
                 assertEquals(i, buf.getInt());
             }
             pool1.unPinBuffer(buffer);
-            pool1.stopPool();
+            pool1.stop();
         }
         finally {
             channel.close();

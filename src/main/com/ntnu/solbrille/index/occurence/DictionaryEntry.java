@@ -63,7 +63,7 @@ public class DictionaryEntry implements IndexEntry {
             size += evenPointer.getSeralizedLength();
         }
         if (oddPointer != null) {
-            size += evenPointer.getSeralizedLength();
+            size += oddPointer.getSeralizedLength();
         }
         return size;
     }

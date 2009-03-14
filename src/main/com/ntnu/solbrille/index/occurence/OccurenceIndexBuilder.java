@@ -1,5 +1,6 @@
 package com.ntnu.solbrille.index.occurence;
 
+import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.iterators.AbstractWrappingIterator;
 import com.ntnu.solbrille.utils.iterators.AnnotatingIterator;
@@ -24,17 +25,17 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class OcccurenceIndexBuilder {
+public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
 
     private final OccurenceIndex index;
 
-    public OcccurenceIndexBuilder(OccurenceIndex index) {
+    public OccurenceIndexBuilder(OccurenceIndex index) {
         this.index = index;
     }
 
     /**
      * Feeds a document to the indexer. The document fed to this method might not appear in the index before
-     * the {@link OcccurenceIndexBuilder#flush()} is called.
+     * the {@link #updateIndex()} ()} is called.
      *
      * @param documentId The document id to be added
      * @param document   The document content
@@ -61,8 +62,30 @@ public class OcccurenceIndexBuilder {
         }
     }
 
-    public void flush() throws IOException, InterruptedException {
-        updateIndex();
+    public void updateIndex() throws IOException, InterruptedException {
+        IndexPhaseState state = activeIndexPhase.getAndSet(new IndexPhaseState());
+        DiskInvertedList activeIndex = index.getActiveList();
+        DiskInvertedList inactiveIndex = index.getInactiveList();
+
+        // TODO: support merge in multiple passes (or not?)
+        int position = 0;
+        InvertedList[] phaseLists = new InvertedList[2 + state.partialListsOnDisk.size()];
+        phaseLists[position++] = activeIndex;
+        phaseLists[position++] = new MemoryInvertedList(state.aggregateState);
+        for (InvertedList disk : state.partialListsOnDisk) {
+            phaseLists[position++] = disk;
+        }
+        Iterator<Pair<DictionaryTerm, InvertedListPointer>> result
+                = mergeInvertedLists(inactiveIndex.getOverwriteBuilder(), phaseLists);
+        index.updateDictionaryEntries(result);
+    }
+
+    public void start() {
+        setIsRunning(true);
+    }
+
+    public void stop() {
+        setIsRunning(false);
     }
 
     private static class MemoryInvertedList implements InvertedList {
@@ -209,24 +232,6 @@ public class OcccurenceIndexBuilder {
 
     private final AtomicReference<IndexPhaseState> activeIndexPhase
             = new AtomicReference<IndexPhaseState>(new IndexPhaseState());
-
-    private void updateIndex() throws IOException, InterruptedException {
-        IndexPhaseState state = activeIndexPhase.getAndSet(new IndexPhaseState());
-        DiskInvertedList activeIndex = index.getActiveList();
-        DiskInvertedList inactiveIndex = index.getInactiveList();
-
-        // TODO: support merge in multiple passes (or not?)
-        int position = 0;
-        InvertedList[] phaseLists = new InvertedList[2 + state.partialListsOnDisk.size()];
-        phaseLists[position++] = activeIndex;
-        phaseLists[position++] = new MemoryInvertedList(state.aggregateState);
-        for (InvertedList disk : state.partialListsOnDisk) {
-            phaseLists[position++] = disk;
-        }
-        Iterator<Pair<DictionaryTerm, InvertedListPointer>> result
-                = mergeInvertedLists(inactiveIndex.getOverwriteBuilder(), phaseLists);
-        index.updateDictionaryEntries(result);
-    }
 
     private boolean shouldUpdateIndex() {
         return false;
