@@ -14,14 +14,24 @@ public class DocumentStatisticsEntry implements IndexEntry {
     public static class DocumentStatisticEntryDescriptor implements IndexEntryDescriptor<DocumentStatisticsEntry> {
 
         public DocumentStatisticsEntry readIndexEntryDescriptor(ByteBuffer buffer) {
-            return new DocumentStatisticsEntry(buffer.getLong());
+            return new DocumentStatisticsEntry(buffer.getLong(), buffer.getLong());
         }
     }
 
     private long documentLength;
+    private long numberOfTokens;
 
-    public DocumentStatisticsEntry(long documentLength) {
+    public DocumentStatisticsEntry(long documentLength, long numberOfTokens) {
         this.documentLength = documentLength;
+        this.numberOfTokens = numberOfTokens;
+    }
+
+    public long getNumberOfTokens() {
+        return numberOfTokens;
+    }
+
+    public void setNumberOfTokens(long numberOfTokens) {
+        this.numberOfTokens = numberOfTokens;
     }
 
     public long getDocumentLength() {
@@ -33,10 +43,11 @@ public class DocumentStatisticsEntry implements IndexEntry {
     }
 
     public int getSeralizedLength() {
-        return Constants.LONG_SIZE;
+        return 2 * Constants.LONG_SIZE;
     }
 
     public void serializeToByteBuffer(ByteBuffer buffer) {
         buffer.putLong(documentLength);
+        buffer.putLong(numberOfTokens);
     }
 }

@@ -1,6 +1,7 @@
 package com.ntnu.solbrille.index;
 
 import com.ntnu.solbrille.buffering.BufferPool;
+import com.ntnu.solbrille.utils.Pair;
 
 import java.io.IOException;
 
@@ -65,4 +66,11 @@ public interface Index {
      */
     void writeToFile(BufferPool bufferPool, int fileNumber, long blockOffset, int byteOffset)
             throws IOException, InterruptedException;
+
+    /**
+     * Gets the on disk size of the index. May be used to place multiple indices in the same file etc.
+     *
+     * @return A pair of the block and byte size of the entry, null if no good estimate exists.
+     */
+    Pair<Long, Integer> getOnDiskSize();
 }

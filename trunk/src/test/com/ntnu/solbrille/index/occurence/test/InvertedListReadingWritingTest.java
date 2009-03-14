@@ -99,7 +99,7 @@ public class InvertedListReadingWritingTest extends TestCase {
             }
         }
         finally {
-            pool.stopPool();
+            pool.stop();
             channel.close();
             file.delete();
         }

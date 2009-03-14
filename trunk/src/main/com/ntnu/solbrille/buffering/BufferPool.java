@@ -1,5 +1,6 @@
 package com.ntnu.solbrille.buffering;
 
+import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 import com.ntnu.solbrille.utils.LookupBlockingFifoQueue;
 
 import java.io.File;
@@ -21,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class BufferPool {
+public class BufferPool extends AbstractLifecycleComponent {
 
     private static final int FLUSHER_THREAD_PERIOD_MILLI_SECONDS = 200;
 
@@ -116,7 +117,7 @@ public class BufferPool {
     }
 
     private final Object mutex = new BufferPoolMutex();
-    private final ScheduledExecutorService flushExecutor = new ScheduledThreadPoolExecutor(5);
+    private ScheduledExecutorService flushExecutor;
 
 
     public BufferPool(int numberOfBuffers, int bufferSize) {
@@ -127,15 +128,26 @@ public class BufferPool {
         for (int i = 0; i < numberOfBuffers; i++) {
             cleanBuffers.offer(new Buffer(bufferSize));
         }
-        flushExecutor.scheduleAtFixedRate(new FlusherCommand(), 0L, (long) BufferPool.FLUSHER_THREAD_PERIOD_MILLI_SECONDS, TimeUnit.MILLISECONDS);
+
     }
 
-    /**
-     * Stups the pool, makes sure that the flush executor stops, and then performs one final flush.
-     */
-    public void stopPool() {
+    public void start() {
+        flushExecutor = new ScheduledThreadPoolExecutor(5);
+        flushExecutor.scheduleAtFixedRate(new FlusherCommand(), 0L, (long) BufferPool.FLUSHER_THREAD_PERIOD_MILLI_SECONDS, TimeUnit.MILLISECONDS);
+        setIsRunning(true);
+    }
+
+    public void stop() {
+        setIsRunning(false);
         flushExecutor.shutdown();
+        flushExecutor = null;
         new FlusherCommand().run();
+        try {
+            System.out.println("Forcing changes!");
+            forceAll();
+        } catch (IOException e) {
+            setFailCause(e);
+        }
     }
 
     public int getBufferSize() {
@@ -213,6 +225,11 @@ public class BufferPool {
         return newFileNumber;
     }
 
+    public void forceAll() throws IOException {
+        for (Map.Entry<Integer, FileInfo> e : files.entrySet()) {
+            e.getValue().getChannel().force(true);
+        }
+    }
 
     /**
      * Deletes the file with the supplied file number.

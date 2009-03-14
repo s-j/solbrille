@@ -3,6 +3,8 @@ package com.ntnu.solbrille.index.occurence;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.index.BasicNavigableKeyValueIndex;
 import com.ntnu.solbrille.index.NavigableKeyValueIndex;
+import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
+import com.ntnu.solbrille.utils.Closeable;
 import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.iterators.CachedIterator;
 import com.ntnu.solbrille.utils.iterators.CachedIteratorAdapter;
@@ -18,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-public class OccurenceIndex {
+public class OccurenceIndex extends AbstractLifecycleComponent {
 
     private final AtomicInteger indexPhase = new AtomicInteger();
 
@@ -30,20 +32,40 @@ public class OccurenceIndex {
     private final DiskInvertedList oddInvertedList = new DiskInvertedList();
     private final DiskInvertedList evenInvertedList = new DiskInvertedList();
 
-    private final int dictionaryFileNumber, oddInvertedListFileNumber, evenInvertedListFileNumber;
+    private final BufferPool bufferPool;
+    private final int oddInvertedListFileNumber, evenInvertedListFileNumber;
 
     public OccurenceIndex(
-            BufferPool bufferPool, int dictionaryFileNumber,
-            int oddInvertedListFileNumber, int evenInvertedListFileNumber)
-            throws IOException, InterruptedException {
-
-        this.dictionaryFileNumber = dictionaryFileNumber;
+            BufferPool bufferPool, int oddInvertedListFileNumber, int evenInvertedListFileNumber) {
+        this.bufferPool = bufferPool;
         this.oddInvertedListFileNumber = oddInvertedListFileNumber;
         this.evenInvertedListFileNumber = evenInvertedListFileNumber;
+    }
 
-        dictionary.initializeFromFile(bufferPool, dictionaryFileNumber, 0);
-        evenInvertedList.initializeFromFile(bufferPool, evenInvertedListFileNumber, 0);
-        oddInvertedList.initializeFromFile(bufferPool, oddInvertedListFileNumber, 0);
+    public void start() {
+        try {
+            evenInvertedList.initializeFromFile(bufferPool, evenInvertedListFileNumber, 0);
+            oddInvertedList.initializeFromFile(bufferPool, oddInvertedListFileNumber, 0);
+            indexPhase.set(Math.max(evenInvertedList.getIndexPhase(), oddInvertedList.getIndexPhase()));
+            System.out.println("Started with index phase: " + indexPhase.get());
+            setIsRunning(true);
+        } catch (IOException e) {
+            setFailCause(e);
+        } catch (InterruptedException e) {
+            setFailCause(e);
+        }
+    }
+
+    public void stop() {
+        try {
+            evenInvertedList.writeToFile(bufferPool, evenInvertedListFileNumber, 0);
+            oddInvertedList.writeToFile(bufferPool, oddInvertedListFileNumber, 0);
+            setIsRunning(true);
+        } catch (IOException e) {
+            setFailCause(e);
+        } catch (InterruptedException e) {
+            setFailCause(e);
+        }
     }
 
     public LookupResult lookup(String term) throws IOException, InterruptedException {
@@ -121,16 +143,17 @@ public class OccurenceIndex {
             DictionaryTerm term = updates.next().getFirst();
             dictionary.put(term, buildDictionaryEntry(updates.getCurrent().getSecond()));
         }
+        if (updates instanceof Closeable) {
+            ((Closeable) updates).close();
+        }
+        indexPhase.incrementAndGet();
+        getActiveList().setIndexPhase(indexPhase.get());
+        getInactiveList().setIndexPhase(indexPhase.get());
 
-        indexPhase.incrementAndGet(); // next index phase
     }
 
     private DictionaryEntry buildDictionaryEntry(InvertedListPointer pointer) {
-        if (indexPhase.get() % 2 > 0) {
-            return new DictionaryEntry(pointer, null);
-        } else {
-            return new DictionaryEntry(null, pointer);
-        }
+        return indexPhase.get() % 2 > 0 ? new DictionaryEntry(pointer, null) : new DictionaryEntry(null, pointer);
     }
 
     private void updateDictionaryEntry(DictionaryEntry entry, InvertedListPointer pointer) {
@@ -139,5 +162,9 @@ public class OccurenceIndex {
         } else {
             entry.setOddPointer(pointer);
         }
+    }
+
+    public Iterable<DictionaryTerm> getDictionaryTerms() {
+        return dictionary.keySet();
     }
 }

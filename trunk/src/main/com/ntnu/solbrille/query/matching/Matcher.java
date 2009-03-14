@@ -1,14 +1,19 @@
 package com.ntnu.solbrille.query.matching;
 
+import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
+import com.ntnu.solbrille.index.occurence.LookupResult;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.query.QueryRequest;
 import com.ntnu.solbrille.query.QueryRequest.Modifier;
 import com.ntnu.solbrille.query.QueryResult;
+import com.ntnu.solbrille.query.QueryTermOccurence;
 import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
+import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.iterators.CachedIterator;
 import com.ntnu.solbrille.utils.iterators.SkippableIterator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -116,11 +121,24 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
 
     public boolean loadQuery(QueryRequest query) {
         this.query = query;
-        /*
+
         for (DictionaryTerm dt : this.query.getTerms()) {
             // a Query has no way of accessing its Modifier?
             try {
-                queryTermMap.get(query.getModifier()).add(index.lookup(dt));
+                Modifier mod = Modifier.OR;
+                QueryTermOccurence termOccs = query.getQueryOccurences(dt);
+                while (termOccs.hasNext() && mod != Modifier.NAND) {
+                    Pair<Integer, Modifier> occ = termOccs.next();
+                    if (mod == Modifier.OR) {
+                        mod = occ.getSecond();
+                    }
+                    if (mod == Modifier.AND && occ.getSecond() == Modifier.NAND) {
+                        mod = occ.getSecond();
+                    }
+                }
+                LookupResult result = index.lookup(dt);
+                query.setDocumentCount(dt, result.getDocumentCount());
+                queryTermMap.get(mod).add(result.getIterator());
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             } catch (InterruptedException ie) {
@@ -128,7 +146,6 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
             }
 
         }
-        */
 
         return true;
     }

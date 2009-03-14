@@ -1,5 +1,7 @@
 package com.ntnu.solbrille.buffering;
 
+import com.ntnu.solbrille.Constants;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -32,6 +34,7 @@ public class Buffer {
     private final int blockSize;
 
     public Buffer(int blockSize) {
+        assert blockSize >= Constants.MINIMUM_BUFFER_BLOCK_SIZE;
         this.blockSize = blockSize;
         buffer = ByteBuffer.allocateDirect(blockSize).order(ByteOrder.LITTLE_ENDIAN);
     }
