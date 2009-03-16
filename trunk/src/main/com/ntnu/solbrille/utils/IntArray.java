@@ -128,6 +128,10 @@ public class IntArray extends AbstractList<Integer>
         return currarr[i];
     }
 
+    public int getInt(int i) {
+        return currarr[i];
+    }
+
     @Override
     public int size() {
         return size;
