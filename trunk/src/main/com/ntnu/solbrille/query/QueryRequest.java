@@ -7,7 +7,7 @@ import java.util.Set;
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.utils.IntArray;
 import com.ntnu.solbrille.utils.Pair;
-import com.sun.tools.javac.util.List;
+//import com.sun.tools.javac.util.List;
 
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
