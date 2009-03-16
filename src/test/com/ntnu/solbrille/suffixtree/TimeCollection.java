@@ -32,7 +32,8 @@ public class TimeCollection {
 
             int filenamepos = 0;
 
-            for(File txt:f.listFiles()) {
+            for(File txt:f.listFiles(ff)) {
+
                 StringBuilder sb = new StringBuilder();
                 String line;
                 try {
