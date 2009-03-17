@@ -148,9 +148,9 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             }
 
 
-            //Scorer okapiscorer = new OkapiScorer(statisticIndex, occurenceIndex);
-            Scorer cosinescorer = new CosineScorer(statisticIndex, occurenceIndex);
-            ScoreCombiner scm = new SingleScoreCombiner(cosinescorer);
+            Scorer okapiscorer = new OkapiScorer(statisticIndex, occurenceIndex);
+            //Scorer cosinescorer = new CosineScorer(statisticIndex, occurenceIndex);
+            ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
 
             Filters fs = new Filters();
             Filter f = new NonNegativeFilter();
