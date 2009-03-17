@@ -9,14 +9,16 @@ import com.ntnu.solbrille.query.QueryRequest.Modifier;
 import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.QueryTermOccurence;
 import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
+import com.ntnu.solbrille.utils.Heap;
 import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.iterators.CachedIterator;
 import com.ntnu.solbrille.utils.iterators.SkippableIterator;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:janmaxim@idi.ntnu.no">Jan Maximilian Winther Kristiansen</a>
@@ -28,17 +30,21 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
 
     private long currentDocumentId;
 
-    private HashMap<Modifier, List<SkippableIterator>> queryTermMap;
+    private final Heap<SkippableIterator<DocumentOccurence>> andTerms = new Heap();
+    private final Heap<SkippableIterator<DocumentOccurence>> nandTerms = new Heap();
+    private final Heap<SkippableIterator<DocumentOccurence>> orTerms = new Heap();
+    private final Map<SkippableIterator<DocumentOccurence>, DictionaryTerm> iteratorToTerm = new IdentityHashMap();
+    private final Map<Modifier, Heap<SkippableIterator<DocumentOccurence>>> modiferToHeap = new HashMap();
+
+    private DictionaryTerm term1;
+    private Iterator<DocumentOccurence> term1Results;
 
     public Matcher(OccurenceIndex index) {
         this.index = index;
-
-        this.currentDocumentId = 0;
-
-        this.queryTermMap = new HashMap<Modifier, List<SkippableIterator>>();
-        this.queryTermMap.put(Modifier.AND, new ArrayList<SkippableIterator>());
-        this.queryTermMap.put(Modifier.NAND, new ArrayList<SkippableIterator>());
-        this.queryTermMap.put(Modifier.OR, new ArrayList<SkippableIterator>());
+        currentDocumentId = 0;
+        modiferToHeap.put(Modifier.OR, orTerms);
+        modiferToHeap.put(Modifier.AND, andTerms);
+        modiferToHeap.put(Modifier.NAND, nandTerms);
     }
 
     public void remove() {
@@ -46,7 +52,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     }
 
     public QueryResult next() {
-        boolean andMatch = false;
+        /*boolean andMatch = false;
         boolean nandMatch = false;
         boolean match = false;
         while (!match) {
@@ -106,13 +112,16 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
         // Creates a query result as a return value. The return value is null if there is no matches.
         // TODO: Needs to be properly handled and populated. a match -> populated queryset with AND and OR matches. !match -> null.
         QueryResult qs = (match) ? new QueryResult(currentDocumentId) : null;
-
-        return qs;
+*/
+        DocumentOccurence docOcc = term1Results.next();
+        QueryResult result = new QueryResult(docOcc.getDocumentId());
+        result.addOccurences(term1, docOcc);
+        return result;
     }
 
     public boolean hasNext() {
         //TODO: Each AND-iterator needs to have a next.
-        return false;
+        return term1Results.hasNext();
     }
 
     public void addSource(QueryProcessingComponent source) {
@@ -121,7 +130,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
 
     public boolean loadQuery(QueryRequest query) {
         this.query = query;
-
+        term1Results = null;
         for (DictionaryTerm dt : this.query.getTerms()) {
             // a Query has no way of accessing its Modifier?
             try {
@@ -138,7 +147,13 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
                 }
                 LookupResult result = index.lookup(dt);
                 query.setDocumentCount(dt, result.getDocumentCount());
-                queryTermMap.get(mod).add(result.getIterator());
+                iteratorToTerm.put(result.getIterator(), dt);
+                modiferToHeap.get(mod).add(result.getIterator());
+
+                if (term1Results == null) {
+                    term1 = dt;
+                    term1Results = result.getIterator();
+                }
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             } catch (InterruptedException ie) {
@@ -150,27 +165,24 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
         return true;
     }
 
-    private long maximumCurrentDocId(List<SkippableIterator> iteratorList) {
+    private long maximumCurrentDocId(Iterable<SkippableIterator<DocumentOccurence>> iterators) {
         long maximum = Long.MIN_VALUE;
-        for (SkippableIterator si : iteratorList) {
+        for (SkippableIterator si : iterators) {
             if (((DocumentOccurence) si.getCurrent()).getDocumentId() > maximum)
                 maximum = ((DocumentOccurence) si.getCurrent()).getDocumentId();
         }
-
         return maximum;
     }
 
-    private boolean isEqual(List<SkippableIterator> iteratorList) {
-        if (iteratorList.size() < 1) return false;
-
-        // I don't like this way of accessing the element (regarding hard-coded the index), any suggestions?
-        long value = ((DocumentOccurence) iteratorList.get(0).getCurrent()).getDocumentId();
-        for (SkippableIterator si : iteratorList) {
-            if (((DocumentOccurence) si.getCurrent()).getDocumentId() != value) {
+    private boolean isEqual(Iterable<SkippableIterator<DocumentOccurence>> iterators) {
+        Iterator<SkippableIterator<DocumentOccurence>> iter = iterators.iterator();
+        if (!iter.hasNext()) return false;
+        long value = iter.next().getCurrent().getDocumentId();
+        for (SkippableIterator<DocumentOccurence> si : iterators) {
+            if (si.getCurrent().getDocumentId() != value) {
                 return false;
             }
         }
-
         return true;
     }
 
