@@ -18,14 +18,16 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
+import junit.framework.TestCase;
+
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
  * @version $Id $.
  */
-public class TestQueryProcessor {
+public class TestQueryProcessor extends TestCase{
 
 
-    public void testProcessing() throws Exception {
+    public void testProcessing() throws Exception  {
         BufferPool pool = new BufferPool(10, 128); // really small buffers, just to be evil
         File inv1File = new File("inv1.bin");
         inv1File.createNewFile();
