@@ -29,8 +29,9 @@ import java.util.Map;
 public class Matcher implements QueryProcessingComponent, CachedIterator<QueryResult> {
     private QueryRequest query;
     private OccurenceIndex index;
+    private QueryResult current;
 
-    private long currentDocumentId;
+    private DocumentOccurence currentDocument;
 
     private final Heap<SkippableIterator<DocumentOccurence>> andTerms = new Heap();
     private final Heap<SkippableIterator<DocumentOccurence>> nandTerms = new Heap();
@@ -43,7 +44,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
 
     public Matcher(OccurenceIndex index) {
         this.index = index;
-        currentDocumentId = 0;
+        currentDocument = null;
         modiferToHeap.put(Modifier.OR, orTerms);
         modiferToHeap.put(Modifier.AND, andTerms);
         modiferToHeap.put(Modifier.NAND, nandTerms);
@@ -54,67 +55,8 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     }
 
     public QueryResult next() {
-        /*boolean andMatch = false;
-        boolean nandMatch = false;
-        boolean match = false;
-        while (!match) {
+        // TODO: populate QueryResult
 
-            // Matches the AND-terms. If all iterators are at the same docId, we have a match.
-            while (!andMatch) {
-
-                // If an iterator is at the end and there is no match yet, it exists no matches.
-                if (!hasNext()) {
-                    match = false;
-                    break;
-                }
-
-                if (!isEqual(queryTermMap.get(Modifier.AND))) {
-                    // If not all iterators are at the same DocId, find the maximum DocID and skip to it.
-                    long maximum = maximumCurrentDocId(queryTermMap.get(Modifier.AND));
-                    for (SkippableIterator si : queryTermMap.get(Modifier.AND)) {
-                        si.skipTo(maximum);
-                    }
-                } else {
-                    // If all iterators are at the same DocId, there is an AND-match.
-                    // I don't like this way of accessing the element (regarding the index), any suggestions?
-                    currentDocumentId = ((DocumentOccurence) queryTermMap.get(Modifier.AND).get(0).getCurrent()).getDocumentId();
-                    andMatch = true;
-                    break;
-                }
-            }
-
-            // TODO: OR matches - will this be like a "DON'T_CARE"-sitation?
-
-            // Checks if the currently matched document has any NAND-terms in it, if there is an AND-match.
-            for (SkippableIterator si : queryTermMap.get(Modifier.NAND)) {
-                si.skipTo(currentDocumentId);
-                if (((DocumentOccurence) si.getCurrent()).getDocumentId() == currentDocumentId) {
-                    nandMatch = true;
-                    break;
-                }
-            }
-
-
-            // If there is a AND-match, and not a valid NAND-martch. The result is valid.
-            if (andMatch && !nandMatch) {
-                match = true;
-                break;
-            } else {
-                // Skip to one value above currentDocumentId in order to prevent looping at the same spot
-                // for AND-matches. Should probably be handled elsewhere?
-                for (SkippableIterator si : queryTermMap.get(Modifier.AND)) {
-                    si.skipPast(currentDocumentId);
-                }
-
-                andMatch = false;
-                nandMatch = false;
-            }
-        }
-
-        // Creates a query result as a return value. The return value is null if there is no matches.
-        // TODO: Needs to be properly handled and populated. a match -> populated queryset with AND and OR matches. !match -> null.
-        QueryResult qs = (match) ? new QueryResult(currentDocumentId) : null;
-*/
         DocumentOccurence docOcc = term1Results.next();
         QueryResult result = new QueryResult(docOcc.getDocumentId());
         result.addOccurences(term1, docOcc);
@@ -122,8 +64,85 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     }
 
     public boolean hasNext() {
-        //TODO: Each AND-iterator needs to have a next.
-        return term1Results.hasNext();
+        boolean match = false;
+        boolean andMatch = false;
+        boolean orMatch = false;
+        boolean nandMatch = false;
+        QueryResult qr = null;
+
+        while (!match) {
+            if (andTerms.size() > 0) {
+                while (!andMatch && hasMore(andTerms)) { 
+                    if (!isEqual(andTerms)) {
+                        DocumentOccurence maximum = maximumCurrentDocument(andTerms);
+                        for (SkippableIterator<DocumentOccurence> si : andTerms) {
+                            si.skipTo(maximum);
+                        }
+                    } else {
+                        andMatch = true;
+                        currentDocument = andTerms.peek().getCurrent();
+                        qr = new QueryResult(currentDocument.getDocumentId());
+                        for (SkippableIterator<DocumentOccurence> si : andTerms) {
+                            qr.addOccurences(iteratorToTerm.get(si), si.getCurrent());
+                        }
+                    }
+                }
+            }
+
+            if (orTerms.size() > 0) {
+                if (!andMatch) {
+                    currentDocument = orTerms.peek().getCurrent();
+                }
+
+                for (SkippableIterator<DocumentOccurence> si : orTerms) {
+                    if (si.getCurrent().compareTo(currentDocument) == 0) {
+                        qr.addOccurences(iteratorToTerm.get(si), si.getCurrent());
+                    }
+                }
+
+                orMatch = true;
+            }
+
+            if (nandTerms.size() > 0) {
+                for (SkippableIterator<DocumentOccurence> si : nandTerms) {
+                    si.skipTo(currentDocument);
+                    if (si.getCurrent().compareTo(currentDocument) == 0) {
+                        nandMatch = true;
+                        break;
+                    }
+                }
+            }
+
+            if ((andMatch || orMatch) && !nandMatch) {
+                match = true;
+                current = qr;
+                skipPastCurrent();
+                break;
+            } else {
+                qr = null;
+                andMatch = false;
+                orMatch = false;
+                nandMatch = false;
+                skipPastCurrent();
+            }
+        }
+        return match;
+    }
+
+    private void skipPastCurrent() {
+        for (SkippableIterator<DocumentOccurence> si : IteratorUtils.chainedIterable(andTerms, orTerms, nandTerms)) {
+            si.skipPast(currentDocument);
+        }
+    }
+
+    private boolean hasMore(Heap<SkippableIterator<DocumentOccurence>> iterators) {
+        for (SkippableIterator<DocumentOccurence> si : iterators) {
+            if (!si.hasNext()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void addSource(QueryProcessingComponent source) {
@@ -177,11 +196,11 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
         nandTerms.clear();
     }
 
-    private long maximumCurrentDocId(Iterable<SkippableIterator<DocumentOccurence>> iterators) {
-        long maximum = Long.MIN_VALUE;
-        for (SkippableIterator si : iterators) {
-            if (((DocumentOccurence) si.getCurrent()).getDocumentId() > maximum)
-                maximum = ((DocumentOccurence) si.getCurrent()).getDocumentId();
+    private DocumentOccurence maximumCurrentDocument(Iterable<SkippableIterator<DocumentOccurence>> iterators) {
+        DocumentOccurence maximum = new DocumentOccurence(-1);
+        for (SkippableIterator<DocumentOccurence> si : iterators) {
+            if (si.getCurrent().compareTo(maximum) > 0)
+                maximum = si.getCurrent();
         }
         return maximum;
     }
