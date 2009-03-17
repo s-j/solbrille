@@ -60,7 +60,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
     private final IndexerOutput output;
     private final Feeder feeder;
 
-    private final QueryProcessor queryProcessor;
+    private QueryProcessor queryProcessor;
     private final Matcher matcher;
 
     private final LifecycleComponent[] components;
@@ -80,18 +80,6 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         feeder = new SearchEngineFeeder(output);
 
         matcher = new Matcher(occurenceIndex);
-        
-        Scorer okapiscorer = new OkapiScorer(statisticIndex, occurenceIndex);
-        ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
-
-        Filters fs = new Filters();
-        Filter f = new NonNegativeFilter();
-        fs.addFilter(f);
-
-        scm.addSource(matcher);
-        fs.addSource(scm);
-        
-        queryProcessor = new QueryProcessor(fs, new QueryPreprocessor());
     }
 
     public void feed(String document) {
@@ -157,6 +145,20 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             } catch (InterruptedException e) {
                 setFailCause(e);
             }
+
+
+            Scorer okapiscorer = new OkapiScorer(statisticIndex, occurenceIndex);
+            ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
+
+            Filters fs = new Filters();
+            Filter f = new NonNegativeFilter();
+            fs.addFilter(f);
+
+            scm.addSource(matcher);
+            fs.addSource(scm);
+
+            queryProcessor = new QueryProcessor(fs, new QueryPreprocessor());
+
             System.out.println("Master started!");
         }
     }

@@ -70,7 +70,7 @@ public class ConsoleApplication {
         void execute(String argument) throws Exception {
             QueryResult[] result = master.query(argument);
             for (QueryResult r : result) {
-                System.out.println(r.getDocumentId());
+                System.out.println(r.getDocumentId() + " Score: " + r.getScore() + " #occs of term1 " + r.getOccurences(r.getTerms().iterator().next()).getPositionList());
             }
         }
     }
@@ -201,6 +201,7 @@ public class ConsoleApplication {
         }
         catch (RuntimeException e) {
             System.out.println(e.getMessage());
+            throw e;
         }
         finally {
             master.stop();

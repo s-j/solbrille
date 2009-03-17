@@ -5,6 +5,9 @@ import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
 import com.ntnu.solbrille.utils.Heap;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
  * @version $Id $.
@@ -36,13 +39,17 @@ public class QueryProcessor {
             }
         }
         System.out.println("results: " + results.size());
-        QueryResult[] res = (QueryResult[]) results.toArray();
+        QueryResult[] res = results.toArray(new QueryResult[results.size()]);
+        Arrays.sort(res, Collections.reverseOrder());
 
         if (start > res.length) return null;
-        else if (end > res.length) rescnt = start - res.length;
+        else if (end > res.length) {
+            end = res.length;
+            rescnt = end - start;
+        }
 
         QueryResult[] ret = new QueryResult[rescnt];
-        for (int i = 0; i < rescnt; i++) ret[i] = res[end - i - 1];
+        for (int i = 0; i < rescnt; i++) ret[i] = res[start + i];
 
         return ret;
     }
