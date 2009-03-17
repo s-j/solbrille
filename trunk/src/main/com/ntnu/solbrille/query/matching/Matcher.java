@@ -9,9 +9,11 @@ import com.ntnu.solbrille.query.QueryRequest.Modifier;
 import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.QueryTermOccurence;
 import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
+import com.ntnu.solbrille.utils.Closeable;
 import com.ntnu.solbrille.utils.Heap;
 import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.iterators.CachedIterator;
+import com.ntnu.solbrille.utils.iterators.IteratorUtils;
 import com.ntnu.solbrille.utils.iterators.SkippableIterator;
 
 import java.io.IOException;
@@ -129,6 +131,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     }
 
     public boolean loadQuery(QueryRequest query) {
+        clean();
         this.query = query;
         term1Results = null;
         for (DictionaryTerm dt : this.query.getTerms()) {
@@ -163,6 +166,15 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
         }
 
         return true;
+    }
+
+    private void clean() {
+        for (SkippableIterator<DocumentOccurence> iter : IteratorUtils.chainedIterable(andTerms, orTerms, nandTerms)) {
+            if (iter instanceof Closeable) ((Closeable) iter).close();
+        }
+        andTerms.clear();
+        orTerms.clear();
+        nandTerms.clear();
     }
 
     private long maximumCurrentDocId(Iterable<SkippableIterator<DocumentOccurence>> iterators) {
