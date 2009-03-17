@@ -20,7 +20,7 @@ public class QueryProcessor {
 
     public QueryResult[] processQuery(String strquery, int start, int end) {
         QueryRequest query = preprocessor.preprocess(strquery);
-        int rescnt = start - end;
+        int rescnt = end - start;
 
         if (!src.loadQuery(query) || (rescnt <= 0)) return new QueryResult[0];
 
