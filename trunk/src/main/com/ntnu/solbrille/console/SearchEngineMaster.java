@@ -15,9 +15,16 @@ import com.ntnu.solbrille.index.occurence.LookupResult;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.index.occurence.OccurenceIndexBuilder;
 import com.ntnu.solbrille.query.QueryResult;
+import com.ntnu.solbrille.query.filtering.Filter;
+import com.ntnu.solbrille.query.filtering.Filters;
+import com.ntnu.solbrille.query.filtering.NonNegativeFilter;
 import com.ntnu.solbrille.query.matching.Matcher;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
 import com.ntnu.solbrille.query.processing.QueryProcessor;
+import com.ntnu.solbrille.query.scoring.OkapiScorer;
+import com.ntnu.solbrille.query.scoring.ScoreCombiner;
+import com.ntnu.solbrille.query.scoring.Scorer;
+import com.ntnu.solbrille.query.scoring.SingleScoreCombiner;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 import com.ntnu.solbrille.utils.LifecycleComponent;
 
@@ -73,7 +80,18 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         feeder = new SearchEngineFeeder(output);
 
         matcher = new Matcher(occurenceIndex);
-        queryProcessor = new QueryProcessor(matcher, new QueryPreprocessor());
+        
+        Scorer okapiscorer = new OkapiScorer(statisticIndex, occurenceIndex);
+        ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
+
+        Filters fs = new Filters();
+        Filter f = new NonNegativeFilter();
+        fs.addFilter(f);
+
+        scm.addSource(matcher);
+        fs.addSource(scm);
+        
+        queryProcessor = new QueryProcessor(fs, new QueryPreprocessor());
     }
 
     public void feed(String document) {
