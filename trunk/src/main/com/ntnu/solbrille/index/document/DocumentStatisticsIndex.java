@@ -147,7 +147,7 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
      * @return The average document size in bytes
      */
     public long getAvgSize() {
-        return getTotalSize() / getTotalNumberOfDocuments();
+        return getTotalNumberOfDocuments() != 0 ? getTotalSize() / getTotalNumberOfDocuments() : 0;
     }
 
     public void registerDocuemntIndexed(String uri, long documentId, long numberOfTokens, long documentLength) throws URISyntaxException {
