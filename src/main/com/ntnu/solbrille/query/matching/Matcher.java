@@ -39,9 +39,6 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     private final Map<SkippableIterator<DocumentOccurence>, DictionaryTerm> iteratorToTerm = new IdentityHashMap();
     private final Map<Modifier, Heap<SkippableIterator<DocumentOccurence>>> modiferToHeap = new HashMap();
 
-    //private DictionaryTerm term1;
-    //private Iterator<DocumentOccurence> term1Results;
-
     public Matcher(OccurenceIndex index) {
         this.index = index;
         currentDocument = null;
@@ -119,7 +116,6 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
             if ((andMatch || orMatch) && !nandMatch) {
                 match = true;
                 current = qr;
-                qr = null;
 
                 if (andMatch) cleanUpAndIterators();
                 
@@ -265,6 +261,6 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     }
 
     public QueryResult getCurrent() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return next();
     }
 }
