@@ -10,7 +10,7 @@ import java.io.IOException;
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
-class TermIterator implements SkippableIterator<DocumentOccurence>, Closeable {
+class TermIterator implements SkippableIterator<DocumentOccurence>, Comparable<TermIterator>, Closeable {
 
     private final InvertedListReader.Reader reader;
     private final long numberOfDocuments;
@@ -23,6 +23,7 @@ class TermIterator implements SkippableIterator<DocumentOccurence>, Closeable {
     }
 
     public DocumentOccurence getCurrent() {
+        if (current == null && hasNext()) next();
         return current;
     }
 
@@ -69,5 +70,10 @@ class TermIterator implements SkippableIterator<DocumentOccurence>, Closeable {
 
     public void close() {
         reader.close();
+    }
+
+    @Override
+    public int compareTo(TermIterator o) {
+        return getCurrent().compareTo(o.getCurrent());
     }
 }
