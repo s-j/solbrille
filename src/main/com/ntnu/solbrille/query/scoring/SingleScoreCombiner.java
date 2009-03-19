@@ -3,6 +3,7 @@ package com.ntnu.solbrille.query.scoring;
 import com.ntnu.solbrille.query.*;
 import com.ntnu.solbrille.query.matching.Matcher;
 import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
+import com.ntnu.solbrille.utils.Pair;
 
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
@@ -26,7 +27,7 @@ public class SingleScoreCombiner implements ScoreCombiner{
 	public QueryResult next() {
 		assert src.hasNext();
 		QueryResult next = src.next();
-		next.setScore(scorer.getScore(next, query));
+		next.setScore(scorer.getScore(next));
 		return next;
 	}
 
@@ -43,6 +44,7 @@ public class SingleScoreCombiner implements ScoreCombiner{
 	@Override
 	public boolean loadQuery(QueryRequest query) {
 		this.query = query;
+		if (!scorer.loadQuery(query)) return false;
 		return src.loadQuery(query);
 	}
 }

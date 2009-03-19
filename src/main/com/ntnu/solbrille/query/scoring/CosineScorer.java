@@ -13,21 +13,27 @@ import com.ntnu.solbrille.query.QueryResult;
 public class CosineScorer implements Scorer{
 	private DocumentStatisticsIndex statistics;
 	private OccurenceIndex index;
+	private QueryRequest query;
 	
 	public CosineScorer(DocumentStatisticsIndex statistics, OccurenceIndex index){
 		this.statistics = statistics;
 		this.index = index;
 	}
 	
+    public boolean loadQuery(QueryRequest query){
+    	this.query = query;
+    	return true;
+    }
+	
 	@Override
-	public float getScore(QueryResult result, QueryRequest request) {
+	public float getScore(QueryResult result) {
 		//TODO: avoid recalculating sumwtq, maxtd, etc.
 		long N = statistics.getTotalNumberOfDocuments();
 		long maxtq = 0, tmptq;
 		long maxtd = 0, tmptd;
 		for (DictionaryTerm term : result.getTerms() ) {
 			tmptd = result.getStatisticsEntry().getMostFrequentTerm().getSecond();
-			tmptq = request.getQueryOccurenceCount(term);
+			tmptq = query.getQueryOccurenceCount(term);
 			if (maxtq < tmptq) maxtq = tmptq;
 			if (maxtd < tmptd) maxtd = tmptd;//FIXM bugbug: det skal v¾re max for alle ord i orgboken, ikke bare de som er med i sp¿rringen
 		}
@@ -37,8 +43,8 @@ public class CosineScorer implements Scorer{
 		double sumwtd = 0.0;
 		for (DictionaryTerm term : result.getTerms() ) {
 			float tfid =  ((float)result.getOccurences(term).getPositionList().size()) / maxtd;
-			long fq =  request.getQueryOccurenceCount(term);		//FIXME - number of occurrences in the query
-			long df = request.getDocumentCount(term);
+			long fq =  query.getQueryOccurenceCount(term);		//FIXME - number of occurrences in the query
+			long df = query.getDocumentCount(term);
 			double idf =  Math.log(((float)N)/df);
 			double wtd = tfid * idf;
 			double wtq = (0.5 + (0.5*fq)/maxtq)* idf;

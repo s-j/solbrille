@@ -43,7 +43,7 @@ public class SimpleScoreCombiner implements ScoreCombiner{
 		float accscore = (float) 0.0;
 		
 		for (Pair<Scorer,Float> scorerpair : scorers) {
-			accscore += scorerpair.getFirst().getScore(next, query) * scorerpair.getSecond();
+			accscore += scorerpair.getFirst().getScore(next) * scorerpair.getSecond();
 		}
 		
 		next.setScore(normalize ? accscore/totalWeight : accscore);
@@ -64,6 +64,9 @@ public class SimpleScoreCombiner implements ScoreCombiner{
 	@Override
 	public boolean loadQuery(QueryRequest query) {
 		this.query = query;
+		for (Pair<Scorer,Float> scorerpair : scorers) {
+			if (!scorerpair.getFirst().loadQuery(query)) return false;
+		}
 		return src.loadQuery(query);
 	}
 	
