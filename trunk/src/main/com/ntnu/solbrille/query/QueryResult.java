@@ -3,6 +3,7 @@ package com.ntnu.solbrille.query;
 import java.util.HashMap;
 import java.util.Set;
 
+import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
 
@@ -13,6 +14,7 @@ import com.ntnu.solbrille.index.occurence.DocumentOccurence;
 public class QueryResult implements Comparable<QueryResult>{
     private final long documentId;
     private HashMap<DictionaryTerm, DocumentOccurence> positionLists = new HashMap<DictionaryTerm, DocumentOccurence>();
+    private DocumentStatisticsEntry stats;
 	private float score;
 	
 	public QueryResult(long documentId){
@@ -53,6 +55,14 @@ public class QueryResult implements Comparable<QueryResult>{
 
 	public int compareTo(QueryResult result){
 		return Float.valueOf(score).compareTo(result.score);
+	}
+	
+	public void setStatisticsEntry(DocumentStatisticsEntry stats){
+		this.stats = stats;
+	}
+	
+	public DocumentStatisticsEntry getStatisticsEntry(){
+		return stats;
 	}
 }
 

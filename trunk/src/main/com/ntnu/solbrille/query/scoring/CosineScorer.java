@@ -14,12 +14,6 @@ public class CosineScorer implements Scorer{
 	private DocumentStatisticsIndex statistics;
 	private OccurenceIndex index;
 	
-	public static float k1 = 1.5f;
-	public static float k2 = 10.0f;
-	public static float b = 0.75f;
-	
-	private long N;
-	
 	public CosineScorer(DocumentStatisticsIndex statistics, OccurenceIndex index){
 		this.statistics = statistics;
 		this.index = index;
@@ -28,11 +22,11 @@ public class CosineScorer implements Scorer{
 	@Override
 	public float getScore(QueryResult result, QueryRequest request) {
 		//TODO: avoid recalculating sumwtq, maxtd, etc.
-		N = statistics.getTotalNumberOfDocuments();
+		long N = statistics.getTotalNumberOfDocuments();
 		long maxtq = 0, tmptq;
 		long maxtd = 0, tmptd;
 		for (DictionaryTerm term : result.getTerms() ) {
-			tmptd = result.getOccurences(term).getPositionList().size();
+			tmptd = result.getStatisticsEntry().getMostFrequentTerm().getSecond();
 			tmptq = request.getQueryOccurenceCount(term);
 			if (maxtq < tmptq) maxtq = tmptq;
 			if (maxtd < tmptd) maxtd = tmptd;//FIXM bugbug: det skal v¾re max for alle ord i orgboken, ikke bare de som er med i sp¿rringen

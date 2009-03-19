@@ -2,6 +2,8 @@ package com.ntnu.solbrille.index.document;
 
 import com.ntnu.solbrille.Constants;
 import com.ntnu.solbrille.index.IndexEntry;
+import com.ntnu.solbrille.index.occurence.DictionaryTerm;
+import com.ntnu.solbrille.utils.Pair;
 
 import java.nio.ByteBuffer;
 
@@ -38,6 +40,14 @@ public class DocumentStatisticsEntry implements IndexEntry {
         return documentLength;
     }
 
+    public Pair<DictionaryTerm, Long> getMostFrequentTerm(){
+    	return new Pair(null, 10); //TODO
+    }
+    
+    public long getNumberOfUniqueTerms(){
+    	return 42; //TODO
+    }
+    
     public void setDocumentLength(long documentLength) {
         this.documentLength = documentLength;
     }
