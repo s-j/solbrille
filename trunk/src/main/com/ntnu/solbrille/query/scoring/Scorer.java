@@ -9,5 +9,6 @@ import com.ntnu.solbrille.query.QueryResult;
 
 public interface Scorer {
 
-	public float getScore(QueryResult result, QueryRequest request);
+	public float getScore(QueryResult result);
+	public boolean loadQuery(QueryRequest query);
 }
