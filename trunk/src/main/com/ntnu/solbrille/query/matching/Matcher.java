@@ -116,6 +116,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
             if ((andMatch || orMatch) && !nandMatch) {
                 match = true;
                 current = qr;
+                qr = null;
 
                 if (andMatch) cleanUpAndIterators();
                 
