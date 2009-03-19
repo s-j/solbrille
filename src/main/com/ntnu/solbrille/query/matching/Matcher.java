@@ -39,8 +39,8 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     private final Map<SkippableIterator<DocumentOccurence>, DictionaryTerm> iteratorToTerm = new IdentityHashMap();
     private final Map<Modifier, Heap<SkippableIterator<DocumentOccurence>>> modiferToHeap = new HashMap();
 
-    private DictionaryTerm term1;
-    private Iterator<DocumentOccurence> term1Results;
+    //private DictionaryTerm term1;
+    //private Iterator<DocumentOccurence> term1Results;
 
     public Matcher(OccurenceIndex index) {
         this.index = index;
@@ -55,12 +55,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     }
 
     public QueryResult next() {
-        // TODO: populate QueryResult
-
-        DocumentOccurence docOcc = term1Results.next();
-        QueryResult result = new QueryResult(docOcc.getDocumentId());
-        result.addOccurences(term1, docOcc);
-        return result;
+        return current;
     }
 
     public boolean hasNext() {
@@ -90,23 +85,31 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
             }
 
             if (orTerms.size() > 0) {
-                if (!andMatch) {
+                if (!andMatch && orTerms.peek().getCurrent() != null) {
                     currentDocument = orTerms.peek().getCurrent();
+                    qr = new QueryResult(currentDocument.getDocumentId());
                 }
 
                 for (SkippableIterator<DocumentOccurence> si : orTerms) {
-                    if (si.getCurrent().compareTo(currentDocument) == 0) {
+                    if (currentDocument != null) {
+                        si.skipTo(currentDocument);
+                    }
+
+                    if (si.getCurrent() != null && si.getCurrent().compareTo(currentDocument) == 0) {
                         qr.addOccurences(iteratorToTerm.get(si), si.getCurrent());
+                        cleanUpIterator(si, Modifier.OR);
+                        orMatch = true;
                     }
                 }
 
-                orMatch = true;
+
             }
 
             if (nandTerms.size() > 0) {
                 for (SkippableIterator<DocumentOccurence> si : nandTerms) {
                     si.skipTo(currentDocument);
-                    if (si.getCurrent().compareTo(currentDocument) == 0) {
+                    if (si.getCurrent() != null && si.getCurrent().compareTo(currentDocument) == 0) {
+                        cleanUpIterator(si, Modifier.NAND);
                         nandMatch = true;
                         break;
                     }
@@ -116,28 +119,45 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
             if ((andMatch || orMatch) && !nandMatch) {
                 match = true;
                 current = qr;
+                qr = null;
+
+                if (andMatch) cleanUpAndIterators();
+                
                 skipPastCurrent();
                 break;
             } else {
                 qr = null;
+                if ((andMatch || orMatch) && !nandMatch) skipPastCurrent();
+                if (andTerms.size() == 0 || orTerms.size() == 0) break;
+
                 andMatch = false;
                 orMatch = false;
                 nandMatch = false;
-                skipPastCurrent();
             }
         }
         return match;
     }
 
     private void skipPastCurrent() {
-        for (SkippableIterator<DocumentOccurence> si : IteratorUtils.chainedIterable(andTerms, orTerms, nandTerms)) {
+
+        for (SkippableIterator<DocumentOccurence> si : andTerms) {
+            si.skipPast(currentDocument);
+        }
+
+        for (SkippableIterator<DocumentOccurence> si : orTerms) {
+            si.skipPast(currentDocument);
+        }
+
+        for (SkippableIterator<DocumentOccurence> si : nandTerms) {
             si.skipPast(currentDocument);
         }
     }
 
     private boolean hasMore(Heap<SkippableIterator<DocumentOccurence>> iterators) {
         for (SkippableIterator<DocumentOccurence> si : iterators) {
-            if (!si.hasNext()) {
+            if (si.getCurrent() != null) {
+                continue;
+            } else {
                 return false;
             }
         }
@@ -152,7 +172,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     public boolean loadQuery(QueryRequest query) {
         clean();
         this.query = query;
-        term1Results = null;
+        //term1Results = null;
         for (DictionaryTerm dt : this.query.getTerms()) {
             // a Query has no way of accessing its Modifier?
             try {
@@ -168,18 +188,21 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
                     }
                 }
                 LookupResult result = index.lookup(dt);
-                query.setDocumentCount(dt, result.getDocumentCount());
-                iteratorToTerm.put(result.getIterator(), dt);
-                modiferToHeap.get(mod).add(result.getIterator());
-
-                if (term1Results == null) {
-                    term1 = dt;
-                    term1Results = result.getIterator();
+                SkippableIterator<DocumentOccurence> si = result.getIterator();
+                if (si.hasNext()) {
+                    si.next();
+                } else {
+                    continue;
                 }
+                query.setDocumentCount(dt, result.getDocumentCount());
+                iteratorToTerm.put(si, dt);
+                modiferToHeap.get(mod).add(si);
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             } catch (InterruptedException ie) {
                 ie.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
         }
@@ -194,6 +217,30 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
         andTerms.clear();
         orTerms.clear();
         nandTerms.clear();
+    }
+
+    private void cleanUpIterator(SkippableIterator<DocumentOccurence> iter, Modifier mod) {
+        if (!iter.hasNext()) {
+            switch (mod) {
+                case OR:
+                    orTerms.remove(iter);
+                    break;
+                case NAND:
+                    nandTerms.remove(iter);
+                    break;
+            }
+
+        }
+    }
+
+    public void cleanUpAndIterators() {
+        for (SkippableIterator<DocumentOccurence> si : andTerms) {
+            if (!si.hasNext()) {
+                andTerms.clear();
+                orTerms.clear();
+                break;
+            }
+        }
     }
 
     private DocumentOccurence maximumCurrentDocument(Iterable<SkippableIterator<DocumentOccurence>> iterators) {
