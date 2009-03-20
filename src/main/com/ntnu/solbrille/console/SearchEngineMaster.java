@@ -82,7 +82,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         output = new IndexerOutput(occurenceIndexBuilder, statisticIndex);
         feeder = new SearchEngineFeeder(output);
 
-        matcher = new Matcher(occurenceIndex);
+        matcher = new Matcher(occurenceIndex, statisticIndex);
     }
 
     public void feed(String document) {
