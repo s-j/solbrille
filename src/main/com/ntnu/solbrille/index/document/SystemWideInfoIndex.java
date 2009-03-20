@@ -37,7 +37,11 @@ class SystemWideInfoIndex implements Index {
     }
 
     void registerDocumentIndexed(long documentLength, long numberOfTokens) {
-        data.registerNewDocumentIndexed(documentLength, numberOfTokens);
+        registerDocumentsIndexed(1, documentLength, numberOfTokens);
+    }
+
+    void registerDocumentsIndexed(long docCount, long documentLength, long numberOfTokens) {
+        data.registerNewDocumentIndexed(docCount, documentLength, numberOfTokens);
     }
 
     public long getTotalNumberOfTokens() {

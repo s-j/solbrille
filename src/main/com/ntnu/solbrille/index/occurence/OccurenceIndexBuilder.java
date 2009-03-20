@@ -1,5 +1,6 @@
 package com.ntnu.solbrille.index.occurence;
 
+import com.ntnu.solbrille.index.document.DocumentIndexBuilder;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.iterators.AbstractWrappingIterator;
@@ -8,6 +9,7 @@ import com.ntnu.solbrille.utils.iterators.DuplicateCollectingIterator;
 import com.ntnu.solbrille.utils.iterators.IteratorMerger;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,9 +35,11 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
     private final OccurenceIndexBuilderMutex mutex = new OccurenceIndexBuilderMutex();
 
     private final OccurenceIndex index;
+    private final DocumentIndexBuilder documentIndexBuilder;
 
-    public OccurenceIndexBuilder(OccurenceIndex index) {
+    public OccurenceIndexBuilder(OccurenceIndex index, DocumentIndexBuilder documentIndexBuilder) {
         this.index = index;
+        this.documentIndexBuilder = documentIndexBuilder;
     }
 
     /**
@@ -47,7 +51,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
      * @throws IOException          On IO error
      * @throws InterruptedException If submitting thread were interupted.
      */
-    public InvertedDocumentInfo addDocument(long documentId, String document) throws IOException, InterruptedException {
+    public void addDocument(long documentId, URI uri, String document) throws IOException, InterruptedException {
         Map<DictionaryTerm, DocumentOccurence> invertedDocument = invertDocument(documentId, document);
         synchronized (mutex) {
             Map<DictionaryTerm, List<DocumentOccurence>> stateMap = activeIndexPhase.get().aggregateState;
@@ -76,7 +80,10 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
             }
         }
 
-        return new InvertedDocumentInfo(document.length(), mostFrequentTerm, totalTokens, invertedDocument.size());
+        documentIndexBuilder.addDocument(
+                documentId,
+                uri,
+                new InvertedDocumentInfo(document.length(), mostFrequentTerm, totalTokens, invertedDocument.size()));
     }
 
     public void updateIndex() throws IOException, InterruptedException {
@@ -99,12 +106,15 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
         Iterator<Pair<DictionaryTerm, InvertedListPointer>> result
                 = mergeInvertedLists(inactiveIndex.getOverwriteBuilder(), phaseLists);
         index.updateDictionaryEntries(result);
+        documentIndexBuilder.updateIndex();
     }
 
+    @Override
     public void start() {
         setIsRunning(true);
     }
 
+    @Override
     public void stop() {
         setIsRunning(false);
     }

@@ -9,6 +9,7 @@ import com.ntnu.solbrille.feeder.processors.LinkExtractor;
 import com.ntnu.solbrille.feeder.processors.PunctuationRemover;
 import com.ntnu.solbrille.feeder.processors.Stemmer;
 import com.ntnu.solbrille.index.IndexerOutput;
+import com.ntnu.solbrille.index.document.DocumentIndexBuilder;
 import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
 import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
@@ -58,6 +59,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
     private final OccurenceIndex occurenceIndex;
     private final OccurenceIndexBuilder occurenceIndexBuilder;
     private final DocumentStatisticsIndex statisticIndex;
+    private final DocumentIndexBuilder statisticIndexBuilder;
 
     private final IndexerOutput output;
     private final Feeder feeder;
@@ -74,10 +76,12 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             int systemInfoFile, int idMappingFile, int statisticsFile) {
         this.pool = pool;
         occurenceIndex = new OccurenceIndex(pool, dictionaryFileNumber, invertedListFile1, invertedListFile2);
-        occurenceIndexBuilder = new OccurenceIndexBuilder(occurenceIndex);
         statisticIndex = new DocumentStatisticsIndex(pool, occurenceIndex, systemInfoFile, idMappingFile, statisticsFile);
+        statisticIndexBuilder = new DocumentIndexBuilder(statisticIndex);
 
-        components = new LifecycleComponent[]{occurenceIndex, occurenceIndexBuilder, statisticIndex};
+        occurenceIndexBuilder = new OccurenceIndexBuilder(occurenceIndex, statisticIndexBuilder);
+
+        components = new LifecycleComponent[]{occurenceIndex, occurenceIndexBuilder, statisticIndex, statisticIndexBuilder};
 
         output = new IndexerOutput(occurenceIndexBuilder, statisticIndex);
         feeder = new SearchEngineFeeder(output);
