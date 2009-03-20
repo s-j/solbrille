@@ -1,6 +1,8 @@
 package com.ntnu.solbrille.system.test;
 
 import com.ntnu.solbrille.buffering.BufferPool;
+import com.ntnu.solbrille.index.document.DocumentIndexBuilder;
+import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.index.occurence.OccurenceIndexBuilder;
@@ -10,6 +12,8 @@ import junit.framework.TestCase;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 
 /**
@@ -21,8 +25,13 @@ public class IndexLookupTest extends TestCase {
     private String[] documents = new String[]{"ola", "jan max", "robin", "simon", "arne", "solbrille search engine", "max speed"};
 
 
-    public void testIndexLookup() throws IOException, InterruptedException {
+    public void testIndexLookup() throws IOException, InterruptedException, URISyntaxException {
         BufferPool pool = new BufferPool(10, 128); // really small buffers, just to be evil
+
+        File dictFile = new File("dict.bin");
+        dictFile.createNewFile();
+        FileChannel dictChannel = new RandomAccessFile(dictFile, "rw").getChannel();
+        int dictFileNumber = pool.registerFile(dictChannel, dictFile);
 
         File inv1File = new File("inv1.bin");
         inv1File.createNewFile();
@@ -33,11 +42,26 @@ public class IndexLookupTest extends TestCase {
         inv2File.createNewFile();
         FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
         int inv2FileNumber = pool.registerFile(inv2Channel, inv2File);
-        OccurenceIndex occurenceIndex = new OccurenceIndex(pool, inv1FileNumber, inv2FileNumber);
+        OccurenceIndex occurenceIndex = new OccurenceIndex(pool, dictFileNumber, inv1FileNumber, inv2FileNumber);
+
+        File statisticsFile = new File("statistics.bin");
+        FileChannel statisticsChannel = new RandomAccessFile(statisticsFile, "rw").getChannel();
+        int statisticsFileNumber = pool.registerFile(statisticsChannel, statisticsFile);
+
+        File sysinfoFile = new File("sysinfo.bin");
+        FileChannel sysinfoChannel = new RandomAccessFile(sysinfoFile, "rw").getChannel();
+        int sysinfoFileNumber = pool.registerFile(sysinfoChannel, sysinfoFile);
+
+        File idMappingFile = new File("idMapping.bin");
+        FileChannel idMappingChannel = new RandomAccessFile(idMappingFile, "rw").getChannel();
+        int idMappingNumber = pool.registerFile(idMappingChannel, idMappingFile);
+
+        DocumentStatisticsIndex docStatIndex = new DocumentStatisticsIndex(pool, occurenceIndex, sysinfoFileNumber, idMappingNumber, statisticsFileNumber);
+        DocumentIndexBuilder docIndexBuilder = new DocumentIndexBuilder(docStatIndex);
         try {
-            OccurenceIndexBuilder occIndexBuilder = new OccurenceIndexBuilder(occurenceIndex);
+            OccurenceIndexBuilder occIndexBuilder = new OccurenceIndexBuilder(occurenceIndex, docIndexBuilder);
             for (long i = 0; i < documents.length; i++) {
-                occIndexBuilder.addDocument(i, documents[(int) i]);
+                occIndexBuilder.addDocument(i, new URI("testdoc/" + i), documents[(int) i]);
             }
             assertFalse(occurenceIndex.lookup("nissefar").getIterator().hasNext());
             assertFalse(occurenceIndex.lookup("max").getIterator().hasNext()); // may change if we adopt dynamic flush strategy
