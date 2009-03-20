@@ -27,6 +27,11 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
 
+    private static final class OccurenceIndexBuilderMutex {
+    }
+
+    private final OccurenceIndexBuilderMutex mutex = new OccurenceIndexBuilderMutex();
+
     private final OccurenceIndex index;
 
     public OccurenceIndexBuilder(OccurenceIndex index) {
@@ -35,23 +40,24 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
 
     /**
      * Feeds a document to the indexer. The document fed to this method might not appear in the index before
-     * the {@link #updateIndex()} ()} is called.
+     * the {@link #updateIndex()} is called.
      *
      * @param documentId The document id to be added
      * @param document   The document content
      * @throws IOException          On IO error
      * @throws InterruptedException If submitting thread were interupted.
      */
-    public void addDocument(long documentId, String document) throws IOException, InterruptedException {
-        Map<DictionaryTerm, DocumentOccurence> invertedDocument
-                = invertDocument(documentId, document);
-        Map<DictionaryTerm, List<DocumentOccurence>> stateMap = activeIndexPhase.get().aggregateState;
-        for (Map.Entry<DictionaryTerm, DocumentOccurence> entry : invertedDocument.entrySet()) {
-            List<DocumentOccurence> occurences = stateMap.get(entry.getKey());
-            if (occurences != null) {
-                occurences.add(entry.getValue()); // always ascending document id's
-            } else {
-                stateMap.put(entry.getKey(), new ArrayList<DocumentOccurence>(Arrays.asList(entry.getValue())));
+    public InvertedDocumentInfo addDocument(long documentId, String document) throws IOException, InterruptedException {
+        Map<DictionaryTerm, DocumentOccurence> invertedDocument = invertDocument(documentId, document);
+        synchronized (mutex) {
+            Map<DictionaryTerm, List<DocumentOccurence>> stateMap = activeIndexPhase.get().aggregateState;
+            for (Map.Entry<DictionaryTerm, DocumentOccurence> entry : invertedDocument.entrySet()) {
+                List<DocumentOccurence> occurences = stateMap.get(entry.getKey());
+                if (occurences != null) {
+                    occurences.add(entry.getValue()); // always ascending document id's
+                } else {
+                    stateMap.put(entry.getKey(), new ArrayList<DocumentOccurence>(Arrays.asList(entry.getValue())));
+                }
             }
         }
         if (shouldFlushToDisk()) {
@@ -60,13 +66,28 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
         if (shouldUpdateIndex()) {
             updateIndex();
         }
+
+        long totalTokens = 0;
+        Pair<DictionaryTerm, Long> mostFrequentTerm = null;
+        for (Map.Entry<DictionaryTerm, DocumentOccurence> termOcc : invertedDocument.entrySet()) {
+            totalTokens += termOcc.getValue().getPositionList().size();
+            if (mostFrequentTerm == null || termOcc.getValue().getPositionList().size() > mostFrequentTerm.getSecond()) {
+                mostFrequentTerm = new Pair<DictionaryTerm, Long>(termOcc.getKey(), Long.valueOf(termOcc.getValue().getPositionList().size()));
+            }
+        }
+
+        return new InvertedDocumentInfo(document.length(), mostFrequentTerm, totalTokens, invertedDocument.size());
     }
 
     public void updateIndex() throws IOException, InterruptedException {
-        IndexPhaseState state = activeIndexPhase.getAndSet(new IndexPhaseState());
-        DiskInvertedList activeIndex = index.getActiveList();
-        DiskInvertedList inactiveIndex = index.getInactiveList();
-
+        IndexPhaseState state;
+        DiskInvertedList activeIndex;
+        DiskInvertedList inactiveIndex;
+        synchronized (mutex) {
+            state = activeIndexPhase.getAndSet(new IndexPhaseState());
+            activeIndex = index.getActiveList();
+            inactiveIndex = index.getInactiveList();
+        }
         // TODO: support merge in multiple passes (or not?)
         int position = 0;
         InvertedList[] phaseLists = new InvertedList[2 + state.partialListsOnDisk.size()];

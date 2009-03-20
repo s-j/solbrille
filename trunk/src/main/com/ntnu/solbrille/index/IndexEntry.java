@@ -25,7 +25,7 @@ public interface IndexEntry {
          * @param buffer The buffer to read the entry from.
          * @return The deserialized instance.
          */
-        T readIndexEntryDescriptor(ByteBuffer buffer);
+        T readIndexEntry(ByteBuffer buffer);
     }
 
     /**

@@ -111,6 +111,16 @@ public class ConsoleApplication {
         }
     }
 
+    private static class FeedTime extends Action {
+        @Override
+        void execute(String argument) throws Exception {
+            File f = new File(argument);
+            if (f.exists() && f.isDirectory()) {
+                master.feedTime(f);
+            }
+        }
+    }
+
     private static final Map<String, Action> actionMap = new HashMap<String, Action>();
     private static SearchEngineMaster master;
     private static BufferPool pool;
@@ -143,6 +153,13 @@ public class ConsoleApplication {
         System.out.println("---- Sample console application for the SOLbRille search engine");
         help();
         pool = new BufferPool(10, 1024);
+
+        File dictionaryFile = new File("dict.bin");
+        if (dictionaryFile.createNewFile()) {
+            System.out.println("Dictionary file created at: " + dictionaryFile.getAbsolutePath());
+        }
+        FileChannel dictionaryChannel = new RandomAccessFile(dictionaryFile, "rw").getChannel();
+        int dictionaryFileNumber = pool.registerFile(dictionaryChannel, dictionaryFile);
 
         File inv1File = new File("inv1.bin");
         if (inv1File.createNewFile()) {
@@ -179,7 +196,7 @@ public class ConsoleApplication {
         FileChannel statisticsChannel = new RandomAccessFile(statisticsFile, "rw").getChannel();
         int statisticsFileNumber = pool.registerFile(statisticsChannel, statisticsFile);
 
-        master = new SearchEngineMaster(pool, inv1FileNumber, inv2FileNumber,
+        master = new SearchEngineMaster(pool, dictionaryFileNumber, inv1FileNumber, inv2FileNumber,
                 sysinfoFileNumber, idMappingNumber, statisticsFileNumber);
 
         master.start();
@@ -191,6 +208,7 @@ public class ConsoleApplication {
         actionMap.put("stat", new Stats());
         actionMap.put("dump", new DumpDict());
         actionMap.put("restart", new Restart());
+        actionMap.put("ft", new FeedTime());
         actionMap.put("exit", new Exit());
 
         BufferedReader inp = new BufferedReader(new InputStreamReader(System.in));
@@ -200,7 +218,7 @@ public class ConsoleApplication {
             }
         }
         catch (RuntimeException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
             throw e;
         }
         finally {

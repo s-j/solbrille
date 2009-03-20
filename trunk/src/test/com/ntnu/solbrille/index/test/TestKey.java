@@ -13,7 +13,7 @@ public class TestKey implements IndexKeyEntry<TestKey> {
 
     public static class TestKeyDescriptor implements IndexEntryDescriptor<TestKey> {
 
-        public TestKey readIndexEntryDescriptor(ByteBuffer buffer) {
+        public TestKey readIndexEntry(ByteBuffer buffer) {
             int value = buffer.getInt();
             return new TestKey(value);
         }

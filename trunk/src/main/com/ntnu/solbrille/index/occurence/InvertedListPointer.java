@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 public class InvertedListPointer implements IndexEntry {
     public static final class InvertedListPointerDescriptor implements IndexEntryDescriptor<InvertedListPointer> {
 
-        public InvertedListPointer readIndexEntryDescriptor(ByteBuffer buffer) {
+        public InvertedListPointer readIndexEntry(ByteBuffer buffer) {
             return new InvertedListPointer(buffer.getLong(), buffer.getInt());
         }
 

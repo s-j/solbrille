@@ -22,8 +22,11 @@ class TermIterator implements SkippableIterator<DocumentOccurence>, Comparable<T
         numberOfDocuments = reader.remainingDocumentsInCurrentTerm;
     }
 
+    @Override
     public DocumentOccurence getCurrent() {
-        if (current == null && hasNext()) next();
+        if (current == null && hasNext()) {
+            next();
+        }
         return current;
     }
 
@@ -31,10 +34,12 @@ class TermIterator implements SkippableIterator<DocumentOccurence>, Comparable<T
         return numberOfDocuments;
     }
 
+    @Override
     public boolean hasNext() {
         return reader.remainingDocumentsInCurrentTerm > 0;
     }
 
+    @Override
     public DocumentOccurence next() {
         assert hasNext();
         try {
@@ -50,10 +55,12 @@ class TermIterator implements SkippableIterator<DocumentOccurence>, Comparable<T
         return null;
     }
 
+    @Override
     public void skipTo(DocumentOccurence target) {
         skip(target, SkipType.SKIP_TO);
     }
 
+    @Override
     public void skipPast(DocumentOccurence target) {
         skip(target, SkipType.SKIP_PAST);
     }
@@ -64,10 +71,12 @@ class TermIterator implements SkippableIterator<DocumentOccurence>, Comparable<T
         }
     }
 
+    @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void close() {
         reader.close();
     }

@@ -51,7 +51,7 @@ class SystemWideInfoIndex implements Index {
             byteBuffer.position(byteOffset);
             boolean exists = byteBuffer.get() == (byte) 1;
             if (exists) {
-                data = INFO_ENTRY_DESC.readIndexEntryDescriptor(byteBuffer);
+                data = INFO_ENTRY_DESC.readIndexEntry(byteBuffer);
             } else {
                 data = new StaticInformationEntry();
             }

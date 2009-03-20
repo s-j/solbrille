@@ -13,7 +13,9 @@ public class DictionaryTerm implements IndexKeyEntry<DictionaryTerm> {
 
     public static class DictionaryTermDescriptor implements IndexEntryDescriptor<DictionaryTerm> {
 
-        public DictionaryTerm readIndexEntryDescriptor(ByteBuffer buffer) {
+        @Override
+        public DictionaryTerm readIndexEntry(ByteBuffer buffer) {
+            int pos = buffer.position();
             int length = buffer.getInt();
             char[] chars = new char[length];
             for (int i = 0; i < length; i++) {
@@ -39,18 +41,23 @@ public class DictionaryTerm implements IndexKeyEntry<DictionaryTerm> {
         this.term = term;
     }
 
+    @Override
     public int getSeralizedLength() {
         return Constants.INT_SIZE + Constants.CHAR_SIZE * term.toCharArray().length;
     }
 
+    @Override
     public void serializeToByteBuffer(ByteBuffer buffer) {
         char[] chars = term.toCharArray();
+        int startPos = buffer.position();
         buffer.putInt(chars.length);
         for (int i = 0; i < chars.length; i++) {
             buffer.putChar(chars[i]);
         }
+        assert buffer.position() - startPos == getSeralizedLength();
     }
 
+    @Override
     public int compareTo(DictionaryTerm o) {
         return term.compareTo(o.term);
     }

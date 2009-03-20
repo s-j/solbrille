@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 public class TestValue implements IndexEntry {
 
     public static class TestValueDescriptor implements IndexEntryDescriptor<TestValue> {
-        public TestValue readIndexEntryDescriptor(ByteBuffer buffer) {
+        public TestValue readIndexEntry(ByteBuffer buffer) {
             int length = buffer.getInt();
             char[] charArray = new char[length];
             for (int i = 0; i < length; i++) {

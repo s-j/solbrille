@@ -15,7 +15,7 @@ public class DocumentUriEntry implements IndexKeyEntry<DocumentUriEntry> {
 
     public static class DocumentUriEntryDescriptor implements IndexEntryDescriptor<DocumentUriEntry> {
 
-        public DocumentUriEntry readIndexEntryDescriptor(ByteBuffer buffer) {
+        public DocumentUriEntry readIndexEntry(ByteBuffer buffer) {
             int length = buffer.getInt();
             char[] chars = new char[length];
             for (int i = 0; i < length; i++) {

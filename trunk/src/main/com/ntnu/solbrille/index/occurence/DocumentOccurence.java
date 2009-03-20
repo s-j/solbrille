@@ -31,4 +31,8 @@ public class DocumentOccurence implements Comparable<DocumentOccurence> {
     public int compareTo(DocumentOccurence o) {
         return Long.valueOf(documentId).compareTo(o.documentId);
     }
+
+    public String toString() {
+        return super.toString() + " (DocId: " + documentId + " occs: " + positionList;
+    }
 }

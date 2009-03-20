@@ -18,15 +18,16 @@ public class DictionaryEntry implements IndexEntry {
 
     public static class DictionaryEntryDescriptor implements IndexEntryDescriptor<DictionaryEntry> {
 
-        public DictionaryEntry readIndexEntryDescriptor(ByteBuffer buffer) {
+        public DictionaryEntry readIndexEntry(ByteBuffer buffer) {
+            int pos = buffer.position();
             byte flag = buffer.get();
             InvertedListPointer evenPointer = null;
             if ((flag & HAS_EVEN) > 0) {
-                evenPointer = INV_LIST_PTR_DESC.readIndexEntryDescriptor(buffer);
+                evenPointer = INV_LIST_PTR_DESC.readIndexEntry(buffer);
             }
             InvertedListPointer oddPointer = null;
-            if ((flag & HAS_EVEN) > 0) {
-                oddPointer = INV_LIST_PTR_DESC.readIndexEntryDescriptor(buffer);
+            if ((flag & HAS_ODD) > 0) {
+                oddPointer = INV_LIST_PTR_DESC.readIndexEntry(buffer);
             }
             return new DictionaryEntry(evenPointer, oddPointer);
         }
@@ -69,6 +70,7 @@ public class DictionaryEntry implements IndexEntry {
     }
 
     public void serializeToByteBuffer(ByteBuffer buffer) {
+        int startPos = buffer.position();
         byte flag = 0;
         if (evenPointer != null) {
             flag |= HAS_EVEN;
@@ -77,11 +79,12 @@ public class DictionaryEntry implements IndexEntry {
             flag |= HAS_ODD;
         }
         buffer.put(flag);
-        if ((flag & HAS_EVEN) > 0) {
+        if (evenPointer != null) {
             evenPointer.serializeToByteBuffer(buffer);
         }
-        if ((flag & HAS_ODD) > 0) {
+        if (oddPointer != null) {
             oddPointer.serializeToByteBuffer(buffer);
         }
+        assert buffer.position() - startPos == getSeralizedLength();
     }
 }

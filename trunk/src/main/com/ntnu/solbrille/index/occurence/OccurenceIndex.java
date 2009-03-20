@@ -33,17 +33,21 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
     private final DiskInvertedList evenInvertedList = new DiskInvertedList();
 
     private final BufferPool bufferPool;
-    private final int oddInvertedListFileNumber, evenInvertedListFileNumber;
+    private final int dictionaryFileNumber, oddInvertedListFileNumber, evenInvertedListFileNumber;
 
     public OccurenceIndex(
-            BufferPool bufferPool, int oddInvertedListFileNumber, int evenInvertedListFileNumber) {
+            BufferPool bufferPool, int dictionaryFileNumber, int oddInvertedListFileNumber, int evenInvertedListFileNumber) {
         this.bufferPool = bufferPool;
+        this.dictionaryFileNumber = dictionaryFileNumber;
         this.oddInvertedListFileNumber = oddInvertedListFileNumber;
         this.evenInvertedListFileNumber = evenInvertedListFileNumber;
     }
 
     public void start() {
         try {
+            System.out.println("Read dict!");
+            dictionary.initializeFromFile(bufferPool, dictionaryFileNumber, 0);
+            System.out.println("Dict done!");
             evenInvertedList.initializeFromFile(bufferPool, evenInvertedListFileNumber, 0);
             oddInvertedList.initializeFromFile(bufferPool, oddInvertedListFileNumber, 0);
             indexPhase.set(Math.max(evenInvertedList.getIndexPhase(), oddInvertedList.getIndexPhase()));
@@ -58,6 +62,9 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
 
     public void stop() {
         try {
+            System.out.println("Write dict!");
+            dictionary.writeToFile(bufferPool, dictionaryFileNumber, 0);
+            System.out.println("Dict write done!");
             evenInvertedList.writeToFile(bufferPool, evenInvertedListFileNumber, 0);
             oddInvertedList.writeToFile(bufferPool, oddInvertedListFileNumber, 0);
             setIsRunning(true);
