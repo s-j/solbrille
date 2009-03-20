@@ -28,7 +28,6 @@ public class QueryProcessor {
         if (!src.loadQuery(query) || (rescnt <= 0)) return new QueryResult[0];
 
         Heap<QueryResult> results = new Heap<QueryResult>();
-        System.out.println("loading");
         for (int i = 0; i < end && src.hasNext(); i++) {
             QueryResult next = src.next();
             if (results.size() < rescnt)
