@@ -1,11 +1,11 @@
 package com.ntnu.solbrille.query.matching;
 
+import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
+import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
 import com.ntnu.solbrille.index.occurence.LookupResult;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
-import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
-import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.query.QueryRequest;
 import com.ntnu.solbrille.query.QueryRequest.Modifier;
 import com.ntnu.solbrille.query.QueryResult;
@@ -36,6 +36,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
 
     private DocumentOccurence currentDocument;
 
+    private int requiredAndTerms;
     private final Heap<SkippableIterator<DocumentOccurence>> andTerms = new Heap();
     private final Heap<SkippableIterator<DocumentOccurence>> nandTerms = new Heap();
     private final Heap<SkippableIterator<DocumentOccurence>> orTerms = new Heap();
@@ -72,22 +73,41 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
         QueryResult qr = null;
 
         while (!match) {
-            if (andTerms.size() > 0) {
-                while (!andMatch && hasMore(andTerms)) { 
-                    if (!isEqual(andTerms)) {
-                        DocumentOccurence maximum = maximumCurrentDocument(andTerms);
-                        for (SkippableIterator<DocumentOccurence> si : andTerms) {
-                            si.skipTo(maximum);
-                        }
-                    } else {
-                        andMatch = true;
-                        currentDocument = andTerms.peek().getCurrent();
-                        qr = new QueryResult(currentDocument.getDocumentId());
-                        for (SkippableIterator<DocumentOccurence> si : andTerms) {
-                            qr.addOccurences(iteratorToTerm.get(si), si.getCurrent());
-                        }
-                    }
+            // Need all and term iterators present to do matching
+            if (requiredAndTerms == andTerms.size()) {
+                SkippableIterator<DocumentOccurence> head = andTerms.peek();
+                qr = new QueryResult(head.getCurrent().getDocumentId());
+                qr.addOccurences(iteratorToTerm.get(head), head.getCurrent());
+                if (head.hasNext()) { // update head
+                    head.next();
+                    andTerms.headChanged();
+                } else { // remove iterator
+                    ((Closeable) andTerms.poll()).close();
                 }
+
+                head = andTerms.isEmpty() ? null : andTerms.peek();
+                while (head != null && qr.getTerms().size() < requiredAndTerms) {
+                    if (head.getCurrent().getDocumentId() != qr.getDocumentId()) {
+                        qr = new QueryResult(head.getCurrent().getDocumentId());
+                    }
+                    qr.addOccurences(iteratorToTerm.get(head), head.getCurrent());
+
+                    if (head.hasNext()) {
+                        head.next();
+                        andTerms.headChanged();
+                    } else {
+                        ((Closeable) andTerms.poll()).close();
+                    }
+                    head = andTerms.isEmpty() ? null : andTerms.peek();
+                }
+
+                if (qr.getTerms().size() < requiredAndTerms) {
+                    qr = null; // no match
+                }
+            }
+
+            if (requiredAndTerms > 0 && qr == null) { // no match
+                return false;
             }
 
             if (orTerms.size() > 0) {
@@ -128,7 +148,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
                 qr = null;
 
                 if (andMatch) cleanUpAndIterators();
-                
+
                 skipPastCurrent();
                 break;
             } else {
@@ -212,7 +232,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
             }
 
         }
-
+        requiredAndTerms = andTerms.size();
         return true;
     }
 
