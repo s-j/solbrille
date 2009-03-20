@@ -59,25 +59,21 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     public QueryResult next() {
         DocumentStatisticsEntry dse = statistics.getDocumentStatistics(current.getDocumentId());
         current.setStatisticsEntry(dse);
-
-        QueryResult next = current;
-        current = null;
-        return next;
+        return current;
     }
 
     public boolean hasNext() {
         boolean match = false;
-        boolean andMatch = false;
-        boolean orMatch = false;
-        boolean nandMatch = false;
         QueryResult qr = null;
-
+        DocumentOccurence currentOccurence = null;
+        
         while (!match) {
             // Need all and term iterators present to do matching
-            if (requiredAndTerms == andTerms.size()) {
+            if (requiredAndTerms == andTerms.size() && requiredAndTerms > 0) {
                 SkippableIterator<DocumentOccurence> head = andTerms.peek();
                 qr = new QueryResult(head.getCurrent().getDocumentId());
                 qr.addOccurences(iteratorToTerm.get(head), head.getCurrent());
+                currentOccurence = head.getCurrent();
                 if (head.hasNext()) { // update head
                     head.next();
                     andTerms.headChanged();
@@ -89,6 +85,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
                 while (head != null && qr.getTerms().size() < requiredAndTerms) {
                     if (head.getCurrent().getDocumentId() != qr.getDocumentId()) {
                         qr = new QueryResult(head.getCurrent().getDocumentId());
+                        currentOccurence = head.getCurrent();
                     }
                     qr.addOccurences(iteratorToTerm.get(head), head.getCurrent());
 
@@ -110,80 +107,79 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
                 return false;
             }
 
-            if (orTerms.size() > 0) {
-                if (!andMatch && orTerms.peek().getCurrent() != null) {
-                    currentDocument = orTerms.peek().getCurrent();
-                    qr = new QueryResult(currentDocument.getDocumentId());
-                }
+            if (orTerms.size() > 0) {  
+                SkippableIterator<DocumentOccurence> head = orTerms.peek();
+                if (qr == null) {
+                    qr = new QueryResult(head.getCurrent().getDocumentId());
+                    qr.addOccurences(iteratorToTerm.get(head), head.getCurrent());
+                    currentOccurence = head.getCurrent();
 
-                for (SkippableIterator<DocumentOccurence> si : orTerms) {
-                    if (currentDocument != null) {
-                        si.skipTo(currentDocument);
-                    }
-
-                    if (si.getCurrent() != null && si.getCurrent().compareTo(currentDocument) == 0) {
-                        qr.addOccurences(iteratorToTerm.get(si), si.getCurrent());
-                        cleanUpIterator(si, Modifier.OR);
-                        orMatch = true;
+                    if (head.hasNext()) {
+                        head.next();
+                        orTerms.headChanged();
+                    } else {
+                        ((Closeable) orTerms.poll()).close();
                     }
                 }
 
+                head = orTerms.peek();
+                while (head != null && head.getCurrent().getDocumentId() <= qr.getDocumentId()) {
+                    head.skipTo(currentOccurence);
+                    orTerms.headChanged();
 
+                    if (head.getCurrent().getDocumentId() == qr.getDocumentId()) {
+                        qr.addOccurences(iteratorToTerm.get(head), head.getCurrent());
+
+                        if (!head.hasNext()) {
+                            ((Closeable) orTerms.poll()).close();
+                        }
+                    }
+
+                    head = orTerms.peek();
+                }
             }
 
-            if (nandTerms.size() > 0) {
-                for (SkippableIterator<DocumentOccurence> si : nandTerms) {
-                    si.skipTo(currentDocument);
-                    if (si.getCurrent() != null && si.getCurrent().compareTo(currentDocument) == 0) {
-                        cleanUpIterator(si, Modifier.NAND);
-                        nandMatch = true;
+            if (nandTerms.size() > 0 && qr != null) {
+                SkippableIterator<DocumentOccurence> head = nandTerms.peek();
+                while (head != null && head.getCurrent().getDocumentId() <= qr.getDocumentId()) {
+                    head.skipTo(currentOccurence);
+                    nandTerms.headChanged();
+                    if (head.getCurrent().getDocumentId() == qr.getDocumentId()) {
+                        qr = null;
+                        if (!head.hasNext()) {
+                            ((Closeable) nandTerms.poll()).close();
+                        }
                         break;
                     }
+
+                    head = nandTerms.peek();
                 }
             }
 
-            if ((andMatch || orMatch) && !nandMatch) {
+            if (qr != null) {
                 match = true;
                 current = qr;
                 qr = null;
-
-                if (andMatch) cleanUpAndIterators();
-
-                skipPastCurrent();
-                break;
-            } else {
-                qr = null;
-                // if (!(andMatch || orMatch) && !nandMatch) skipPastCurrent();
-                if (andTerms.size() == 0 || orTerms.size() == 0) break;
-
-                andMatch = false;
-                orMatch = false;
-                nandMatch = false;
             }
+
+            if (match == false && orTerms.isEmpty() && andTerms.isEmpty()) {
+                return match;
+            }
+
         }
         return match;
     }
 
     private void skipPastCurrent() {
 
-        for (SkippableIterator<DocumentOccurence> si : andTerms) {
-            si.skipPast(currentDocument);
-        }
-
-        for (SkippableIterator<DocumentOccurence> si : orTerms) {
-            si.skipPast(currentDocument);
-        }
-
-        for (SkippableIterator<DocumentOccurence> si : nandTerms) {
+        for (SkippableIterator<DocumentOccurence> si : IteratorUtils.chainedIterable(andTerms, orTerms, nandTerms)) {
             si.skipPast(currentDocument);
         }
     }
 
     private boolean hasMore(Heap<SkippableIterator<DocumentOccurence>> iterators) {
         for (SkippableIterator<DocumentOccurence> si : iterators) {
-            if (si.getCurrent() != null) {
-                continue;
-            } else {
+            if (!(si.getCurrent() != null)) {
                 return false;
             }
         }
@@ -198,9 +194,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     public boolean loadQuery(QueryRequest query) {
         clean();
         this.query = query;
-        //term1Results = null;
         for (DictionaryTerm dt : this.query.getTerms()) {
-            // a Query has no way of accessing its Modifier?
             try {
                 Modifier mod = Modifier.OR;
                 QueryTermOccurence termOccs = query.getQueryOccurences(dt);
