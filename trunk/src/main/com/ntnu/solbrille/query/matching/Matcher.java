@@ -4,6 +4,8 @@ import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
 import com.ntnu.solbrille.index.occurence.LookupResult;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
+import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
+import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.query.QueryRequest;
 import com.ntnu.solbrille.query.QueryRequest.Modifier;
 import com.ntnu.solbrille.query.QueryResult;
@@ -29,6 +31,7 @@ import java.util.Map;
 public class Matcher implements QueryProcessingComponent, CachedIterator<QueryResult> {
     private QueryRequest query;
     private OccurenceIndex index;
+    private DocumentStatisticsIndex statistics;
     private QueryResult current;
 
     private DocumentOccurence currentDocument;
@@ -39,8 +42,9 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     private final Map<SkippableIterator<DocumentOccurence>, DictionaryTerm> iteratorToTerm = new IdentityHashMap();
     private final Map<Modifier, Heap<SkippableIterator<DocumentOccurence>>> modiferToHeap = new HashMap();
 
-    public Matcher(OccurenceIndex index) {
+    public Matcher(OccurenceIndex index, DocumentStatisticsIndex statistics) {
         this.index = index;
+        this.statistics = statistics;
         currentDocument = null;
         modiferToHeap.put(Modifier.OR, orTerms);
         modiferToHeap.put(Modifier.AND, andTerms);
@@ -52,7 +56,12 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     }
 
     public QueryResult next() {
-        return current;
+        DocumentStatisticsEntry dse = statistics.getDocumentStatistics(current.getDocumentId());
+        current.setStatisticsEntry(dse);
+
+        QueryResult next = current;
+        current = null;
+        return next;
     }
 
     public boolean hasNext() {
@@ -124,7 +133,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
                 break;
             } else {
                 qr = null;
-                if ((andMatch || orMatch) && !nandMatch) skipPastCurrent();
+                // if (!(andMatch || orMatch) && !nandMatch) skipPastCurrent();
                 if (andTerms.size() == 0 || orTerms.size() == 0) break;
 
                 andMatch = false;
