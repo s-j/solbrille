@@ -23,6 +23,7 @@ import com.ntnu.solbrille.query.filtering.NonNegativeFilter;
 import com.ntnu.solbrille.query.matching.Matcher;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
 import com.ntnu.solbrille.query.processing.QueryProcessor;
+import com.ntnu.solbrille.query.scoring.CosineScorer;
 import com.ntnu.solbrille.query.scoring.OkapiScorer;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
 import com.ntnu.solbrille.query.scoring.Scorer;
@@ -157,10 +158,11 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             }
             setIsRunning(true);
 
-            Scorer okapiscorer = new OkapiScorer(statisticIndex, occurenceIndex);
-            //Scorer cosinescorer = new CosineScorer(statisticIndex, occurenceIndex);
-            ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
-
+            //Scorer okapiscorer = new OkapiScorer(statisticIndex, occurenceIndex);
+            Scorer cosinescorer = new CosineScorer(statisticIndex, occurenceIndex);
+            //ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
+            ScoreCombiner scm = new SingleScoreCombiner(cosinescorer);
+            
             Filters fs = new Filters();
             Filter f = new NonNegativeFilter();
             fs.addFilter(f);
