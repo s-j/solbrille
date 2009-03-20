@@ -61,8 +61,8 @@ public class StaticInformationEntry implements IndexEntry {
         return totalNumberOfTokens.get();
     }
 
-    public void registerNewDocumentIndexed(long documentLength, long numberOfTokensIndexed) {
-        totalNumberOfDocuments.incrementAndGet();
+    public void registerNewDocumentIndexed(long docCounts, long documentLength, long numberOfTokensIndexed) {
+        totalNumberOfDocuments.addAndGet(docCounts);
         totalDocumentLength.addAndGet(documentLength);
         totalNumberOfTokens.addAndGet(numberOfTokensIndexed);
     }

@@ -3,7 +3,6 @@ package com.ntnu.solbrille.index;
 import com.ntnu.solbrille.feeder.Struct;
 import com.ntnu.solbrille.feeder.outputs.FeederOutput;
 import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
-import com.ntnu.solbrille.index.occurence.InvertedDocumentInfo;
 import com.ntnu.solbrille.index.occurence.OccurenceIndexBuilder;
 
 import java.io.IOException;
@@ -24,7 +23,6 @@ public class IndexerOutput implements FeederOutput {
     }
 
     public void put(Struct document) {
-        // TODO: Check if document exists?
         try {
             String content = document.getField("content").getValue();
             String uri = document.getField("uri").getValue();
@@ -32,14 +30,7 @@ public class IndexerOutput implements FeederOutput {
                 System.out.println("Duplicate document: " + uri);
             } else {
                 long documentId = statisticIndex.getNextDocumentId();
-                InvertedDocumentInfo documentInfo = indexBuilder.addDocument(documentId, content);
-                statisticIndex.registerDocuemntIndexed(
-                        documentId,
-                        uri,
-                        documentInfo.getTotalTokens(),
-                        documentInfo.getDocumentSize(),
-                        documentInfo.getUniqueTerms(),
-                        documentInfo.getMostFrequentTerm());
+                indexBuilder.addDocument(documentId, new URI(uri), content);
             }
         } catch (IOException e) {
             e.printStackTrace();
