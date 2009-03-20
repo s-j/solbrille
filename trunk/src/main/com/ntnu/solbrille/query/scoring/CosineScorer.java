@@ -51,9 +51,10 @@ public class CosineScorer implements Scorer{
 			sumwtdq += wtq * wtd;
 			sumwtq += wtq * wtq;
 			sumwtd += wtd * wtd;
-			System.out.println(maxtd);
+			System.out.println(term + " " + tfid + "log(" + N +"/" + df + ")" );
 		}
-		float res = (float) (sumwtdq / ( Math.sqrt(sumwtq) * Math.sqrt(sumwtd)));
+		System.out.println(sumwtdq+ " "+Math.sqrt(sumwtd));
+		float res = (float) (sumwtdq / ( Math.sqrt(sumwtd)));
 		//System.out.println(sumwtq);
 		return res;	
 	}
