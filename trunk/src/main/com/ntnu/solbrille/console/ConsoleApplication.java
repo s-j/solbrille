@@ -217,7 +217,7 @@ public class ConsoleApplication {
                 execute(inp.readLine());
             }
         }
-        catch (RuntimeException e) {
+        catch (Exception e) {
             e.printStackTrace();
             throw e;
         }
