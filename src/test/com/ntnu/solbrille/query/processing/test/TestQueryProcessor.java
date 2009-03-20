@@ -13,22 +13,26 @@ import com.ntnu.solbrille.query.scoring.OkapiScorer;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
 import com.ntnu.solbrille.query.scoring.Scorer;
 import com.ntnu.solbrille.query.scoring.SingleScoreCombiner;
+import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 
-import junit.framework.TestCase;
-
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
  * @version $Id $.
  */
-public class TestQueryProcessor extends TestCase{
+public class TestQueryProcessor extends TestCase {
 
 
-    public void testProcessing() throws Exception  {
+    public void testProcessing() throws Exception {
         BufferPool pool = new BufferPool(10, 128); // really small buffers, just to be evil
+        File dictFile = new File("dict.bin");
+        dictFile.createNewFile();
+        FileChannel dictChannel = new RandomAccessFile(dictFile, "rw").getChannel();
+        int dictFileNumber = pool.registerFile(dictChannel, dictFile);
+
         File inv1File = new File("inv1.bin");
         inv1File.createNewFile();
         FileChannel inv1Channel = new RandomAccessFile(inv1File, "rw").getChannel();
@@ -51,10 +55,10 @@ public class TestQueryProcessor extends TestCase{
         FileChannel statisticsChannel = new RandomAccessFile(statisticsFile, "rw").getChannel();
         int statisticsFileNumber = pool.registerFile(statisticsChannel, statisticsFile);
 
-        OccurenceIndex occurenceIndex = new OccurenceIndex(pool, inv1FileNumber, inv2FileNumber);
+        OccurenceIndex occurenceIndex = new OccurenceIndex(pool, dictFileNumber, inv1FileNumber, inv2FileNumber);
         DocumentStatisticsIndex statisticsIndex = new DocumentStatisticsIndex(pool, occurenceIndex, sysinfoFileNumber, idMappingNumber, statisticsFileNumber);
 
-        Matcher qm = new Matcher(occurenceIndex);
+        Matcher qm = new Matcher(occurenceIndex, statisticsIndex);
 
         //TODO: provide enough information to okapi scorer
         //something like StatisticIndex
