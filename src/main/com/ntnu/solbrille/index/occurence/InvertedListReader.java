@@ -44,7 +44,7 @@ public class InvertedListReader {
             currentBlockLastElementStart = currentByteBuffer.getInt();
             currentByteBuffer.position(termPointer.getByteOffset());
             if (Constants.DEBUG) { // check if we are pointing on the correct term
-                currentTerm = TERM_DESCRIPTOR.readIndexEntryDescriptor(currentByteBuffer);
+                currentTerm = TERM_DESCRIPTOR.readIndexEntry(currentByteBuffer);
                 assert currentTerm.equals(term);
             } else { // assume pointing on correct term.
                 currentTerm = term;
@@ -130,7 +130,7 @@ public class InvertedListReader {
             try {
                 ByteBuffer byteBuffer = buffer.getByteBuffer();
                 byteBuffer.position(pointer.getByteOffset());
-                DictionaryTerm term = TERM_DESCRIPTOR.readIndexEntryDescriptor(byteBuffer);
+                DictionaryTerm term = TERM_DESCRIPTOR.readIndexEntry(byteBuffer);
                 byteBuffer.position(byteBuffer.position() + 2 * Constants.LONG_SIZE);
                 return new Pair<DictionaryTerm, InvertedListPointer>(term, new InvertedListPointer(byteBuffer.getLong(), byteBuffer.getInt()));
             }

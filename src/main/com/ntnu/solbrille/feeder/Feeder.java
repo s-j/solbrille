@@ -74,9 +74,9 @@ public class Feeder {
     private Log LOG = LogFactory.getLog(this.getClass());
 
     public Feeder() {
-        docExecutor = new ThreadPoolExecutor(10, 20, 10, TimeUnit.SECONDS, new ArrayBlockingQueue(100));
+        docExecutor = new ThreadPoolExecutor(10, 20, 10, TimeUnit.SECONDS, new ArrayBlockingQueue(1000));
         docCompService = new ExecutorCompletionService<Struct>(docExecutor);
-        outputExecutor = new ThreadPoolExecutor(10, 20, 10, TimeUnit.SECONDS, new ArrayBlockingQueue(100));
+        outputExecutor = new ThreadPoolExecutor(10, 20, 10, TimeUnit.SECONDS, new ArrayBlockingQueue(1000));
         outputs = Collections.synchronizedList(new ArrayList<FeederOutput>());
 
         Runnable outputRunner = new Runnable() {

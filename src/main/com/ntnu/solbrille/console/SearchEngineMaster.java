@@ -1,5 +1,6 @@
 package com.ntnu.solbrille.console;
 
+import com.ntnu.solbrille.TimeCollection;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.feeder.Feeder;
 import com.ntnu.solbrille.feeder.Struct;
@@ -21,7 +22,6 @@ import com.ntnu.solbrille.query.filtering.NonNegativeFilter;
 import com.ntnu.solbrille.query.matching.Matcher;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
 import com.ntnu.solbrille.query.processing.QueryProcessor;
-import com.ntnu.solbrille.query.scoring.CosineScorer;
 import com.ntnu.solbrille.query.scoring.OkapiScorer;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
 import com.ntnu.solbrille.query.scoring.Scorer;
@@ -29,6 +29,7 @@ import com.ntnu.solbrille.query.scoring.SingleScoreCombiner;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 import com.ntnu.solbrille.utils.LifecycleComponent;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -68,10 +69,11 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
 
     public SearchEngineMaster(
             BufferPool pool,
+            int dictionaryFileNumber,
             int invertedListFile1, int invertedListFile2,
             int systemInfoFile, int idMappingFile, int statisticsFile) {
         this.pool = pool;
-        occurenceIndex = new OccurenceIndex(pool, invertedListFile1, invertedListFile2);
+        occurenceIndex = new OccurenceIndex(pool, dictionaryFileNumber, invertedListFile1, invertedListFile2);
         occurenceIndexBuilder = new OccurenceIndexBuilder(occurenceIndex);
         statisticIndex = new DocumentStatisticsIndex(pool, occurenceIndex, systemInfoFile, idMappingFile, statisticsFile);
 
@@ -88,6 +90,17 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         doc.setField("uri", "dummydoc/" + dummyUriCounter.incrementAndGet());
         doc.setField("content", document);
         feeder.feed(doc);
+    }
+
+    public void feedTime(File f) {
+        TimeCollection collection = new TimeCollection();
+        String[] docs = collection.getTimeCollection(f, Integer.MAX_VALUE);
+        for (int i = 0; i < docs.length; i++) {
+            Struct doc = new Struct();
+            doc.setField("uri", new File(f.getPath(), collection.filenames[i]).toURI().toString());
+            feeder.feed(doc);
+        }
+
     }
 
     public QueryResult[] query(String query) {
@@ -138,15 +151,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             for (LifecycleComponent comp : components) {
                 comp.start();
             }
-            try {
-                occurenceIndexBuilder.updateIndex();
-                setIsRunning(true);
-            } catch (IOException e) {
-                setFailCause(e);
-            } catch (InterruptedException e) {
-                setFailCause(e);
-            }
-
+            setIsRunning(true);
 
             Scorer okapiscorer = new OkapiScorer(statisticIndex, occurenceIndex);
             //Scorer cosinescorer = new CosineScorer(statisticIndex, occurenceIndex);

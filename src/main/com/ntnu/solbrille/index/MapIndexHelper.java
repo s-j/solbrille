@@ -50,8 +50,8 @@ public class MapIndexHelper {
             while (remaining > 0) {
                 int blockEntries = byteBuffer.getInt();
                 for (int i = 0; i < blockEntries; i++) {
-                    K key = keyDescriptor.readIndexEntryDescriptor(byteBuffer);
-                    V value = valueDescriptor.readIndexEntryDescriptor(byteBuffer);
+                    K key = keyDescriptor.readIndexEntry(byteBuffer);
+                    V value = valueDescriptor.readIndexEntry(byteBuffer);
                     index.put(key, value);
                 }
                 remaining -= blockEntries;
@@ -105,12 +105,11 @@ public class MapIndexHelper {
             if (entryIterator.hasNext()) {
                 Map.Entry<K, V> entry = entryIterator.next();
                 int size = entry.getKey().getSeralizedLength() + entry.getValue().getSeralizedLength();
-                int remainingCapacity = byteBuffer.remaining();
                 while (entry != null) { // need to write a new block
                     buffer.setIsDirty(true);
                     int blockStartPosition = byteBuffer.position();
                     byteBuffer.putInt(0); // place holder for block count.
-                    remainingCapacity = byteBuffer.remaining();
+                    int remainingCapacity = byteBuffer.remaining();
                     int blockCount = 0;
                     while (entry != null && size <= remainingCapacity) { // write records to block while remaining
                         entry.getKey().serializeToByteBuffer(byteBuffer);

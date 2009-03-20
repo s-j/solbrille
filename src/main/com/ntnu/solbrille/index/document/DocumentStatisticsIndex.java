@@ -3,8 +3,10 @@ package com.ntnu.solbrille.index.document;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.index.BasicNavigableKeyValueIndex;
 import com.ntnu.solbrille.index.NavigableKeyValueIndex;
+import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
+import com.ntnu.solbrille.utils.Pair;
 
 import java.io.IOException;
 import java.net.URI;
@@ -150,9 +152,12 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
         return getTotalNumberOfDocuments() != 0 ? getTotalSize() / getTotalNumberOfDocuments() : 0;
     }
 
-    public void registerDocuemntIndexed(String uri, long documentId, long numberOfTokens, long documentLength) throws URISyntaxException {
-        idMapping.put(new DocumentUriEntry(new URI(uri)), new DocumentIdEntry(documentId));
-        statistics.put(new DocumentIdEntry(documentId), new DocumentStatisticsEntry(documentLength, numberOfTokens));
+    public void registerDocuemntIndexed(
+            long documentId, String uri, long numberOfTokens, long documentLength,
+            long uniqueTerms, Pair<DictionaryTerm, Long> mostFrequentTerm) throws URISyntaxException {
+        URI docUri = new URI(uri);
+        idMapping.put(new DocumentUriEntry(docUri), new DocumentIdEntry(documentId));
+        statistics.put(new DocumentIdEntry(documentId), new DocumentStatisticsEntry(documentLength, numberOfTokens, uniqueTerms, mostFrequentTerm, docUri));
         infoIndex.registerDocumentIndexed(documentLength, numberOfTokens);
     }
 }

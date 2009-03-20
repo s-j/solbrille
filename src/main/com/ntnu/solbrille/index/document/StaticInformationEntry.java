@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class StaticInformationEntry implements IndexEntry {
 
     public static class StaticInformationEntryDescriptor implements IndexEntryDescriptor<StaticInformationEntry> {
-        public StaticInformationEntry readIndexEntryDescriptor(ByteBuffer buffer) {
+        public StaticInformationEntry readIndexEntry(ByteBuffer buffer) {
             StaticInformationEntry entry = new StaticInformationEntry();
             entry.documentIdCounter.set(buffer.getLong());
             entry.totalNumberOfTokens.set(buffer.getLong());

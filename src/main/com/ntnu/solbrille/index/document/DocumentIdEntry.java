@@ -14,7 +14,7 @@ public class DocumentIdEntry implements IndexKeyEntry<DocumentIdEntry> {
 
     public static class DocumentIdEntryDescriptor implements IndexEntryDescriptor<DocumentIdEntry> {
 
-        public DocumentIdEntry readIndexEntryDescriptor(ByteBuffer buffer) {
+        public DocumentIdEntry readIndexEntry(ByteBuffer buffer) {
             return new DocumentIdEntry(buffer.getLong());
         }
     }
