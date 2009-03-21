@@ -10,6 +10,7 @@ public abstract class AbstractLifecycleComponent implements LifecycleComponent {
     private boolean isRunning;
 
 
+    @Override
     public void restart() {
         stop();
         start();
@@ -19,10 +20,12 @@ public abstract class AbstractLifecycleComponent implements LifecycleComponent {
         isRunning = running;
     }
 
+    @Override
     public boolean isRunning() {
         return isRunning;
     }
 
+    @Override
     public boolean isFailed() {
         return failCause == null;
     }
@@ -31,6 +34,7 @@ public abstract class AbstractLifecycleComponent implements LifecycleComponent {
         failCause = e;
     }
 
+    @Override
     public Exception getFailCause() {
         return failCause;
     }

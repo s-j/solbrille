@@ -2,9 +2,9 @@ package com.ntnu.solbrille.console;
 
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
+import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
 import com.ntnu.solbrille.index.occurence.LookupResult;
-import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.query.QueryResult;
 
 import java.io.BufferedReader;
@@ -71,9 +71,13 @@ public class ConsoleApplication {
         void execute(String argument) throws Exception {
             QueryResult[] result = master.query(argument);
             for (QueryResult r : result) {
-                for (DictionaryTerm dt: r.getTerms()) {
+                System.out.println("---------");
+                for (DictionaryTerm dt : r.getTerms()) {
                     System.out.println(r.getDocumentId() + " Score: " + r.getScore() + " #occs of " + dt.getTerm() + " " + r.getOccurences(dt).getPositionList());
                 }
+                System.out.println("Document info: " + r.getStatisticsEntry());
+                System.out.println("---------");
+
             }
         }
     }

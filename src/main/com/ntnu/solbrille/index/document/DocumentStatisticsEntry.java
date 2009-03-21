@@ -97,4 +97,13 @@ public class DocumentStatisticsEntry implements IndexEntry {
         buffer.putLong(numberOfTokens);
         buffer.putLong(uniqueTerms);
     }
+
+    @Override
+    public String toString() {
+        return "(uri: " + uriEntry.getDocumentUri()
+                + ", length: " + getDocumentLength()
+                + ", Unique tersm: " + getUniqueTerms()
+                + ", Number of tokens: " + getNumberOfTokens()
+                + ", Most frequent term: " + getMostFrequentTerm() + " )";
+    }
 }
