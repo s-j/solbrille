@@ -91,6 +91,17 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
         return result;
     }
 
+    public long getDocumentCount(String term) throws IOException, InterruptedException {
+        return getDocumentCount(new DictionaryTerm(term));
+    }
+
+    public long getDocumentCount(DictionaryTerm term) throws IOException, InterruptedException {
+        LookupResult lr = lookup(term);
+        long count = lr.getDocumentCount();
+        lr.close();
+        return count;
+    }
+
     public long getDictionaryTermCount() {
         return dictionary.size();
     }
