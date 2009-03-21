@@ -23,14 +23,13 @@ public class QueryRequest {
 
     private HashMap<DictionaryTerm, Pair<IntArray, IntArray>> terms;
     private HashMap<DictionaryTerm, Long> termstats;
-    private ArrayList<ArrayList<DictionaryTerm>> phrases; //pairs of start,endpos..
+    private ArrayList<Pair<Modifier, ArrayList<DictionaryTerm>>> phrases; //pairs of start,endpos..
 
-    //TODO: could be nice to add a list of term modifications in each of queries
     public QueryRequest(String strquery) {
         this.strquery = strquery;
         terms = new HashMap<DictionaryTerm, Pair<IntArray, IntArray>>();
         termstats = new HashMap<DictionaryTerm, Long>();
-        phrases = new ArrayList<ArrayList<DictionaryTerm>>();
+        phrases = new ArrayList<Pair<Modifier,ArrayList<DictionaryTerm>>>();
     }
 
     public Pair<IntArray, IntArray> addTerm(DictionaryTerm term, IntArray occs, IntArray flags) {
@@ -67,12 +66,11 @@ public class QueryRequest {
         return new QueryTermOccurence(tmp.getFirst(), tmp.getSecond());
     }
 
-    public void addPhrase(ArrayList<DictionaryTerm> phrase) {
-        phrases.add(phrase);
+    public void addPhrase(Modifier modifier, ArrayList<DictionaryTerm> phrase) {
+        phrases.add(new Pair(modifier, phrase));
     }
 
-    //TODO: change to a better type
-    public ArrayList<ArrayList<DictionaryTerm>> getPhrases() {
+    public ArrayList<Pair<Modifier,ArrayList<DictionaryTerm>>> getPhrases() {
         return phrases;
     }
 
