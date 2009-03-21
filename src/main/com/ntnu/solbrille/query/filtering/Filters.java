@@ -71,6 +71,9 @@ public class Filters implements QueryProcessingComponent{
 	public boolean loadQuery(QueryRequest query) {
 		this.query = query;
 		assert src!= null;
+        for (Filter filter: filters){
+            if (!filter.loadQuery(query)) return false;
+        }
 		return src.loadQuery(query);
 	}
 	

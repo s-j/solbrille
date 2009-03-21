@@ -20,6 +20,7 @@ import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.filtering.Filter;
 import com.ntnu.solbrille.query.filtering.Filters;
 import com.ntnu.solbrille.query.filtering.NonNegativeFilter;
+import com.ntnu.solbrille.query.filtering.PhraseFilter;
 import com.ntnu.solbrille.query.matching.Matcher;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
 import com.ntnu.solbrille.query.processing.QueryProcessor;
@@ -164,8 +165,10 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             ScoreCombiner scm = new SingleScoreCombiner(cosinescorer);
 
             Filters fs = new Filters();
-            Filter f = new NonNegativeFilter();
-            fs.addFilter(f);
+            Filter nnFilter = new NonNegativeFilter();
+            Filter phFilter = new PhraseFilter();
+            fs.addFilter(phFilter);
+            fs.addFilter(nnFilter);
 
             scm.addSource(matcher);
             fs.addSource(scm);
