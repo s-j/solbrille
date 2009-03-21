@@ -110,14 +110,14 @@ public class QueryPreprocessor {
 
             for (String last : processed) {
                 DictionaryTerm lt = new DictionaryTerm(last);
-
-                System.out.println("Found term: " + lt + " : " + pos + " : " + curmod);
-                request.addTermOccurence(lt, pos, curmod);
-
                 if (phrase){
+                    System.out.println("Found term: " + lt + " : " + pos + " : " + Modifier.OR);
+                    request.addTermOccurence(lt, pos, Modifier.OR); //matcher should not care, phrase filter will take care of it
                 	currphrase.add(lt);
                 	skiplast = true;
                 } else {
+                    System.out.println("Found term: " + lt + " : " + pos + " : " + curmod);
+                    request.addTermOccurence(lt, pos, curmod);
                 	skiplast = false;
                 }
                 pos++;
