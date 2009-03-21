@@ -32,8 +32,6 @@ public class Matcher implements QueryProcessingComponent {
     private DocumentStatisticsIndex statistics;
     private QueryResult current;
 
-    private DocumentOccurence currentDocument;
-
     private int requiredAndTerms;
     private final Heap<SkippableIterator<DocumentOccurence>> andTerms = new Heap();
     private final Heap<SkippableIterator<DocumentOccurence>> nandTerms = new Heap();
@@ -44,7 +42,6 @@ public class Matcher implements QueryProcessingComponent {
     public Matcher(OccurenceIndex index, DocumentStatisticsIndex statistics) {
         this.index = index;
         this.statistics = statistics;
-        currentDocument = null;
         modiferToHeap.put(Modifier.OR, orTerms);
         modiferToHeap.put(Modifier.AND, andTerms);
         modiferToHeap.put(Modifier.NAND, nandTerms);
@@ -168,22 +165,6 @@ public class Matcher implements QueryProcessingComponent {
         return true;
     }
 
-    private void skipPastCurrent() {
-        for (SkippableIterator<DocumentOccurence> si : IteratorUtils.chainedIterable(andTerms, orTerms, nandTerms)) {
-            si.skipPast(currentDocument);
-        }
-    }
-
-    private boolean hasMore(Heap<SkippableIterator<DocumentOccurence>> iterators) {
-        for (SkippableIterator<DocumentOccurence> si : iterators) {
-            if (!(si.getCurrent() != null)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     public void addSource(QueryProcessingComponent source) {
         throw new UnsupportedOperationException();
     }
@@ -234,50 +215,5 @@ public class Matcher implements QueryProcessingComponent {
         andTerms.clear();
         orTerms.clear();
         nandTerms.clear();
-    }
-
-    private void cleanUpIterator(SkippableIterator<DocumentOccurence> iter, Modifier mod) {
-        if (!iter.hasNext()) {
-            switch (mod) {
-                case OR:
-                    orTerms.remove(iter);
-                    break;
-                case NAND:
-                    nandTerms.remove(iter);
-                    break;
-            }
-
-        }
-    }
-
-    public void cleanUpAndIterators() {
-        for (SkippableIterator<DocumentOccurence> si : andTerms) {
-            if (!si.hasNext()) {
-                andTerms.clear();
-                orTerms.clear();
-                break;
-            }
-        }
-    }
-
-    private DocumentOccurence maximumCurrentDocument(Iterable<SkippableIterator<DocumentOccurence>> iterators) {
-        DocumentOccurence maximum = new DocumentOccurence(-1);
-        for (SkippableIterator<DocumentOccurence> si : iterators) {
-            if (si.getCurrent().compareTo(maximum) > 0)
-                maximum = si.getCurrent();
-        }
-        return maximum;
-    }
-
-    private boolean isEqual(Iterable<SkippableIterator<DocumentOccurence>> iterators) {
-        Iterator<SkippableIterator<DocumentOccurence>> iter = iterators.iterator();
-        if (!iter.hasNext()) return false;
-        long value = iter.next().getCurrent().getDocumentId();
-        for (SkippableIterator<DocumentOccurence> si : iterators) {
-            if (si.getCurrent().getDocumentId() != value) {
-                return false;
-            }
-        }
-        return true;
     }
 }
