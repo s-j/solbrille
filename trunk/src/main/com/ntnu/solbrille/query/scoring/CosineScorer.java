@@ -48,7 +48,6 @@ public class CosineScorer implements Scorer{
 			double wtq = (0.5 + (0.5*fq)/maxtq)* idf;
 			sumwtdq += wtq * wtd;
 		}
-		float res = (float) (sumwtdq/result.getStatisticsEntry().getTfIdfDocumentWeight());
-		return res;
+		return (float) (sumwtdq/result.getStatisticsEntry().getTfIdfDocumentWeight());
 	}
 }
