@@ -85,7 +85,8 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
         if (pointer == null) {
             result = new LookupResult(0, new SkipAdaptor<DocumentOccurence>(new VoidIterator<DocumentOccurence>()));
         } else {
-            TermIterator occs = getActiveList().lookupTerm(term, pointer);
+            Pair<Iterator<DocumentOccurence>, Long> lookup = getActiveList().lookupTerm(term, pointer);
+            TermIterator occs = (TermIterator) lookup.getFirst();
             result = new LookupResult(occs.getNumberOfDocuments(), occs);
         }
         return result;

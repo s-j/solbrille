@@ -46,6 +46,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
      * Feeds a document to the indexer. The document fed to this method might not appear in the index before
      * the {@link #updateIndex()} is called.
      *
+     * @param uri
      * @param documentId The document id to be added
      * @param document   The document content
      * @throws IOException          On IO error
@@ -54,7 +55,9 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
     public void addDocument(long documentId, URI uri, String document) throws IOException, InterruptedException {
         Map<DictionaryTerm, DocumentOccurence> invertedDocument = invertDocument(documentId, document);
         synchronized (mutex) {
-            Map<DictionaryTerm, List<DocumentOccurence>> stateMap = activeIndexPhase.get().aggregateState;
+            IndexPhaseState state = activeIndexPhase.get();
+            state.size++;
+            Map<DictionaryTerm, List<DocumentOccurence>> stateMap = state.aggregateState;
             for (Map.Entry<DictionaryTerm, DocumentOccurence> entry : invertedDocument.entrySet()) {
                 List<DocumentOccurence> occurences = stateMap.get(entry.getKey());
                 if (occurences != null) {
@@ -96,6 +99,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
             inactiveIndex = index.getInactiveList();
         }
         // TODO: support merge in multiple passes (or not?)
+        long newTotalDocuments = documentIndexBuilder.getTotalNumberOfDocuments() + state.size;
         int position = 0;
         InvertedList[] phaseLists = new InvertedList[2 + state.partialListsOnDisk.size()];
         phaseLists[position++] = activeIndex;
@@ -103,10 +107,11 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
         for (InvertedList disk : state.partialListsOnDisk) {
             phaseLists[position++] = disk;
         }
+        Map<Long, Float> tfIdfAccumulator = new HashMap<Long, Float>();
         Iterator<Pair<DictionaryTerm, InvertedListPointer>> result
-                = mergeInvertedLists(inactiveIndex.getOverwriteBuilder(), phaseLists);
+                = mergeInvertedLists(inactiveIndex.getOverwriteBuilder(), tfIdfAccumulator, newTotalDocuments, phaseLists);
         index.updateDictionaryEntries(result);
-        documentIndexBuilder.updateIndex();
+        documentIndexBuilder.updateIndex(tfIdfAccumulator);
     }
 
     @Override
@@ -130,12 +135,14 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
             return new AnnotatingIterator(invertedList.keySet().iterator(), new InvertedListPointer(0, 0));
         }
 
-        public Iterator<DocumentOccurence> lookupTerm(DictionaryTerm term, InvertedListPointer pointer) throws IOException, InterruptedException {
-            return invertedList.get(term).iterator();
+        public Pair<Iterator<DocumentOccurence>, Long> lookupTerm(DictionaryTerm term, InvertedListPointer pointer) throws IOException, InterruptedException {
+            List<DocumentOccurence> list = invertedList.get(term);
+            return new Pair<Iterator<DocumentOccurence>, Long>(list.iterator(), Long.valueOf(list.size()));
         }
     }
 
     private static final class IndexPhaseState {
+        private long size = 0;
         private final NavigableMap<DictionaryTerm, List<DocumentOccurence>> aggregateState
                 = new TreeMap<DictionaryTerm, List<DocumentOccurence>>();
         private final Collection<DiskInvertedList> partialListsOnDisk = new ArrayList<DiskInvertedList>();
@@ -152,13 +159,21 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
     private static InvertedListPointer writeToInvertedList(
             DictionaryTerm term,
             InvertedListBuilder output,
+            long totalDocuments,
+            Map<Long, Float> tfIdfAccumulator,
             Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>... sources)
             throws IOException, InterruptedException {
         Iterator<DocumentOccurence>[] documentIterators = new Iterator[sources.length];
         int position = 0;
+        long termDocs = 0;
         for (Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList> source : sources) {
-            documentIterators[position++] = source.getSecond().lookupTerm(source.getFirst().getFirst(), source.getFirst().getSecond());
+            Pair<Iterator<DocumentOccurence>, Long> result = source.getSecond().lookupTerm(source.getFirst().getFirst(), source.getFirst().getSecond());
+            termDocs += result.getSecond();
+            documentIterators[position++] = result.getFirst();
         }
+
+        float idf = (float) totalDocuments / (float) termDocs;
+
         Iterator<DocumentOccurence> mergedDocuments = new IteratorMerger<DocumentOccurence>(documentIterators);
         Iterator<Collection<DocumentOccurence>> collectedDocuments = new DuplicateCollectingIterator<DocumentOccurence>(DOC_OCC_COMP, mergedDocuments);
         InvertedListPointer start = output.nextTerm(term);
@@ -177,9 +192,13 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
             }
             output.nextDocument(docId);
             Iterator<Integer> posList = new IteratorMerger<Integer>(positionLists);
+            long termFrequency = 0;
             while (posList.hasNext()) {
                 output.nextOccurence(posList.next());
+                termFrequency++;
             }
+            Float oldWeight = tfIdfAccumulator.get(docId);
+            tfIdfAccumulator.put(docId, (oldWeight == null ? 0 : oldWeight) + idf * termFrequency);
         }
         return start;
     }
@@ -196,12 +215,17 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
             AbstractWrappingIterator<Pair<DictionaryTerm, InvertedListPointer>,
                     DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>> {
         private final InvertedListBuilder output;
+        private final long newTotalDocuments;
+        private final Map<Long, Float> tfIdfWeightAccumulator;
 
         private LazyMergedInvertedListWriterIterator(
                 DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> wrapped,
-                InvertedListBuilder output) {
+                InvertedListBuilder output, long newTotalDocuments,
+                Map<Long, Float> tfIdfWeightAccumulator) {
             super(wrapped);
             this.output = output;
+            this.newTotalDocuments = newTotalDocuments;
+            this.tfIdfWeightAccumulator = tfIdfWeightAccumulator;
         }
 
         public boolean hasNext() {
@@ -212,7 +236,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
             Collection<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> terms = getWrapped().next();
             DictionaryTerm term = terms.iterator().next().getFirst().getFirst(); // always at least one term
             try {
-                InvertedListPointer pointer = writeToInvertedList(term, output, terms.toArray(new Pair[terms.size()]));
+                InvertedListPointer pointer = writeToInvertedList(term, output, newTotalDocuments, tfIdfWeightAccumulator, terms.toArray(new Pair[terms.size()]));
                 return new Pair<DictionaryTerm, InvertedListPointer>(term, pointer);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -235,20 +259,10 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
         }
     }
 
-    /**
-     * Merges a number of inverted lists and puts the output in another. This method is lazy, teh reslting
-     * iterator will run the computation when consumed.
-     *
-     * @param output The inverted lists to write the results to.
-     * @param inputs The inverted lists to be merged.
-     * @return A iterator of the dictionary terms and the location of the term in the <code>output</code>
-     *         parameter. This iterator need to be consumed for teh file to be written.
-     * @throws IOException          On error writing to output.
-     * @throws InterruptedException If the calling thread is blocked.
-     */
     private Iterator<Pair<DictionaryTerm, InvertedListPointer>> mergeInvertedLists(
             InvertedListBuilder output,
-            InvertedList... inputs) throws IOException, InterruptedException {
+            Map<Long, Float> tdIdfWeightAccumulator,
+            long newTotalDocuments, InvertedList... inputs) throws IOException, InterruptedException {
         AnnotatingIterator<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>[] listIterators = new AnnotatingIterator[inputs.length];
         int position = 0;
         for (InvertedList list : inputs) {
@@ -258,7 +272,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
                 = new IteratorMerger<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>(TERM_MERGE_COMP, listIterators);
         DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>> collectedTerms
                 = new DuplicateCollectingIterator<Pair<Pair<DictionaryTerm, InvertedListPointer>, InvertedList>>(TERM_MERGE_COMP, mergedTermIterators);
-        return new LazyMergedInvertedListWriterIterator(collectedTerms, output);
+        return new LazyMergedInvertedListWriterIterator(collectedTerms, output, newTotalDocuments, tdIdfWeightAccumulator);
     }
 
     private final AtomicReference<IndexPhaseState> activeIndexPhase

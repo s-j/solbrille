@@ -10,7 +10,7 @@ import java.util.Iterator;
  * @version $Id $.
  */
 interface InvertedList {
-    Iterator<DocumentOccurence> lookupTerm(DictionaryTerm term, InvertedListPointer pointer) throws IOException, InterruptedException;
+    Pair<Iterator<DocumentOccurence>, Long> lookupTerm(DictionaryTerm term, InvertedListPointer pointer) throws IOException, InterruptedException;
 
     Iterator<Pair<DictionaryTerm, InvertedListPointer>> getTermIterator() throws IOException, InterruptedException;
 }

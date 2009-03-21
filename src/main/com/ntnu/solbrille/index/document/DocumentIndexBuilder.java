@@ -5,13 +5,13 @@ import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
  */
 public class DocumentIndexBuilder extends AbstractLifecycleComponent {
-
     private static final class DocumentIndexBuilderMutex {
     }
 
@@ -36,13 +36,17 @@ public class DocumentIndexBuilder extends AbstractLifecycleComponent {
         }
     }
 
-    public void updateIndex() {
+    public void updateIndex(Map<Long, Float> tfIdfAccumulator) {
         StaticInformationEntry oldDelta;
         synchronized (mutex) {
             oldDelta = globalStatisticsDelta;
             globalStatisticsDelta = new StaticInformationEntry();
         }
-        statisticsIndex.updateGlobalStatistics(oldDelta);
+        statisticsIndex.updateGlobalStatistics(oldDelta, tfIdfAccumulator);
+    }
+
+    public long getTotalNumberOfDocuments() {
+        return statisticsIndex.getTotalNumberOfDocuments();
     }
 
     @Override

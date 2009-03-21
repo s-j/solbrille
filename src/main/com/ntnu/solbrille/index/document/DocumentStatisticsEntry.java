@@ -33,6 +33,8 @@ public class DocumentStatisticsEntry implements IndexEntry {
     private long numberOfTokens;
     private long uniqueTerms;
 
+    private float tfIdfWeight;
+
     private Pair<DictionaryTerm, Long> mostFrequentTerm;
 
     public DocumentStatisticsEntry(long documentLength, long numberOfTokens, long uniqueTerms, Pair<DictionaryTerm, Long> mostFrequentTerm, URI docUri) {
@@ -83,13 +85,17 @@ public class DocumentStatisticsEntry implements IndexEntry {
         this.documentLength = documentLength;
     }
 
-    public long getTfIdfDocumentWeight() {
-        return getDocumentLength();
+    public float getTfIdfDocumentWeight() {
+        return (float) Math.sqrt(tfIdfWeight);
+    }
+
+    public void setTfIdfDocumentWeight(float weight) {
+        tfIdfWeight = weight;
     }
 
     @Override
     public int getSeralizedLength() {
-        return 4 * Constants.LONG_SIZE + mostFrequentTerm.getFirst().getSeralizedLength() + uriEntry.getSeralizedLength();
+        return 4 * Constants.LONG_SIZE + Constants.FLOAT_SIZE + mostFrequentTerm.getFirst().getSeralizedLength() + uriEntry.getSeralizedLength();
     }
 
     @Override
@@ -100,6 +106,7 @@ public class DocumentStatisticsEntry implements IndexEntry {
         buffer.putLong(documentLength);
         buffer.putLong(numberOfTokens);
         buffer.putLong(uniqueTerms);
+        buffer.putFloat(tfIdfWeight);
     }
 
     @Override
