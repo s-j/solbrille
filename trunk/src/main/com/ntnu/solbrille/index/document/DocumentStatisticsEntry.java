@@ -83,6 +83,10 @@ public class DocumentStatisticsEntry implements IndexEntry {
         this.documentLength = documentLength;
     }
 
+    public long getTfIdfDocumentWeight() {
+        return getDocumentLength();
+    }
+
     @Override
     public int getSeralizedLength() {
         return 4 * Constants.LONG_SIZE + mostFrequentTerm.getFirst().getSeralizedLength() + uriEntry.getSeralizedLength();
@@ -102,7 +106,8 @@ public class DocumentStatisticsEntry implements IndexEntry {
     public String toString() {
         return "(uri: " + uriEntry.getDocumentUri()
                 + ", length: " + getDocumentLength()
-                + ", Unique tersm: " + getUniqueTerms()
+                + ", TF*IDF weight: " + getTfIdfDocumentWeight()
+                + ", Unique terms: " + getUniqueTerms()
                 + ", Number of tokens: " + getNumberOfTokens()
                 + ", Most frequent term: " + getMostFrequentTerm() + " )";
     }

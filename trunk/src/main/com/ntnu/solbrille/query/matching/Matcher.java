@@ -126,9 +126,11 @@ public class Matcher implements QueryProcessingComponent {
 
                     if (head.getCurrent().getDocumentId() == qr.getDocumentId()) {
                         qr.addOccurences(iteratorToTerm.get(head), head.getCurrent());
-
                         if (!head.hasNext()) {
                             ((Closeable) orTerms.poll()).close();
+                        } else {
+                            head.next();
+                            orTerms.headChanged();
                         }
                     }
 
