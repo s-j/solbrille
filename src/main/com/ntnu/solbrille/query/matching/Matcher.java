@@ -1,6 +1,5 @@
 package com.ntnu.solbrille.query.matching;
 
-import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
 import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
@@ -14,7 +13,6 @@ import com.ntnu.solbrille.query.processing.QueryProcessingComponent;
 import com.ntnu.solbrille.utils.Closeable;
 import com.ntnu.solbrille.utils.Heap;
 import com.ntnu.solbrille.utils.Pair;
-import com.ntnu.solbrille.utils.iterators.CachedIterator;
 import com.ntnu.solbrille.utils.iterators.IteratorUtils;
 import com.ntnu.solbrille.utils.iterators.SkippableIterator;
 
@@ -28,7 +26,7 @@ import java.util.Map;
  * @author <a href="mailto:janmaxim@idi.ntnu.no">Jan Maximilian Winther Kristiansen</a>
  * @version $Id $.
  */
-public class Matcher implements QueryProcessingComponent, CachedIterator<QueryResult> {
+public class Matcher implements QueryProcessingComponent {
     private QueryRequest query;
     private OccurenceIndex index;
     private DocumentStatisticsIndex statistics;
@@ -57,17 +55,16 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
     }
 
     public QueryResult next() {
-        DocumentStatisticsEntry dse = statistics.getDocumentStatistics(current.getDocumentId());
-        current.setStatisticsEntry(dse);
-        return current;
+        assert current != null;
+        QueryResult result = current;
+        current = null;
+        return result;
     }
 
     public boolean hasNext() {
-        boolean match = false;
         QueryResult qr = null;
         DocumentOccurence currentOccurence = null;
-        
-        while (!match) {
+        while (current == null) {
             // Need all and term iterators present to do matching
             if (requiredAndTerms == andTerms.size() && requiredAndTerms > 0) {
                 SkippableIterator<DocumentOccurence> head = andTerms.peek();
@@ -107,7 +104,7 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
                 return false;
             }
 
-            if (orTerms.size() > 0) {  
+            if (orTerms.size() > 0) {
                 SkippableIterator<DocumentOccurence> head = orTerms.peek();
                 if (qr == null) {
                     qr = new QueryResult(head.getCurrent().getDocumentId());
@@ -157,21 +154,19 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
             }
 
             if (qr != null) {
-                match = true;
                 current = qr;
-                qr = null;
+                current.setStatisticsEntry(statistics.getDocumentStatistics(current.getDocumentId()));
             }
 
-            if (match == false && orTerms.isEmpty() && andTerms.isEmpty()) {
-                return match;
+            if (current == null && orTerms.isEmpty() && andTerms.isEmpty()) {
+                return false;
             }
 
         }
-        return match;
+        return true;
     }
 
     private void skipPastCurrent() {
-
         for (SkippableIterator<DocumentOccurence> si : IteratorUtils.chainedIterable(andTerms, orTerms, nandTerms)) {
             si.skipPast(currentDocument);
         }
@@ -282,9 +277,5 @@ public class Matcher implements QueryProcessingComponent, CachedIterator<QueryRe
             }
         }
         return true;
-    }
-
-    public QueryResult getCurrent() {
-        return next();
     }
 }
