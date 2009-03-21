@@ -10,6 +10,7 @@ import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -148,7 +149,7 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
      * @return The average document size in bytes
      */
     public long getAvgSize() {
-        return getTotalNumberOfDocuments() != 0 ? getTotalSize() / getTotalNumberOfDocuments() : 0;
+        return getTotalNumberOfDocuments() == 0 ? 0 : getTotalSize() / getTotalNumberOfDocuments();
     }
 
     void registerDocuemntIndexed(long documentId, String uri, InvertedDocumentInfo documentInfo) throws URISyntaxException {
@@ -164,10 +165,16 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
                         docUri));
     }
 
-    void updateGlobalStatistics(StaticInformationEntry delta) {
+    void updateGlobalStatistics(StaticInformationEntry delta, Map<Long, Float> tfIdfAccumulator) {
         infoIndex.registerDocumentsIndexed(
                 delta.getTotalNumberOfDocuments(),
                 delta.getTotalDocumentLength(),
                 delta.getTotalNumberOfTokens());
+        for (Map.Entry<Long, Float> docWeight : tfIdfAccumulator.entrySet()) {
+            DocumentIdEntry idEntry = new DocumentIdEntry(docWeight.getKey());
+            DocumentStatisticsEntry entry = statistics.get(idEntry);
+            entry.setTfIdfDocumentWeight(docWeight.getValue());
+            // statistics.put(idEntry, entry); updated reference no need 
+        }
     }
 }

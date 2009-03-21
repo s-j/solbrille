@@ -70,10 +70,13 @@ public class DiskInvertedList implements Index, InvertedList {
         this.indexPhase.set(indexPhase);
     }
 
-    public TermIterator lookupTerm(DictionaryTerm term, InvertedListPointer pointer) throws IOException, InterruptedException {
-        return reader.iterateTerm(term, pointer);
+    @Override
+    public Pair<Iterator<DocumentOccurence>, Long> lookupTerm(DictionaryTerm term, InvertedListPointer pointer) throws IOException, InterruptedException {
+        TermIterator iter = reader.iterateTerm(term, pointer);
+        return new Pair<Iterator<DocumentOccurence>, Long>(iter, iter.getNumberOfDocuments());
     }
 
+    @Override
     public Iterator<Pair<DictionaryTerm, InvertedListPointer>> getTermIterator() throws IOException, InterruptedException {
         return reader.getFileIterator();
     }
@@ -82,6 +85,7 @@ public class DiskInvertedList implements Index, InvertedList {
      * Gets a inverted list builder which overwrites this file.
      *
      * @return Inverted list builder.
+     * @throws java.io.IOException
      */
     InvertedListBuilder getOverwriteBuilder() throws IOException, InterruptedException {
         return new InvertedListBuilder(bufferPool, fileNumber, blockOffset + 1);

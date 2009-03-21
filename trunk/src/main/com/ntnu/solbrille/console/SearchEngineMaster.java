@@ -24,7 +24,6 @@ import com.ntnu.solbrille.query.matching.Matcher;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
 import com.ntnu.solbrille.query.processing.QueryProcessor;
 import com.ntnu.solbrille.query.scoring.CosineScorer;
-import com.ntnu.solbrille.query.scoring.OkapiScorer;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
 import com.ntnu.solbrille.query.scoring.Scorer;
 import com.ntnu.solbrille.query.scoring.SingleScoreCombiner;
@@ -149,6 +148,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         }
     }
 
+    @Override
     public void start() {
         if (!isRunning()) {
             pool.start();
@@ -162,7 +162,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             Scorer cosinescorer = new CosineScorer(statisticIndex, occurenceIndex);
             //ScoreCombiner scm = new SingleScoreCombiner(okapiscorer);
             ScoreCombiner scm = new SingleScoreCombiner(cosinescorer);
-            
+
             Filters fs = new Filters();
             Filter f = new NonNegativeFilter();
             fs.addFilter(f);
@@ -176,6 +176,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         }
     }
 
+    @Override
     public void stop() {
         if (isRunning()) {
             System.out.println("Stopping master!");
