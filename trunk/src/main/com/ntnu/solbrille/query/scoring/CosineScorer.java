@@ -35,27 +35,20 @@ public class CosineScorer implements Scorer{
 			tmptd = result.getStatisticsEntry().getMostFrequentTerm().getSecond();
 			tmptq = query.getQueryOccurenceCount(term);
 			if (maxtq < tmptq) maxtq = tmptq;
-			if (maxtd < tmptd) maxtd = tmptd;//FIXM bugbug: det skal v¾re max for alle ord i orgboken, ikke bare de som er med i sp¿rringen
-		}
+			if (maxtd < tmptd) maxtd = tmptd;
+        }
 		
 		double sumwtdq = 0.0;
-		double sumwtq = 0.0;
-		double sumwtd = 0.0;
 		for (DictionaryTerm term : result.getTerms() ) {
 			float tfid =  ((float)result.getOccurences(term).getPositionList().size()) / maxtd;
-			long fq =  query.getQueryOccurenceCount(term);		//FIXME - number of occurrences in the query
+			long fq =  query.getQueryOccurenceCount(term);
 			long df = query.getDocumentCount(term);
 			double idf =  Math.log(((float)N)/df);
 			double wtd = tfid * idf;
 			double wtq = (0.5 + (0.5*fq)/maxtq)* idf;
 			sumwtdq += wtq * wtd;
-			sumwtq += wtq * wtq;
-			sumwtd += wtd * wtd;
-			System.out.println(term + " " + tfid + "log(" + N +"/" + df + ")" );
 		}
-		System.out.println(sumwtdq+ " "+Math.sqrt(sumwtd));
-		float res = (float) (sumwtdq / ( Math.sqrt(sumwtd)));
-		//System.out.println(sumwtq);
-		return res;	
+		float res = (float) (sumwtdq/result.getStatisticsEntry().getTfIdfDocumentWeight());
+		return res;
 	}
 }
