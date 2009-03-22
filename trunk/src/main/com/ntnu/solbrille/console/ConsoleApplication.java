@@ -11,11 +11,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
-import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.net.URI;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
