@@ -32,6 +32,7 @@ public class CosineScorer implements Scorer{
 		long maxtq = 0, tmptq;
 		long maxtd = 0, tmptd;
 		for (DictionaryTerm term : result.getTerms() ) {
+            if (query.getQueryOccurences(term).get(0).getSecond() == QueryRequest.Modifier.PNAND) continue; //hack
 			tmptd = result.getStatisticsEntry().getMostFrequentTerm().getSecond();
 			tmptq = query.getQueryOccurenceCount(term);
 			if (maxtq < tmptq) maxtq = tmptq;
@@ -40,6 +41,7 @@ public class CosineScorer implements Scorer{
 		
 		double sumwtdq = 0.0;
 		for (DictionaryTerm term : result.getTerms() ) {
+            if (query.getQueryOccurences(term).get(0).getSecond() == QueryRequest.Modifier.PNAND) continue; //hack
 			float tfid =  ((float)result.getOccurences(term).getPositionList().size()) / maxtd;
 			long fq =  query.getQueryOccurenceCount(term);
 			long df = query.getDocumentCount(term);

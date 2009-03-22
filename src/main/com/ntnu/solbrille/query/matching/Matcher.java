@@ -184,6 +184,9 @@ public class Matcher implements QueryProcessingComponent {
                     if (mod == Modifier.AND && occ.getSecond() == Modifier.NAND) {
                         mod = occ.getSecond();
                     }
+                    if (mod == Modifier.PNAND){//an ugly hack by Simon
+                        mod = Modifier.OR;
+                    }
                 }
                 LookupResult result = index.lookup(dt);
                 SkippableIterator<DocumentOccurence> si = result.getIterator();

@@ -10,6 +10,7 @@ import org.tartarus.snowball.ext.porterStemmer;
 
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.query.QueryRequest;
+import com.ntnu.solbrille.query.QueryTermOccurence;
 import com.ntnu.solbrille.query.QueryRequest.Modifier;
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
@@ -111,8 +112,9 @@ public class QueryPreprocessor {
             for (String last : processed) {
                 DictionaryTerm lt = new DictionaryTerm(last);
                 if (phrase){
-                    System.out.println("Found term: " + lt + " : " + pos + " : " + Modifier.OR);
-                    request.addTermOccurence(lt, pos, Modifier.OR); //matcher should not care, phrase filter will take care of it
+                    Modifier modcurmod = (curmod == Modifier.NAND) ? Modifier.PNAND : curmod;
+                    System.out.println("Found term: " + lt + " : " + pos + " : " + modcurmod);
+                    request.addTermOccurence(lt, pos, modcurmod); //matcher should not care, phrase filter will take care of it
                 	currphrase.add(lt);
                 	skiplast = true;
                 } else {
@@ -123,8 +125,25 @@ public class QueryPreprocessor {
                 pos++;
 			}
         }
+        fixPNANDS(request);
 		return request;
 	}
+
+    // an ugly hack to remove conflicts between AND/OR/NAND and PNAND
+    public void fixPNANDS(QueryRequest request){
+        for (DictionaryTerm term :request.getTerms()){
+            QueryTermOccurence occ = request.getQueryOccurences(term);
+
+            boolean hasPNAND = false;
+            boolean hasOther = false;
+            while (occ.hasNext()){
+                Modifier flag = occ.next().getSecond();
+                if (flag == Modifier.PNAND) hasPNAND = true;
+                else hasOther = true;
+            }
+            if (hasPNAND && hasOther) occ.removeMarked(Modifier.PNAND.ordinal());
+        }
+    }
 
 	public static void main(String args[]){
 		String test = " lazy, dog +jump over -quick +\"hello dolly\" -foxy moo +bar +--kaa-boom-pang! +moo-cow";

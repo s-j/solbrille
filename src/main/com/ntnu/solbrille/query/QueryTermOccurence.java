@@ -43,4 +43,22 @@ public class QueryTermOccurence implements Iterator<Pair<Integer, Modifier>>{
 		curr = 0;
 	}
 
+    public void removeMarked(int flag){
+        IntArray newpos = new IntArray();
+        IntArray newflags = new IntArray();
+        for (int i=0; i<pos.size(); i++){
+            if (flags.get(i) != flag){
+                newflags.add(flags.get(i));
+                newpos.add(pos.get(i));
+            }
+        }
+        pos = newpos;
+        flags = newflags;
+        reset();
+    }
+
+    public Pair<Integer, Modifier> get(int i){
+        Pair<Integer, Modifier> ret = new Pair<Integer, Modifier>(pos.get(i), Modifier.values()[flags.get(i)]);
+		return ret;
+    }
 }

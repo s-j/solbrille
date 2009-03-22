@@ -2,6 +2,7 @@ package com.ntnu.solbrille.query.filtering;
 
 import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.QueryRequest;
+import com.ntnu.solbrille.query.QueryTermOccurence;
 import com.ntnu.solbrille.query.QueryRequest.Modifier;
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
@@ -26,7 +27,6 @@ public class PhraseFilter implements Filter{
 
     @Override
     public boolean filter(QueryResult result) {
-        System.out.println("dung!");
         for (Pair<Modifier, ArrayList<DictionaryTerm>> phrase : query.getPhrases()){
             Modifier mod = phrase.getFirst();
             ArrayList<DictionaryTerm> terms = phrase.getSecond();
@@ -49,9 +49,10 @@ public class PhraseFilter implements Filter{
               lists.add(pos);
               ptrs[i++] = 0;
             }
-
+            ptrs[0]=-1;
             while(!end && !occurs){
-               if (ptrs[0] > lists.get(0).size()){
+                ptrs[0]++;
+                if (ptrs[0] > lists.get(0).size()){
                    end = true;
                    break;
                }
@@ -62,6 +63,7 @@ public class PhraseFilter implements Filter{
                    int currj = lists.get(j).get(ptrs[j]);
 
                    while (currj < curr + j){
+                       ptrs[j]++;
                        if (ptrs[j] >= lists.get(j).size()){
                            end = true;
                            endround = true;
@@ -81,6 +83,13 @@ public class PhraseFilter implements Filter{
             if ((mod == Modifier.AND && !occurs) || (mod == Modifier.NAND && occurs)) return false;
 
         }
-        return true;
+
+        //an ugly hack
+        boolean pass=false;
+        for (DictionaryTerm term: result.getTerms()){
+            Modifier mod = query.getQueryOccurences(term).get(0).getSecond();
+            if (mod != Modifier.PNAND) return true;
+        }
+        return false;
     }
 }
