@@ -9,6 +9,8 @@ import junit.framework.TestCase;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -106,7 +108,7 @@ public class ContentIndexTest extends TestCase {
             {}
     };
 
-    public void testContentIndex() throws IOException, InterruptedException {
+    public void testContentIndex() throws IOException, InterruptedException, URISyntaxException {
         BufferPool pool = new BufferPool(10, 1024); // realy small buffers just to be naughty :P
         pool.start();
 
@@ -130,8 +132,8 @@ public class ContentIndexTest extends TestCase {
             for (int i = 0; i < documents.length; i++) {
                 tokenized[i] = Arrays.asList(documents[i].split(" "));
                 Iterator<String> actual = tokenized[i].iterator();
-                builder.addDocument((long) (i + 1), tokenized[i]);
-                ContentIndexDataFileIterator lookup = contentIndex.getContent(i + 1, 0, Integer.MAX_VALUE);
+                builder.addDocument(new URI("doc/" + i), tokenized[i]);
+                ContentIndexDataFileIterator lookup = contentIndex.getContent(new URI("doc/" + i), 0, Integer.MAX_VALUE);
                 while (actual.hasNext()) {
                     assertTrue(lookup.hasNext());
                     String fromIndex = lookup.next();
@@ -145,7 +147,7 @@ public class ContentIndexTest extends TestCase {
             int i = 0;
             for (int[][] tests : ranges) {
                 for (int[] test : tests) {
-                    ContentIndexDataFileIterator lookup = contentIndex.getContent(i + 1, test[0], test[1]);
+                    ContentIndexDataFileIterator lookup = contentIndex.getContent(new URI("doc/" + i), test[0], test[1]);
                     List<String> actualData = tokenized[i].subList(test[0], Math.min(tokenized[i].size(), test[0] + test[1]));
                     Iterator<String> actual = actualData.iterator();
                     while (lookup.hasNext() && actual.hasNext()) {

@@ -2,10 +2,11 @@ package com.ntnu.solbrille.index.content;
 
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.index.BasicNavigableKeyValueIndex;
-import com.ntnu.solbrille.index.document.DocumentIdEntry;
+import com.ntnu.solbrille.index.document.DocumentUriEntry;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 
 import java.io.IOException;
+import java.net.URI;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -14,9 +15,9 @@ import java.io.IOException;
 public class ContentIndex extends AbstractLifecycleComponent {
 
     private final ContentIndexDataFile dataFile = new ContentIndexDataFile();
-    private final BasicNavigableKeyValueIndex<DocumentIdEntry, ContentIndexDataFilePointer> contentIndex
-            = new BasicNavigableKeyValueIndex<DocumentIdEntry, ContentIndexDataFilePointer>(
-            new DocumentIdEntry.DocumentIdEntryDescriptor(),
+    private final BasicNavigableKeyValueIndex<DocumentUriEntry, ContentIndexDataFilePointer> contentIndex
+            = new BasicNavigableKeyValueIndex<DocumentUriEntry, ContentIndexDataFilePointer>(
+            new DocumentUriEntry.DocumentUriEntryDescriptor(),
             new ContentIndexDataFilePointer.ContentIndexDataFilePointerDescriptor()
     );
 
@@ -30,9 +31,9 @@ public class ContentIndex extends AbstractLifecycleComponent {
         this.contentDataFileNumber = contentDataFileNumber;
     }
 
-    public ContentIndexDataFileIterator getContent(long documentId, long offset, int length)
+    public ContentIndexDataFileIterator getContent(URI uri, long offset, int length)
             throws IOException, InterruptedException {
-        ContentIndexDataFilePointer pointer = contentIndex.get(new DocumentIdEntry(documentId));
+        ContentIndexDataFilePointer pointer = contentIndex.get(new DocumentUriEntry(uri));
         if (pointer != null) {
             return new ContentIndexDataFileIterator(contentDataFileNumber, pool, pointer, offset, length);
         }
@@ -74,8 +75,8 @@ public class ContentIndex extends AbstractLifecycleComponent {
         setIsRunning(false);
     }
 
-    void addDocument(long documentId, Iterable<String> content) throws IOException, InterruptedException {
+    void addDocument(URI uri, Iterable<String> content) throws IOException, InterruptedException {
         ContentIndexDataFilePointer pointer = dataFile.writeContent(content);
-        contentIndex.put(new DocumentIdEntry(documentId), pointer);
+        contentIndex.put(new DocumentUriEntry(uri), pointer);
     }
 }

@@ -31,9 +31,13 @@ public class IndexerOutput implements FeederOutput {
         try {
             String content = document.getField("content").getValue();
             String uri = document.getField("uri").getValue();
-            long documentId = Long.parseLong(document.getField("documentId").getValue());
-            LOG.info("Storing document: " + documentId + " in index.");
-            indexBuilder.addDocument(documentId, new URI(uri), content);
+            if (statisticIndex.getDocumentIdFor(new URI(uri)) < 0) {
+                long documentId = statisticIndex.getNextDocumentId();
+                indexBuilder.addDocument(documentId, new URI(uri), content);
+            } else {
+                LOG.info("Dumplacte document: " + uri);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);

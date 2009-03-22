@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -85,7 +86,7 @@ public class ConsoleApplication {
                 }
                 System.out.println("Document info: " + r.getStatisticsEntry());
                 System.out.println("Sniplets: " + r.getBestWindow());
-                System.out.println(master.getSniplet(r.getDocumentId(), r.getBestWindow().getFirst(), r.getBestWindow().getSecond()));
+                System.out.println(master.getSniplet(r.getStatisticsEntry().getURI(), r.getBestWindow().getFirst(), r.getBestWindow().getSecond()));
                 System.out.println("---------");
             }
         }
@@ -154,7 +155,13 @@ public class ConsoleApplication {
 
         @Override
         void execute(String argument) throws Exception {
-            System.out.println(master.getSniplet(Long.parseLong(argument), 0, Integer.MAX_VALUE));
+            try {
+                long docId = Long.parseLong(argument);
+                System.out.println(master.getSniplet(master.lookupStatistics(docId).getURI(), 0, Integer.MAX_VALUE));
+            }
+            catch (NumberFormatException e) {
+                System.out.println(master.getSniplet(new URI(argument), 0, Integer.MAX_VALUE));
+            }
         }
 
     }
