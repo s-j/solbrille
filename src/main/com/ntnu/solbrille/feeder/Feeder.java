@@ -36,9 +36,7 @@ class CallableDoc implements Callable<Struct> {
 
     public Struct call() throws Exception {
         for (DocumentProcessor processor : documentProcessors) {
-            if (!processor.process(struct)) {
-                return null; // short circuit
-            }
+            processor.process(struct); 
         }
         return struct;
     }
@@ -95,8 +93,11 @@ public class Feeder {
                     try {
                         Future<Struct> fStruct = docCompService.take();
                         Struct struct = fStruct.get();
-                        if (struct != null) {
-                            outputExecutor.execute(new RunnableOutput(struct, outputs));
+                        //if (struct != null) {
+                        //    outputExecutor.execute(new RunnableOutput(struct, outputs));
+                        //}
+                        for (FeederOutput output : outputs) {
+                            output.put(struct);
                         }
                     } catch (InterruptedException e) {
                         interrupted = true;
@@ -130,7 +131,7 @@ public class Feeder {
     public void feed(URI uri) {
         //When feeding only the url, it is assumed that a document processor will fetch the content
         Struct document = new Struct();
-        document.setField("uri", uri.toString());
+        document.setField("uri", uri);
         feed(document);
     }
 

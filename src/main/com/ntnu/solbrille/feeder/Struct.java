@@ -10,14 +10,14 @@ import java.util.*;
  */
 public class Struct {
 
-    String value;
+    Object value;
     private Map<String, List<Struct>> structs;
 
     public Struct() {
         this.value = null;
     }
     
-    public Struct(String value) {
+    public Struct(Object value) {
         this.value = value;
     }
 
@@ -29,14 +29,13 @@ public class Struct {
     }
 
 
-    public void addField(String key,String value) {
+    public void addField(String key,Object value) {
         addField(key, new Struct(value));
     }
 
 
-    public void setField(String key,String value) {
+    public void setField(String key,Object value) {
         setField(key,new Struct(value));
-
     }
 
     public void setField(String key,Struct struct) {
@@ -49,6 +48,10 @@ public class Struct {
     public void setFields(String key,List<Struct> list) {
         //TODO: Should clone
         getStructs().put(key,list);
+    }
+
+    public void clearField(String key) {
+        getStructs().remove(key);
     }
 
     public Struct getField(String key) {
@@ -70,13 +73,13 @@ public class Struct {
         return list;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 
     public void encodeXml(StringBuilder sb) {
         if(value != null) {
-            sb.append(Translate.encode(value));
+            sb.append(Translate.encode(value.toString()));
         }
         
         if(getStructs() != null) {
