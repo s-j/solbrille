@@ -4,8 +4,13 @@ import com.ntnu.solbrille.TimeCollection;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.feeder.Feeder;
 import com.ntnu.solbrille.feeder.Struct;
-import com.ntnu.solbrille.feeder.processors.*;
-import com.ntnu.solbrille.index.DocumentIdGenerator;
+import com.ntnu.solbrille.feeder.processors.ContentRetriever;
+import com.ntnu.solbrille.feeder.processors.HtmlToText;
+import com.ntnu.solbrille.feeder.processors.LinkExtractor;
+import com.ntnu.solbrille.feeder.processors.PunctuationRemover;
+import com.ntnu.solbrille.feeder.processors.Stemmer;
+import com.ntnu.solbrille.feeder.processors.Termizer;
+import com.ntnu.solbrille.feeder.processors.Tokenizer;
 import com.ntnu.solbrille.index.IndexerOutput;
 import com.ntnu.solbrille.index.content.ContentIndex;
 import com.ntnu.solbrille.index.content.ContentIndexBuilder;
@@ -37,10 +42,10 @@ import com.ntnu.solbrille.utils.LifecycleComponent;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.concurrent.atomic.AtomicLong;
-import java.nio.channels.FileChannel;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.FileChannel;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -54,13 +59,13 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
                 IndexerOutput output,
                 DocumentStatisticsIndex statistics,
                 ContentIndexOutput contentOutput) {
-            processors.add(new ContentRetriever("uri","content"));
-            processors.add(new LinkExtractor("content","link"));
-            processors.add(new HtmlToText("content","cleanedContent"));
-            processors.add(new Tokenizer("cleanedContent","tokens"));
-            processors.add(new PunctuationRemover("tokens","cleanedTokens"));
-            processors.add(new Stemmer("cleanedTokens","cleanedTokens"));
-            processors.add(new Termizer("cleanedTokens","terms"));
+            processors.add(new ContentRetriever("uri", "content"));
+            processors.add(new LinkExtractor("content", "link"));
+            processors.add(new HtmlToText("content", "cleanedContent"));
+            processors.add(new Tokenizer("cleanedContent", "tokens"));
+            processors.add(new PunctuationRemover("tokens", "cleanedTokens"));
+            processors.add(new Stemmer("cleanedTokens", "cleanedTokens"));
+            processors.add(new Termizer("cleanedTokens", "terms"));
             outputs.add(output);
             outputs.add(contentOutput);
         }
@@ -246,7 +251,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         }
     }
 
-    public static SearchEngineMaster createMaster() throws IOException{
+    public static SearchEngineMaster createMaster() throws IOException {
         BufferPool indexPool = new BufferPool(100, 1024);
         BufferPool contentPool = new BufferPool(50, 1024);
 
@@ -306,16 +311,13 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         FileChannel contentIndexDataChannel = new RandomAccessFile(contentIndexDataFile, "rw").getChannel();
         int contentIndexDataFileNumber = contentPool.registerFile(contentIndexDataChannel, contentIndexDataFile);
 
-        return  new SearchEngineMaster(indexPool, contentPool,
+        return new SearchEngineMaster(indexPool, contentPool,
                 dictionaryFileNumber, inv1FileNumber, inv2FileNumber,
                 sysinfoFileNumber, idMappingNumber, statisticsFileNumber,
                 contentIndexFileNumber, contentIndexDataFileNumber);
 
 
     }
-
-
-
 
 
 }
