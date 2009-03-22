@@ -23,7 +23,10 @@ public class DocumentStatisticsEntry implements IndexEntry {
         public DocumentStatisticsEntry readIndexEntry(ByteBuffer buffer) {
             DocumentUriEntry uri = URI_DESC.readIndexEntry(buffer);
             Pair<DictionaryTerm, Long> mostFrequent = new Pair<DictionaryTerm, Long>(TERM_DESC.readIndexEntry(buffer), buffer.getLong());
-            return new DocumentStatisticsEntry(buffer.getLong(), buffer.getLong(), buffer.getLong(), mostFrequent, uri.getDocumentUri());
+            DocumentStatisticsEntry statisticsEntry = new DocumentStatisticsEntry(
+                    buffer.getLong(), buffer.getLong(), buffer.getLong(), mostFrequent, uri.getDocumentUri());
+            statisticsEntry.setTfIdfDocumentWeight(buffer.getFloat());
+            return statisticsEntry;
         }
     }
 
@@ -37,7 +40,12 @@ public class DocumentStatisticsEntry implements IndexEntry {
 
     private Pair<DictionaryTerm, Long> mostFrequentTerm;
 
-    public DocumentStatisticsEntry(long documentLength, long numberOfTokens, long uniqueTerms, Pair<DictionaryTerm, Long> mostFrequentTerm, URI docUri) {
+    public DocumentStatisticsEntry(
+            long documentLength,
+            long numberOfTokens,
+            long uniqueTerms,
+            Pair<DictionaryTerm, Long> mostFrequentTerm,
+            URI docUri) {
         this.documentLength = documentLength;
         this.numberOfTokens = numberOfTokens;
         this.uniqueTerms = uniqueTerms;
@@ -112,10 +120,10 @@ public class DocumentStatisticsEntry implements IndexEntry {
     @Override
     public String toString() {
         return "(uri: " + uriEntry.getDocumentUri()
-                + ", length: " + getDocumentLength()
+                + ", length: " + documentLength
                 + ", TF*IDF weight: " + getTfIdfDocumentWeight()
-                + ", Unique terms: " + getUniqueTerms()
-                + ", Number of tokens: " + getNumberOfTokens()
-                + ", Most frequent term: " + getMostFrequentTerm() + " )";
+                + ", Unique terms: " + uniqueTerms
+                + ", Number of tokens: " + numberOfTokens
+                + ", Most frequent term: " + mostFrequentTerm + " )";
     }
 }
