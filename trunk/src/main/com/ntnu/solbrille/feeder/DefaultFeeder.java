@@ -11,9 +11,11 @@ public class DefaultFeeder extends Feeder{
     public DefaultFeeder() {
         processors.add(new ContentRetriever("uri","content"));
         processors.add(new LinkExtractor("content","link"));
-        processors.add(new TextToHtml("content","content"));
-        processors.add(new PunctuationRemover("content","content"));
-        processors.add(new Stemmer("content","content"));
+        processors.add(new HtmlToText("content","cleanedContent"));
+        processors.add(new Tokenizer("cleanedContent","tokens"));
+        processors.add(new PunctuationRemover("tokens","cleanedTokens"));
+        processors.add(new Stemmer("cleanedTokens","cleanedTokens"));
+        processors.add(new Termizer("cleanedTokens","terms"));
         outputs.add(new StreamOutput());
     }
 }

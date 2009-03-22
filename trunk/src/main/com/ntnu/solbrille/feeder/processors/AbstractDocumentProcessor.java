@@ -6,27 +6,21 @@ package com.ntnu.solbrille.feeder.processors;
  */
 public abstract class AbstractDocumentProcessor implements DocumentProcessor {
 
-    private String inputField;
-    private String outputField;
+    final private String inputField;
+    final private String outputField;
 
     public AbstractDocumentProcessor(String inputField,String outputField) {
-        this.setInputField(inputField);
-        this.setOutputField(outputField);
+        this.inputField  = inputField;
+        this.outputField = outputField;
     }
 
     public String getInputField() {
         return inputField;
     }
 
-    public void setInputField(String inputField) {
-        this.inputField = inputField;
-    }
-
     public String getOutputField() {
         return outputField;
     }
 
-    public void setOutputField(String outputField) {
-        this.outputField = outputField;
-    }
+    
 }

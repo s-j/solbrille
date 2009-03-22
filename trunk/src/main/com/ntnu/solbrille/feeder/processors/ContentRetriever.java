@@ -28,9 +28,9 @@ public class ContentRetriever extends AbstractDocumentProcessor {
     }
 
     @Override
-    public boolean process(Struct document) throws URISyntaxException, IOException {
+    public void process(Struct document) throws URISyntaxException, IOException {
         if (overwrite || document.getField(getOutputField()) == null) {
-            URI uri = new URI(document.getField(getInputField()).getValue());
+            URI uri = (URI)document.getField(getInputField()).getValue();
             Object o = uri.toURL().getContent(new Class[]{InputStream.class});
             if (o == null) {
                 LOG.error("Not able to retrive inputstream for uri: " + uri.toString());
@@ -44,7 +44,6 @@ public class ContentRetriever extends AbstractDocumentProcessor {
 
             document.setField(getOutputField(), sb.toString());
         }
-        return true;
     }
 
     /**
