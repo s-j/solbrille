@@ -31,10 +31,15 @@ public class IntArrayTest extends TestCase {
         ia.remove(5);
         ia.remove(5);
         assertEquals(1,(int)ia.get(0));
+    }
 
+    public void testBugFromSimon() {
+        IntArray ia = new IntArray(0);
+        ia.add(1);
+        ia.add(2);
+        ia.remove(1);
+        ia.remove(0);
 
-
-
-
+        
     }
 }
