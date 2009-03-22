@@ -92,7 +92,7 @@ public class IntArray extends AbstractList<Integer>
         if(nsize < currarr.length) {
             int ncap = (int)((size-i)*factor);
             int ncurrarr[] = new int[ncap];
-            System.arraycopy(currarr,0,ncurrarr,0,currarr.length);
+            System.arraycopy(currarr,0,ncurrarr,0,size-i);
             currarr = ncurrarr;
         }
         size -= i;
