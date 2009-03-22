@@ -3,6 +3,7 @@ package com.ntnu.solbrille.index.content;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 
 import java.io.IOException;
+import java.net.URI;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -16,9 +17,9 @@ public class ContentIndexBuilder extends AbstractLifecycleComponent {
         this.index = index;
     }
 
-    public void addDocument(long documentId, Iterable<String> content) throws IOException, InterruptedException {
+    public void addDocument(URI uri, Iterable<String> content) throws IOException, InterruptedException {
         // TODO: allow overwrites etc..
-        this.index.addDocument(documentId, content);
+        this.index.addDocument(uri, content);
     }
 
     @Override

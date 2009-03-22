@@ -41,6 +41,8 @@ import com.ntnu.solbrille.utils.LifecycleComponent;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -148,8 +150,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         return statisticIndex.getDocumentStatistics(documentId);
     }
 
-    public String getSniplet(long documentId, long start, int length) throws IOException, InterruptedException {
-        ContentIndexDataFileIterator sniplet = contentIndex.getContent(documentId, start, length);
+    public String getSniplet(URI uri, long start, int length) throws IOException, InterruptedException, URISyntaxException {
+        ContentIndexDataFileIterator sniplet = contentIndex.getContent(uri, start, length);
         if (sniplet == null) {
             return "";
         }
