@@ -6,9 +6,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.net.URI;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -27,15 +26,13 @@ public class ContentIndexOutput implements FeederOutput {
     @Override
     public void put(Struct document) {
         try {
-            String content = document.getField("original").toString();
-            contentIndexBuilder.addDocument(
-                    new URI(document.getField("uri").getValue()),
-                    Arrays.asList(content.split("\\s")));
+            URI uri = (URI) document.getField("uri").getValue();
+            LOG.info("Storing content of document: " + uri + " in content index.");
+            String content = document.getField("token").toString();
+            contentIndexBuilder.addDocument(uri, Arrays.asList(content.split("\\s")));
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
             e.printStackTrace();
         }
     }

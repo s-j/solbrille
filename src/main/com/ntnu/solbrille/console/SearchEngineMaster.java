@@ -4,12 +4,7 @@ import com.ntnu.solbrille.TimeCollection;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.feeder.Feeder;
 import com.ntnu.solbrille.feeder.Struct;
-import com.ntnu.solbrille.feeder.processors.ContentRetriever;
-import com.ntnu.solbrille.feeder.processors.CopyProcessor;
-import com.ntnu.solbrille.feeder.processors.LinkExtractor;
-import com.ntnu.solbrille.feeder.processors.PunctuationRemover;
-import com.ntnu.solbrille.feeder.processors.Stemmer;
-import com.ntnu.solbrille.feeder.processors.TextToHtml;
+import com.ntnu.solbrille.feeder.processors.*;
 import com.ntnu.solbrille.index.DocumentIdGenerator;
 import com.ntnu.solbrille.index.IndexerOutput;
 import com.ntnu.solbrille.index.content.ContentIndex;
@@ -41,9 +36,11 @@ import com.ntnu.solbrille.utils.LifecycleComponent;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.concurrent.atomic.AtomicLong;
+import java.nio.channels.FileChannel;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -57,13 +54,13 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
                 IndexerOutput output,
                 DocumentStatisticsIndex statistics,
                 ContentIndexOutput contentOutput) {
-            processors.add(new DocumentIdGenerator("uri", "documentId", statistics));
-            processors.add(new ContentRetriever("uri", "content"));
-            processors.add(new LinkExtractor("content", "link"));
-            processors.add(new TextToHtml("content", "content"));
-            processors.add(new CopyProcessor("content", "original"));
-            processors.add(new PunctuationRemover("content", "content"));
-            processors.add(new Stemmer("content", "content"));
+            processors.add(new ContentRetriever("uri","content"));
+            processors.add(new LinkExtractor("content","link"));
+            processors.add(new HtmlToText("content","cleanedContent"));
+            processors.add(new Tokenizer("cleanedContent","tokens"));
+            processors.add(new PunctuationRemover("tokens","cleanedTokens"));
+            processors.add(new Stemmer("cleanedTokens","cleanedTokens"));
+            processors.add(new Termizer("cleanedTokens","terms"));
             outputs.add(output);
             outputs.add(contentOutput);
         }
@@ -127,6 +124,10 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         feeder.feed(doc);
     }
 
+    public void feed(Struct struct) {
+        feeder.feed(struct);
+    }
+
     public void feedTime(File f) {
         TimeCollection collection = new TimeCollection();
         String[] docs = collection.getTimeCollection(f, Integer.MAX_VALUE);
@@ -171,6 +172,10 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         System.out.println("#Tokens: " + statisticIndex.getTotalNumberOfTokens());
         System.out.println("Total size: " + statisticIndex.getTotalSize());
         System.out.println("----------------");
+    }
+
+    public Iterable<DictionaryTerm> getDict() {
+        return occurenceIndex.getDictionaryTerms();
     }
 
     public void dumpDictionary() {
@@ -240,4 +245,77 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             System.out.println("Master stopped!");
         }
     }
+
+    public static SearchEngineMaster createMaster() throws IOException{
+        BufferPool indexPool = new BufferPool(100, 1024);
+        BufferPool contentPool = new BufferPool(50, 1024);
+
+        File dictionaryFile = new File("dict.bin");
+        if (dictionaryFile.createNewFile()) {
+            System.out.println("Dictionary file created at: " + dictionaryFile.getAbsolutePath());
+        }
+        FileChannel dictionaryChannel = new RandomAccessFile(dictionaryFile, "rw").getChannel();
+        int dictionaryFileNumber = indexPool.registerFile(dictionaryChannel, dictionaryFile);
+
+        File inv1File = new File("inv1.bin");
+        if (inv1File.createNewFile()) {
+            System.out.println("Inverted list 1 created at: " + inv1File.getAbsolutePath());
+        }
+        FileChannel inv1Channel = new RandomAccessFile(inv1File, "rw").getChannel();
+        int inv1FileNumber = indexPool.registerFile(inv1Channel, inv1File);
+
+        File inv2File = new File("inv2.bin");
+        if (inv2File.createNewFile()) {
+            System.out.println("Inverted list 2 created at: " + inv2File.getAbsolutePath());
+        }
+        FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
+        int inv2FileNumber = indexPool.registerFile(inv2Channel, inv2File);
+
+        File sysinfoFile = new File("sysinfo.bin");
+        if (sysinfoFile.createNewFile()) {
+            System.out.println("Sysinfo created at: " + sysinfoFile.getAbsolutePath());
+        }
+        FileChannel sysinfoChannel = new RandomAccessFile(sysinfoFile, "rw").getChannel();
+        int sysinfoFileNumber = indexPool.registerFile(sysinfoChannel, sysinfoFile);
+
+        File idMappingFile = new File("idMapping.bin");
+        if (idMappingFile.createNewFile()) {
+            System.out.println("idMapping file created at: " + idMappingFile.getAbsolutePath());
+        }
+        FileChannel idMappingChannel = new RandomAccessFile(idMappingFile, "rw").getChannel();
+        int idMappingNumber = indexPool.registerFile(idMappingChannel, idMappingFile);
+
+        File statisticsFile = new File("statistics.bin");
+        if (statisticsFile.createNewFile()) {
+            System.out.println("statistics file created at: " + statisticsFile.getAbsolutePath());
+        }
+        FileChannel statisticsChannel = new RandomAccessFile(statisticsFile, "rw").getChannel();
+        int statisticsFileNumber = indexPool.registerFile(statisticsChannel, statisticsFile);
+
+        File contentIndexFile = new File("contentIndex.bin");
+        if (contentIndexFile.createNewFile()) {
+            System.out.println("Content index created at: " + contentIndexFile.getAbsolutePath());
+        }
+        FileChannel contentIndexChannel = new RandomAccessFile(contentIndexFile, "rw").getChannel();
+        int contentIndexFileNumber = contentPool.registerFile(contentIndexChannel, contentIndexFile);
+
+        File contentIndexDataFile = new File("contentIndexData.bin");
+        if (contentIndexDataFile.createNewFile()) {
+            System.out.println("Content index data file created at: " + contentIndexDataFile.getAbsolutePath());
+        }
+        FileChannel contentIndexDataChannel = new RandomAccessFile(contentIndexDataFile, "rw").getChannel();
+        int contentIndexDataFileNumber = contentPool.registerFile(contentIndexDataChannel, contentIndexDataFile);
+
+        return  new SearchEngineMaster(indexPool, contentPool,
+                dictionaryFileNumber, inv1FileNumber, inv2FileNumber,
+                sysinfoFileNumber, idMappingNumber, statisticsFileNumber,
+                contentIndexFileNumber, contentIndexDataFileNumber);
+
+
+    }
+
+
+
+
+
 }

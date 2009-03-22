@@ -3,6 +3,7 @@ package com.ntnu.solbrille.index.content;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.index.BasicNavigableKeyValueIndex;
 import com.ntnu.solbrille.index.document.DocumentUriEntry;
+import com.ntnu.solbrille.index.document.DocumentUriEntry;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 
 import java.io.IOException;
