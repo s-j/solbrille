@@ -34,10 +34,12 @@ public class DiskInvertedList implements Index, InvertedList {
         this.blockOffset = blockOffset;
         this.reader = new InvertedListReader(bufferPool, fileNumber, blockOffset + 1);
         Buffer metaBuffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, blockOffset));
+        metaBuffer.getReadLock().lock();
         try {
             indexPhase.set(metaBuffer.getByteBuffer().getInt());
         }
         finally {
+            metaBuffer.getReadLock().unlock();
             bufferPool.unPinBuffer(metaBuffer);
         }
     }
@@ -48,12 +50,14 @@ public class DiskInvertedList implements Index, InvertedList {
 
     public void writeToFile(BufferPool bufferPool, int fileNumber, long blockOffset, int byteOffset) throws IOException, InterruptedException {
         Buffer metaBuffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, blockOffset));
+        metaBuffer.getWriteLock().lock();
         try {
             int phase = indexPhase.get();
             metaBuffer.getByteBuffer().putInt(phase);
             metaBuffer.setIsDirty(true);
         }
         finally {
+            metaBuffer.getWriteLock().unlock();
             bufferPool.unPinBuffer(metaBuffer);
         }
     }

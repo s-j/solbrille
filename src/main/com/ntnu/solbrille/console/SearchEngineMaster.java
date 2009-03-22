@@ -5,10 +5,17 @@ import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.feeder.Feeder;
 import com.ntnu.solbrille.feeder.Struct;
 import com.ntnu.solbrille.feeder.processors.ContentRetriever;
+import com.ntnu.solbrille.feeder.processors.CopyProcessor;
 import com.ntnu.solbrille.feeder.processors.LinkExtractor;
 import com.ntnu.solbrille.feeder.processors.PunctuationRemover;
 import com.ntnu.solbrille.feeder.processors.Stemmer;
+import com.ntnu.solbrille.feeder.processors.TextToHtml;
+import com.ntnu.solbrille.index.DocumentIdGenerator;
 import com.ntnu.solbrille.index.IndexerOutput;
+import com.ntnu.solbrille.index.content.ContentIndex;
+import com.ntnu.solbrille.index.content.ContentIndexBuilder;
+import com.ntnu.solbrille.index.content.ContentIndexDataFileIterator;
+import com.ntnu.solbrille.index.content.ContentIndexOutput;
 import com.ntnu.solbrille.index.document.DocumentIndexBuilder;
 import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
 import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
@@ -23,6 +30,7 @@ import com.ntnu.solbrille.query.filtering.NonNegativeFilter;
 import com.ntnu.solbrille.query.filtering.PhraseFilter;
 import com.ntnu.solbrille.query.matching.Matcher;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
+import com.ntnu.solbrille.query.processing.DynamicSnipletExtractor;
 import com.ntnu.solbrille.query.processing.QueryProcessor;
 import com.ntnu.solbrille.query.scoring.CosineScorer;
 import com.ntnu.solbrille.query.scoring.ScoreCombiner;
@@ -43,26 +51,37 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
 
     private static final class SearchEngineFeeder extends Feeder {
 
-        public SearchEngineFeeder(IndexerOutput output) {
+        public SearchEngineFeeder(
+                IndexerOutput output,
+                DocumentStatisticsIndex statistics,
+                ContentIndexOutput contentOutput) {
+            processors.add(new DocumentIdGenerator("uri", "documentId", statistics));
             processors.add(new ContentRetriever("uri", "content"));
             processors.add(new LinkExtractor("content", "link"));
-            //processors.add(new TextToHtml("content","content"));
+            processors.add(new TextToHtml("content", "content"));
+            processors.add(new CopyProcessor("content", "original"));
             processors.add(new PunctuationRemover("content", "content"));
             processors.add(new Stemmer("content", "content"));
             outputs.add(output);
+            outputs.add(contentOutput);
         }
 
     }
 
-    private final AtomicLong dummyUriCounter = new AtomicLong();
+    private final AtomicLong dummyUriCounter = new AtomicLong(System.currentTimeMillis());
 
-    private final BufferPool pool;
+    private final BufferPool indexPool;
+    private final BufferPool contentPool;
     private final OccurenceIndex occurenceIndex;
     private final OccurenceIndexBuilder occurenceIndexBuilder;
     private final DocumentStatisticsIndex statisticIndex;
     private final DocumentIndexBuilder statisticIndexBuilder;
 
+    private final ContentIndex contentIndex;
+    private final ContentIndexBuilder contentIndexBuilder;
+
     private final IndexerOutput output;
+    private final ContentIndexOutput contentOutput;
     private final Feeder feeder;
 
     private QueryProcessor queryProcessor;
@@ -71,21 +90,30 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
     private final LifecycleComponent[] components;
 
     public SearchEngineMaster(
-            BufferPool pool,
+            BufferPool indexPool, BufferPool contentPool,
             int dictionaryFileNumber,
             int invertedListFile1, int invertedListFile2,
-            int systemInfoFile, int idMappingFile, int statisticsFile) {
-        this.pool = pool;
-        occurenceIndex = new OccurenceIndex(pool, dictionaryFileNumber, invertedListFile1, invertedListFile2);
-        statisticIndex = new DocumentStatisticsIndex(pool, occurenceIndex, systemInfoFile, idMappingFile, statisticsFile);
+            int systemInfoFile, int idMappingFile, int statisticsFile,
+            int contentIndexFile,
+            int contentIndexDataFile) {
+        this.indexPool = indexPool;
+        this.contentPool = contentPool;
+        occurenceIndex = new OccurenceIndex(indexPool, dictionaryFileNumber, invertedListFile1, invertedListFile2);
+        statisticIndex = new DocumentStatisticsIndex(indexPool, occurenceIndex, systemInfoFile, idMappingFile, statisticsFile);
         statisticIndexBuilder = new DocumentIndexBuilder(statisticIndex);
 
         occurenceIndexBuilder = new OccurenceIndexBuilder(occurenceIndex, statisticIndexBuilder);
 
-        components = new LifecycleComponent[]{occurenceIndex, occurenceIndexBuilder, statisticIndex, statisticIndexBuilder};
+        contentIndex = new ContentIndex(contentPool, contentIndexFile, contentIndexDataFile);
+        contentIndexBuilder = new ContentIndexBuilder(contentIndex);
 
         output = new IndexerOutput(occurenceIndexBuilder, statisticIndex);
-        feeder = new SearchEngineFeeder(output);
+        contentOutput = new ContentIndexOutput(contentIndexBuilder);
+
+        components = new LifecycleComponent[]{
+                occurenceIndex, occurenceIndexBuilder, statisticIndex,
+                statisticIndexBuilder, contentIndex, contentIndexBuilder};
+        feeder = new SearchEngineFeeder(output, statisticIndex, contentOutput);
 
         matcher = new Matcher(occurenceIndex, statisticIndex);
     }
@@ -120,6 +148,20 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         return statisticIndex.getDocumentStatistics(documentId);
     }
 
+    public String getSniplet(long documentId, long start, int length) throws IOException, InterruptedException {
+        ContentIndexDataFileIterator sniplet = contentIndex.getContent(documentId, start, length);
+        if (sniplet == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        while (sniplet.hasNext()) {
+            sb.append(sniplet.next());
+            sb.append(" ");
+        }
+        sniplet.close();
+        return sb.toString();
+    }
+
     public void printStatus() {
         System.out.println("----------------");
         System.out.println("#Terms: " + statisticIndex.getTotalNumberOfDictionaryTerms());
@@ -152,7 +194,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
     @Override
     public void start() {
         if (!isRunning()) {
-            pool.start();
+            indexPool.start();
+            contentPool.start();
             System.out.println("Starting master!");
             for (LifecycleComponent comp : components) {
                 comp.start();
@@ -173,7 +216,10 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             scm.addSource(matcher);
             fs.addSource(scm);
 
-            queryProcessor = new QueryProcessor(fs, new QueryPreprocessor());
+            DynamicSnipletExtractor sniplets = new DynamicSnipletExtractor(60);
+            sniplets.addSource(fs);
+
+            queryProcessor = new QueryProcessor(sniplets, new QueryPreprocessor());
 
             System.out.println("Master started!");
         }
@@ -186,7 +232,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             for (LifecycleComponent comp : components) {
                 comp.stop();
             }
-            pool.stop();
+            indexPool.stop();
+            contentPool.stop();
             setIsRunning(false);
             System.out.println("Master stopped!");
         }

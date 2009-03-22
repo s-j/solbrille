@@ -79,20 +79,26 @@ public class InvertedListReader {
             remainingPositionsInCurrentDocument = currentByteBuffer.getLong();
             nextDocumentBlock = currentByteBuffer.getLong();
             nextDocumentByteOffset = currentByteBuffer.getInt();
-            //try {
-            DocumentOccurence docOcc = new DocumentOccurence(currentDocumentId);
+            try {
+                DocumentOccurence docOcc = new DocumentOccurence(currentDocumentId);
 
-            while (remainingPositionsInCurrentDocument > 0) {
-                docOcc.addPosition(readNextPosition());
+                while (remainingPositionsInCurrentDocument > 0) {
+                    docOcc.addPosition(readNextPosition());
+                }
+                remainingDocumentsInCurrentTerm--;
+                return docOcc;
             }
-            remainingDocumentsInCurrentTerm--;
-            return docOcc;
-            /*}
-            catch (Exception e) {
+            catch (IOException e) {
                 e.printStackTrace();
-                System.exit(0);
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                System.exit(-1);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(-1);
             }
-            return null;*/
+            return null;
         }
 
         public void close() {
@@ -127,6 +133,7 @@ public class InvertedListReader {
          */
         private Pair<DictionaryTerm, InvertedListPointer> getTermAndNextPointer(InvertedListPointer pointer) throws IOException, InterruptedException {
             Buffer buffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, pointer.getBlockOffset()));
+            buffer.getReadLock().lock();
             try {
                 ByteBuffer byteBuffer = buffer.getByteBuffer();
                 byteBuffer.position(pointer.getByteOffset());
@@ -135,6 +142,7 @@ public class InvertedListReader {
                 return new Pair<DictionaryTerm, InvertedListPointer>(term, new InvertedListPointer(byteBuffer.getLong(), byteBuffer.getInt()));
             }
             finally {
+                buffer.getReadLock().unlock();
                 bufferPool.unPinBuffer(buffer);
             }
         }
@@ -197,6 +205,7 @@ public class InvertedListReader {
 
     Pair<InvertedListPointer, Long> getFirstTermPointerAndTermCount() throws IOException, InterruptedException {
         Buffer buffer = bufferPool.pinBuffer(new FileBlockPointer(fileNumber, startBlock));
+        buffer.getReadLock().lock();
         try {
             ByteBuffer byteBuffer = buffer.getByteBuffer();
             byteBuffer.position(Constants.INT_SIZE); // last element start not needed
@@ -206,6 +215,7 @@ public class InvertedListReader {
             return new Pair<InvertedListPointer, Long>(pointer, numberOfTerms);
         }
         finally {
+            buffer.getReadLock().unlock();
             bufferPool.unPinBuffer(buffer);
         }
     }

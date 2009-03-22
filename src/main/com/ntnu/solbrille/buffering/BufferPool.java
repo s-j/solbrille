@@ -2,6 +2,8 @@ package com.ntnu.solbrille.buffering;
 
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 import com.ntnu.solbrille.utils.LookupBlockingFifoQueue;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BufferPool extends AbstractLifecycleComponent {
 
     private static final int FLUSHER_THREAD_PERIOD_MILLI_SECONDS = 200;
+
+    private Log LOG = LogFactory.getLog(this.getClass());
 
     private static final class DeleteMarker {
 
@@ -58,6 +62,7 @@ public class BufferPool extends AbstractLifecycleComponent {
 
         public void run() {
             try {
+                //LOG.info("Flushing buffer pool, pinned buffers: " + (numberOfBuffers - cleanBuffers.size() - dirtyBuffers.size()));
                 Collection<Buffer> dirty = new ArrayList<Buffer>();
                 Collection<DeleteMarker> deleteMarkers = new ArrayList<DeleteMarker>();
                 synchronized (mutex) {
@@ -92,7 +97,7 @@ public class BufferPool extends AbstractLifecycleComponent {
             } catch (Exception e) {
                 System.out.println("Some error occured in the flusher command.");
                 e.printStackTrace();
-                System.exit(0);
+                System.exit(1);
             }
         }
 
@@ -120,8 +125,11 @@ public class BufferPool extends AbstractLifecycleComponent {
     private ScheduledExecutorService flushExecutor;
 
 
+    private final int numberOfBuffers;
+
     public BufferPool(int numberOfBuffers, int bufferSize) {
         this.bufferSize = bufferSize;
+        this.numberOfBuffers = numberOfBuffers;
         cleanBuffers = new LookupBlockingFifoQueue<Buffer>(mutex);
         dirtyBuffers = new LookupBlockingFifoQueue<Buffer>(mutex);
         deleted = new LookupBlockingFifoQueue<DeleteMarker>(mutex);
@@ -178,6 +186,7 @@ public class BufferPool extends AbstractLifecycleComponent {
                 buffers.put(location, buffer);
                 buffer.setBlockPointer(location);
                 buffer.setFileInfo(files.get(location.getFileNumber()));
+                buffer.load();
             } else { // remove the buffer from any list
                 LookupBlockingFifoQueue<Buffer> list = buffer.isDirty() ? dirtyBuffers : cleanBuffers;
                 list.remove(buffer);
@@ -185,7 +194,6 @@ public class BufferPool extends AbstractLifecycleComponent {
         }
         buffer.incrementAndReturnPinnedCount();
         buffer.setIsPinned(true);
-        buffer.load();
         return buffer;
     }
 
