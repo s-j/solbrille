@@ -40,6 +40,8 @@ public class OkapiScorer implements Scorer {
         long dl = entry.getDocumentLength();                         //FIXME - length of the document in bytes
 
         for (DictionaryTerm term : result.getTerms()) {
+            if (query.getQueryOccurences(term).get(0).getSecond() == QueryRequest.Modifier.PNAND) continue;
+
             long f = result.getOccurences(term).getPositionList().size();
             long df = query.getDocumentCount(term);                 //FIXME - number of docs contains a term
             long fq = query.getQueryOccurenceCount(term);        //FIXME - number of occurrences in the query

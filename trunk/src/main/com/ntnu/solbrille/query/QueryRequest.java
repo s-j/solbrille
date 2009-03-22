@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class QueryRequest {
     public static enum Modifier {
-        AND, OR, NAND
+        AND, OR, NAND, PNAND
     }
 
     ;
