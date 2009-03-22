@@ -4,12 +4,13 @@ import com.ntnu.solbrille.feeder.Struct;
 import com.ntnu.solbrille.feeder.outputs.FeederOutput;
 import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.index.occurence.OccurenceIndexBuilder;
+import com.ntnu.solbrille.utils.IntArray;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -29,11 +30,12 @@ public class IndexerOutput implements FeederOutput {
 
     public void put(Struct document) {
         try {
-            String content = document.getField("content").getValue();
-            String uri = document.getField("uri").getValue();
-            if (statisticIndex.getDocumentIdFor(new URI(uri)) < 0) {
+            String rawContent = (String) document.getField("content").getValue();
+            Map<String, IntArray> content = (Map<String, IntArray>) document.getField("terms").getValue();
+            URI uri = (URI) document.getField("uri").getValue();
+            if (statisticIndex.getDocumentIdFor(uri) < 0) {
                 long documentId = statisticIndex.getNextDocumentId();
-                indexBuilder.addDocument(documentId, new URI(uri), content);
+                indexBuilder.addDocument(documentId, uri, rawContent, content);
             } else {
                 LOG.info("Dumplacte document: " + uri);
             }
@@ -42,9 +44,6 @@ public class IndexerOutput implements FeederOutput {
             e.printStackTrace();
             System.exit(-1);
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } catch (URISyntaxException e) {
             e.printStackTrace();
             System.exit(-1);
         }

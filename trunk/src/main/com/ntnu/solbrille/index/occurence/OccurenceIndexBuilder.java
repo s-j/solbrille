@@ -2,6 +2,7 @@ package com.ntnu.solbrille.index.occurence;
 
 import com.ntnu.solbrille.index.document.DocumentIndexBuilder;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
+import com.ntnu.solbrille.utils.IntArray;
 import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.iterators.AbstractWrappingIterator;
 import com.ntnu.solbrille.utils.iterators.AnnotatingIterator;
@@ -52,18 +53,20 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
      * @throws IOException          On IO error
      * @throws InterruptedException If submitting thread were interupted.
      */
-    public void addDocument(long documentId, URI uri, String document) throws IOException, InterruptedException {
-        Map<DictionaryTerm, DocumentOccurence> invertedDocument = invertDocument(documentId, document);
+    public void addDocument(long documentId, URI uri, String rawDocument, Map<String, IntArray> document) throws IOException, InterruptedException {
         synchronized (mutex) {
             IndexPhaseState state = activeIndexPhase.get();
             state.size++;
             Map<DictionaryTerm, List<DocumentOccurence>> stateMap = state.aggregateState;
-            for (Map.Entry<DictionaryTerm, DocumentOccurence> entry : invertedDocument.entrySet()) {
-                List<DocumentOccurence> occurences = stateMap.get(entry.getKey());
+            for (Map.Entry<String, IntArray> entry : document.entrySet()) {
+                DocumentOccurence occ = new DocumentOccurence(documentId);
+                DictionaryTerm term = new DictionaryTerm(entry.getKey());
+                occ.getPositionList().addAll(entry.getValue());
+                List<DocumentOccurence> occurences = stateMap.get(term);
                 if (occurences != null) {
-                    occurences.add(entry.getValue()); // always ascending document id's
+                    occurences.add(occ); // always ascending document id's
                 } else {
-                    stateMap.put(entry.getKey(), new ArrayList<DocumentOccurence>(Arrays.asList(entry.getValue())));
+                    stateMap.put(term, new ArrayList<DocumentOccurence>(Arrays.asList(occ)));
                 }
             }
         }
@@ -76,17 +79,18 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
 
         long totalTokens = 0;
         Pair<DictionaryTerm, Long> mostFrequentTerm = null;
-        for (Map.Entry<DictionaryTerm, DocumentOccurence> termOcc : invertedDocument.entrySet()) {
-            totalTokens += termOcc.getValue().getPositionList().size();
-            if (mostFrequentTerm == null || termOcc.getValue().getPositionList().size() > mostFrequentTerm.getSecond()) {
-                mostFrequentTerm = new Pair<DictionaryTerm, Long>(termOcc.getKey(), Long.valueOf(termOcc.getValue().getPositionList().size()));
+        for (Map.Entry<String, IntArray> termOcc : document.entrySet()) {
+            totalTokens += termOcc.getValue().size();
+            if (mostFrequentTerm == null || termOcc.getValue().size() > mostFrequentTerm.getSecond()) {
+                mostFrequentTerm = new Pair<DictionaryTerm, Long>(new DictionaryTerm(termOcc.getKey()),
+                        Long.valueOf(termOcc.getValue().size()));
             }
         }
 
         documentIndexBuilder.addDocument(
                 documentId,
                 uri,
-                new InvertedDocumentInfo(document.length(), mostFrequentTerm, totalTokens, invertedDocument.size()));
+                new InvertedDocumentInfo(rawDocument.length(), mostFrequentTerm, totalTokens, document.size()));
     }
 
     public void updateIndex() throws IOException, InterruptedException {
