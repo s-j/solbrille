@@ -75,12 +75,10 @@ public class Buffer {
             if (dirty) {
                 readerWriterLock.readLock().lock();
                 try {
-                    int oldPos = buffer.position();
                     buffer.position(0); // flush entire buffer
                     buffer.limit(blockSize);
                     fileInfo.getChannel().write(buffer, blockPointer.getBlockNumber() * blockSize);
                     buffer.clear();
-                    buffer.position(oldPos);
                 }
                 finally {
                     readerWriterLock.readLock().unlock();

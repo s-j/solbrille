@@ -21,27 +21,33 @@ import java.util.Map;
  * @version $Id $.
  */
 public class ConsoleApplication {
-
     private abstract static class Action {
+
         abstract void execute(String argument) throws Exception;
+
     }
 
     private static class Feed extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             master.feed(argument);
         }
+
     }
 
     private static class Flush extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             master.flush();
             System.out.println("Flushed!");
         }
+
     }
 
     private static class Lookup extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             LookupResult occs = master.lookup(argument);
@@ -64,9 +70,11 @@ public class ConsoleApplication {
             }
             System.out.println("Total number of results: " + count + " metadata says: " + occs.getDocumentCount());
         }
+
     }
 
     private static class Query extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             QueryResult[] result = master.query(argument);
@@ -76,49 +84,62 @@ public class ConsoleApplication {
                     System.out.println(r.getDocumentId() + " Score: " + r.getScore() + " #occs of " + dt.getTerm() + " " + r.getOccurences(dt).getPositionList());
                 }
                 System.out.println("Document info: " + r.getStatisticsEntry());
+                System.out.println("Sniplets: " + r.getBestWindow());
+                System.out.println(master.getSniplet(r.getDocumentId(), r.getBestWindow().getFirst(), r.getBestWindow().getSecond()));
                 System.out.println("---------");
-
             }
         }
+
     }
 
     private static class Help extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             help();
         }
+
     }
 
     private static class Stats extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             master.printStatus();
         }
+
     }
 
     private static class DumpDict extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             master.dumpDictionary();
         }
+
     }
 
     private static class Exit extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             master.stop();
             throw new RuntimeException("shutdown!");
         }
+
     }
 
     private static class Restart extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             master.restart();
         }
+
     }
 
     private static class FeedTime extends Action {
+
         @Override
         void execute(String argument) throws Exception {
             File f = new File(argument);
@@ -126,11 +147,23 @@ public class ConsoleApplication {
                 master.feedTime(f);
             }
         }
+
+    }
+
+    private static class DumpDocument extends Action {
+
+        @Override
+        void execute(String argument) throws Exception {
+            System.out.println(master.getSniplet(Long.parseLong(argument), 0, Integer.MAX_VALUE));
+        }
+
     }
 
     private static final Map<String, Action> actionMap = new HashMap<String, Action>();
+
     private static SearchEngineMaster master;
-    private static BufferPool pool;
+    private static BufferPool indexPool;
+    private static BufferPool contentPool;
 
     private static void execute(String command) throws Exception {
         String[] parts = command.split(" ", 2);
@@ -152,6 +185,7 @@ public class ConsoleApplication {
         System.out.println("----      Help: \"help\" To show this message.");
         System.out.println("----      Stats: \"stat\" To show statistics.");
         System.out.println("----      Dump dictionary: \"dump\" Dump dictionary.");
+        System.out.println("----      Dump document: \"dumpDoc <docId>\" Dump the cacehed contents of a document.");
         System.out.println("----      Restart: \"restart\" To restart the search engine.");
         System.out.println("----      Exit: \"exit\" To exit this application.");
     }
@@ -159,52 +193,69 @@ public class ConsoleApplication {
     public static void main(String[] args) throws Exception {
         System.out.println("---- Sample console application for the SOLbRille search engine");
         help();
-        pool = new BufferPool(10, 1024);
+        indexPool = new BufferPool(100, 1024);
+        contentPool = new BufferPool(50, 1024);
 
         File dictionaryFile = new File("dict.bin");
         if (dictionaryFile.createNewFile()) {
             System.out.println("Dictionary file created at: " + dictionaryFile.getAbsolutePath());
         }
         FileChannel dictionaryChannel = new RandomAccessFile(dictionaryFile, "rw").getChannel();
-        int dictionaryFileNumber = pool.registerFile(dictionaryChannel, dictionaryFile);
+        int dictionaryFileNumber = indexPool.registerFile(dictionaryChannel, dictionaryFile);
 
         File inv1File = new File("inv1.bin");
         if (inv1File.createNewFile()) {
             System.out.println("Inverted list 1 created at: " + inv1File.getAbsolutePath());
         }
         FileChannel inv1Channel = new RandomAccessFile(inv1File, "rw").getChannel();
-        int inv1FileNumber = pool.registerFile(inv1Channel, inv1File);
+        int inv1FileNumber = indexPool.registerFile(inv1Channel, inv1File);
 
         File inv2File = new File("inv2.bin");
         if (inv2File.createNewFile()) {
             System.out.println("Inverted list 2 created at: " + inv2File.getAbsolutePath());
         }
         FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
-        int inv2FileNumber = pool.registerFile(inv2Channel, inv2File);
+        int inv2FileNumber = indexPool.registerFile(inv2Channel, inv2File);
 
         File sysinfoFile = new File("sysinfo.bin");
         if (sysinfoFile.createNewFile()) {
             System.out.println("Sysinfo created at: " + sysinfoFile.getAbsolutePath());
         }
         FileChannel sysinfoChannel = new RandomAccessFile(sysinfoFile, "rw").getChannel();
-        int sysinfoFileNumber = pool.registerFile(sysinfoChannel, sysinfoFile);
+        int sysinfoFileNumber = indexPool.registerFile(sysinfoChannel, sysinfoFile);
 
         File idMappingFile = new File("idMapping.bin");
         if (idMappingFile.createNewFile()) {
             System.out.println("idMapping file created at: " + idMappingFile.getAbsolutePath());
         }
         FileChannel idMappingChannel = new RandomAccessFile(idMappingFile, "rw").getChannel();
-        int idMappingNumber = pool.registerFile(idMappingChannel, idMappingFile);
+        int idMappingNumber = indexPool.registerFile(idMappingChannel, idMappingFile);
 
         File statisticsFile = new File("statistics.bin");
         if (statisticsFile.createNewFile()) {
             System.out.println("statistics file created at: " + statisticsFile.getAbsolutePath());
         }
         FileChannel statisticsChannel = new RandomAccessFile(statisticsFile, "rw").getChannel();
-        int statisticsFileNumber = pool.registerFile(statisticsChannel, statisticsFile);
+        int statisticsFileNumber = indexPool.registerFile(statisticsChannel, statisticsFile);
 
-        master = new SearchEngineMaster(pool, dictionaryFileNumber, inv1FileNumber, inv2FileNumber,
-                sysinfoFileNumber, idMappingNumber, statisticsFileNumber);
+        File contentIndexFile = new File("contentIndex.bin");
+        if (contentIndexFile.createNewFile()) {
+            System.out.println("Content index created at: " + contentIndexFile.getAbsolutePath());
+        }
+        FileChannel contentIndexChannel = new RandomAccessFile(contentIndexFile, "rw").getChannel();
+        int contentIndexFileNumber = contentPool.registerFile(contentIndexChannel, contentIndexFile);
+
+        File contentIndexDataFile = new File("contentIndexData.bin");
+        if (contentIndexDataFile.createNewFile()) {
+            System.out.println("Content index data file created at: " + contentIndexDataFile.getAbsolutePath());
+        }
+        FileChannel contentIndexDataChannel = new RandomAccessFile(contentIndexDataFile, "rw").getChannel();
+        int contentIndexDataFileNumber = contentPool.registerFile(contentIndexDataChannel, contentIndexDataFile);
+
+        master = new SearchEngineMaster(indexPool, contentPool,
+                dictionaryFileNumber, inv1FileNumber, inv2FileNumber,
+                sysinfoFileNumber, idMappingNumber, statisticsFileNumber,
+                contentIndexFileNumber, contentIndexDataFileNumber);
 
         master.start();
         actionMap.put("help", new Help());
@@ -214,6 +265,7 @@ public class ConsoleApplication {
         actionMap.put("flush", new Flush());
         actionMap.put("stat", new Stats());
         actionMap.put("dump", new DumpDict());
+        actionMap.put("dumpdoc", new DumpDocument());
         actionMap.put("restart", new Restart());
         actionMap.put("ft", new FeedTime());
         actionMap.put("exit", new Exit());

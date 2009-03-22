@@ -36,7 +36,9 @@ class CallableDoc implements Callable<Struct> {
 
     public Struct call() throws Exception {
         for (DocumentProcessor processor : documentProcessors) {
-            processor.process(struct);
+            if (!processor.process(struct)) {
+                return null; // short circuit
+            }
         }
         return struct;
     }
@@ -80,6 +82,7 @@ public class Feeder {
         outputs = Collections.synchronizedList(new ArrayList<FeederOutput>());
 
         Runnable outputRunner = new Runnable() {
+            @Override
             public void run() {
                 boolean interrupted = false;
                 while (!doStop) {
@@ -92,7 +95,9 @@ public class Feeder {
                     try {
                         Future<Struct> fStruct = docCompService.take();
                         Struct struct = fStruct.get();
-                        outputExecutor.execute(new RunnableOutput(struct, outputs));
+                        if (struct != null) {
+                            outputExecutor.execute(new RunnableOutput(struct, outputs));
+                        }
                     } catch (InterruptedException e) {
                         interrupted = true;
                         LOG.error("Document completion service aborted while waiting: ", e);
