@@ -10,10 +10,26 @@ import java.util.List;
  */
 public class DocumentOccurence implements Comparable<DocumentOccurence> {
     private final long documentId;
-    private final IntArray positionList = new IntArray(1);
+    private final IntArray positionList;
 
     public DocumentOccurence(long documentId) {
+        this(documentId,new IntArray(1));
+
+    }
+
+    public DocumentOccurence(long documentId,List<Integer> list) {
+        if(list instanceof IntArray) {
+            this.documentId = documentId;
+            this.positionList = (IntArray)list;
+        } else {
+            this.documentId = documentId;
+            this.positionList = new IntArray(list);
+        }
+    }
+
+    public DocumentOccurence(long documentId,IntArray list) {
         this.documentId = documentId;
+        this.positionList = list;
     }
 
     public long getDocumentId() {

@@ -4,12 +4,13 @@ import com.ntnu.solbrille.feeder.Struct;
 import com.ntnu.solbrille.feeder.outputs.FeederOutput;
 import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
 import com.ntnu.solbrille.index.occurence.OccurenceIndexBuilder;
-import com.ntnu.solbrille.utils.IntArray;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,16 +31,16 @@ public class IndexerOutput implements FeederOutput {
 
     public void put(Struct document) {
         try {
-            String rawContent = (String) document.getField("content").getValue();
-            Map<String, IntArray> content = (Map<String, IntArray>) document.getField("terms").getValue();
-            URI uri = (URI) document.getField("uri").getValue();
-            if (statisticIndex.getDocumentIdFor(uri) < 0) {
-                long documentId = statisticIndex.getNextDocumentId();
-                indexBuilder.addDocument(documentId, uri, rawContent, content);
-            } else {
-                LOG.info("Dumplacte document: " + uri);
-            }
+            Map<String,? extends List<Integer>> terms = (Map<String,? extends List<Integer>>)document.getField("terms").getValue();
+            List<String> tokens = (List<String>)document.getField("token");
+            URI uri = (URI)document.getField("uri").getValue();
 
+            if (statisticIndex.getDocumentIdFor(uri) > -1) {
+                LOG.info("Duplicate document: " + uri);
+            } else {
+                long documentId = statisticIndex.getNextDocumentId();
+                indexBuilder.addDocument(documentId, uri,terms);
+            }
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);
