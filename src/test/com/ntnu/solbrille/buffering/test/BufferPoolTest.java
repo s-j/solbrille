@@ -34,6 +34,7 @@ public class BufferPoolTest extends TestCase {
         FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
         try {
             BufferPool pool = new BufferPool(10, 16 * 1024);
+            pool.start();
             final int fileNumber = pool.registerFile(channel, file);
             Collection<Buffer> buffers = new ArrayList<Buffer>(10);
             for (int i = 0; i < 10; i++) {
@@ -69,12 +70,14 @@ public class BufferPoolTest extends TestCase {
             pool.stop();
 
             BufferPool pool1 = new BufferPool(1, 16 * 1024);
+
             int fileNumber2 = pool1.registerFile(channel, file);
             Buffer buffer = pool1.pinBuffer(new FileBlockPointer(fileNumber2, 10));
             buf = buffer.getByteBuffer();
             for (int i = 0; i < 100; i++) {
                 assertEquals(i, buf.getInt());
             }
+            pool1.start();
             pool1.unPinBuffer(buffer);
             pool1.stop();
         }

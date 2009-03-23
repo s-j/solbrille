@@ -1,9 +1,20 @@
 package com.ntnu.solbrille.system.test;
 
+import com.ntnu.solbrille.buffering.BufferPool;
+import com.ntnu.solbrille.index.document.DocumentIndexBuilder;
+import com.ntnu.solbrille.index.document.DocumentStatisticsIndex;
+import com.ntnu.solbrille.index.occurence.DocumentOccurence;
+import com.ntnu.solbrille.index.occurence.OccurenceIndex;
+import com.ntnu.solbrille.index.occurence.OccurenceIndexBuilder;
+import com.ntnu.solbrille.utils.iterators.SkippableIterator;
 import junit.framework.TestCase;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.FileChannel;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -15,8 +26,8 @@ public class IndexLookupTest extends TestCase {
 
 
     public void testIndexLookup() throws IOException, InterruptedException, URISyntaxException {
-/*        BufferPool pool = new BufferPool(10, 128); // really small buffers, just to be evil
-TODO: Use feeder
+        BufferPool pool = new BufferPool(10, 128); // really small buffers, just to be evil
+        
         File dictFile = new File("dict.bin");
         dictFile.createNewFile();
         FileChannel dictChannel = new RandomAccessFile(dictFile, "rw").getChannel();
@@ -45,6 +56,9 @@ TODO: Use feeder
         FileChannel idMappingChannel = new RandomAccessFile(idMappingFile, "rw").getChannel();
         int idMappingNumber = pool.registerFile(idMappingChannel, idMappingFile);
 
+        pool.start();
+        occurenceIndex.start();
+
         DocumentStatisticsIndex docStatIndex = new DocumentStatisticsIndex(pool, occurenceIndex, sysinfoFileNumber, idMappingNumber, statisticsFileNumber);
         DocumentIndexBuilder docIndexBuilder = new DocumentIndexBuilder(docStatIndex);
         try {
@@ -67,7 +81,7 @@ TODO: Use feeder
             inv2Channel.close();
             inv1File.delete();
             inv2File.delete();
-        }*/
+        }
     }
 
 }

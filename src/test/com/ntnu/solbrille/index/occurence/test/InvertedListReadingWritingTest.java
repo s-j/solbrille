@@ -66,12 +66,13 @@ public class InvertedListReadingWritingTest extends TestCase {
     };
 
     public void testWriteThenRead() throws IOException, InterruptedException {
-        BufferPool pool = new BufferPool(10, 64); // realy small buffers just to be naughty :P
+        BufferPool pool = new BufferPool(10, 1024); // realy small buffers just to be naughty :P
         File file = new File("test.bin");
         file.createNewFile();
         FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
         try {
             int fileNumber = pool.registerFile(channel, file);
+            pool.start();
             InvertedListBuilder builder = new InvertedListBuilder(pool, fileNumber, 0);
             Pair<Map<Integer, InvertedListPointer>, Map<DictionaryTerm, InvertedListPointer>> pair = buildInvertedFile(builder, terms, termDocOcc);
             Map<Integer, InvertedListPointer> pointers = pair.getFirst();
