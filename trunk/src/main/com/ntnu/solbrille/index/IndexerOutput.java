@@ -37,7 +37,7 @@ public class IndexerOutput implements FeederOutput {
                 LOG.info("Duplicate document: " + uri);
             } else {
                 long documentId = statisticIndex.getNextDocumentId();
-                indexBuilder.addDocument(documentId, uri, terms);
+                indexBuilder.addDocument(documentId, uri, ((String) document.getField("cleanedContent").getValue()).length(), terms);
             }
         } catch (IOException e) {
             e.printStackTrace();

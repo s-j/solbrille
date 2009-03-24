@@ -53,7 +53,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
      * @throws IOException          On IO error
      * @throws InterruptedException If submitting thread were interupted.
      */
-    public void addDocument(long documentId, URI uri, Map<String, ? extends List<Integer>> document) throws IOException, InterruptedException {
+    public void addDocument(long documentId, URI uri, long documentLength, Map<String, ? extends List<Integer>> document) throws IOException, InterruptedException {
         Map<DictionaryTerm, DocumentOccurence> invertedDocument = createInvertedDocument(documentId, document);
         synchronized (mutex) {
             IndexPhaseState state = activeIndexPhase.get();
@@ -89,7 +89,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
         documentIndexBuilder.addDocument(
                 documentId,
                 uri,
-                new InvertedDocumentInfo(invertedDocument.size(), mostFrequentTerm, totalTokens, invertedDocument.size()));
+                new InvertedDocumentInfo(documentLength, mostFrequentTerm, totalTokens, invertedDocument.size()));
     }
 
     public void updateIndex() throws IOException, InterruptedException {
@@ -290,7 +290,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
      * Helper function to add a document as a String
      */
     public void addDocument(long documentId, URI uri, String document) throws IOException, InterruptedException {
-        addDocument(documentId, uri, invertDocument(document));
+        addDocument(documentId, uri, document.length(), invertDocument(document));
 
     }
 

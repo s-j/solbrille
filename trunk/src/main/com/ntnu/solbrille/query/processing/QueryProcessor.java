@@ -36,10 +36,8 @@ public class QueryProcessor {
             if (!src.loadQuery(query) || (rescnt <= 0)) return new QueryResult[0];
 
             NavigableSet<QueryResult> results = new TreeSet<QueryResult>(Collections.reverseOrder());
-            float best = Float.NEGATIVE_INFINITY;
             while (src.hasNext()) {
                 QueryResult next = src.next();
-                best = Math.max(best, next.getScore());
                 if (results.size() > rescnt) {
                     QueryResult least = results.last();
                     if (least.compareTo(next) <= 0) {
@@ -50,7 +48,6 @@ public class QueryProcessor {
                     results.add(next);
                 }
             }
-            System.out.println("Best: " + best);
             QueryResult[] res = results.toArray(new QueryResult[results.size()]);
             Arrays.sort(res, Collections.reverseOrder());
             if (start > res.length) return null;

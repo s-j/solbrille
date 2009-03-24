@@ -22,7 +22,7 @@
 \section{System architecture}
 The system is designed around three major data structures, or indices. These are the occurrence index which store inverted lists with positions. The content index stores the content of the documents, and is used for snippets and clustering. The last index is the statistics index which is used to store document statistics which may be used to calculate relevance. 
 
-All these indices are wrapped by one class \texttt{SearchEngineMaster}, the interface for the system uses this master class to feed documents and to execute queries.  
+All these indices are wrapped by one class \texttt{SearchEngineMaster}. The external interface for the system uses this master class to feed documents and to execute queries.  
 
 \subsection{Statistics index structure}\label{sub:statistics_index_structure}
 The statistics index is a mapping from document id to a statistics object containing information such as most frequent term, document vector $tf*idf$ length and number of unique terms.
@@ -48,7 +48,28 @@ When the index is flushed, the index update that were built in the first phase i
 
 During this merge, the statistics for each document is calculated and stored in the statistics index. 
 
-When the merge is completed the dictionary is updated so that the pointers in the dictionary points into the new inverted file. 
+When the merge is completed the dictionary is updated so that the pointers in the dictionary points into the newly created inverted file. 
+
+\section{Feeding pipeline}\label{sec:feeding_pipeline}
+The feeding pipeline of our solution is modeled around two main concepts. A document structure which is a object containing various objects with various keys (fields), it's basically a map. A processor is a processing unit in our feeding pipeline which transforms a field in a document structure, and places the result in another. An example of a feeding processor is shown in Figure~\ref{fig:feeding_processor}.
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics[width=0.9\textwidth]{processor.pdf}
+	\caption[Feeding pipeline example]{Feeding pipeline example, a html to text processor strips away html from the input field ``content'', and puts the result into the ``cleaned'' field.}\label{fig:feeding_processor}
+\end{figure}
+
+\subsection{Implemented feeding processors}\label{sub:implemented_feeding_processors}
+To be able to solve our task we have implemented multiple feeding processors. These are:
+
+\begin{itemize}
+	\item \textbf{HtmlToText:} strips away HTML tags.
+	\item \textbf{Tokenizer:} brakes the documents into tokens. These tokens are the raw tokens of the documents, that is, no characters are removed from the text, the text is only split into pieces.
+	\item \textbf{PunctuationRemover:} removes punctuations and whitespaces from tokens. 
+	\item \textbf{Stemmer:} reduces tokens to their stems. 
+	\item \textbf{Termizer:} creates inverted documents, collecting position lists for each term in the document.
+\end{itemize}
+
 
 \begin{figure*}[htbp]
 	\begin{center}
