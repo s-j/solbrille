@@ -136,11 +136,9 @@ public class TimeBenchmarksTest extends TestCase {
                     relevantFound++;
                 }
 
-                if (j >= rel.length){
-                    double precision =  ((double) relevantFound) / j;
-                    double recall = ((double) relevantFound) / rel.length;
-                    trace.add((double)j + " " + precision + " " + recall);
-                }
+                double precision =  ((double) relevantFound) / j;
+                double recall = ((double) relevantFound) / rel.length;
+                trace.add(recall + " " + precision);
             }
 
             traces.add(trace);
