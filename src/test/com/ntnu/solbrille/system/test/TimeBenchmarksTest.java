@@ -122,16 +122,24 @@ public class TimeBenchmarksTest extends TestCase {
 
         int i = 0;
         for (String query : queries) {
-            System.out.println(i + ": Query: " + query);
             int[] rel = relevant[i++];
+            System.out.println(i + ": Query: " + query + "(" + rel.length + ")");
             QueryResult[] res = master.query(query, 0, rel.length * 2);
             int relevantFound = 0;
             for (int j = 0; j < res.length; j++) {
                 if (isRelevant(res[j], rel)) {
                     relevantFound++;
                 }
-                System.out.println(j + " relevant: " + relevantFound);
+
+                if (j >= rel.length){
+                    System.out.println(j + " results, relevant: " + relevantFound);
+                    System.out.println("Precision: " + ((double) relevantFound) / res.length);
+                    System.out.println("Recall: " + ((double) relevantFound / rel.length));
+                }
             }
+
+
+
         }
     }
 
