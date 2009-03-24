@@ -98,7 +98,7 @@ class SearchServlet extends HttpServlet {
         if (allResults.length > 10) {
             response.getOutputStream().println("<ul>");
             for (int i = 0; i <= allResults.length / 10; i++) {
-                response.getOutputStream().println("<a href=\"/search?query="+query+"&offset=" + (i*10) + "\">" + (i+1) + "</a>");
+                response.getOutputStream().println("<a href=\"?query="+query+"&offset=" + (i*10) + "\">" + (i+1) + "</a>");
             }
             response.getOutputStream().println("</ul>");
         }
