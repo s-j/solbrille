@@ -168,7 +168,6 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         StringBuilder sb = new StringBuilder();
         while (sniplet.hasNext()) {
             sb.append(sniplet.next());
-            sb.append(" ");
         }
         sniplet.close();
         return sb.toString();

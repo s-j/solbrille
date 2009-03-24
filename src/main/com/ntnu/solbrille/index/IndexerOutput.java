@@ -9,7 +9,6 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
@@ -31,15 +30,15 @@ public class IndexerOutput implements FeederOutput {
 
     public void put(Struct document) {
         try {
-            Map<String,? extends List<Integer>> terms = (Map<String,? extends List<Integer>>)document.getField("terms").getValue();
-            List<String> tokens = (List<String>)document.getField("token");
-            URI uri = (URI)document.getField("uri").getValue();
-
+            Map<String, ? extends List<Integer>> terms = (Map<String, ? extends List<Integer>>) document.getField("terms").getValue();
+            List<String> tokens = (List<String>) document.getField("token");
+            URI uri = (URI) document.getField("uri").getValue();
+            LOG.info("Feed ing document to index!");
             if (statisticIndex.getDocumentIdFor(uri) > -1) {
                 LOG.info("Duplicate document: " + uri);
             } else {
                 long documentId = statisticIndex.getNextDocumentId();
-                indexBuilder.addDocument(documentId, uri,terms);
+                indexBuilder.addDocument(documentId, uri, terms);
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -2,10 +2,9 @@ package com.ntnu.solbrille.feeder.processors;
 
 import com.ntnu.solbrille.feeder.Struct;
 
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * A pattern that removes all non-whitespace characters
@@ -13,7 +12,7 @@ import java.util.ArrayList;
  * @author <a href="mailto:arnebef@yahoo-inc.com">Arne Bergene Fossaa</a>
  * @version $Id $.
  */
-public class PunctuationRemover extends  AbstractDocumentProcessor{
+public class PunctuationRemover extends AbstractDocumentProcessor {
 
     public PunctuationRemover(String inputField, String outputField) {
         super(inputField, outputField);
@@ -24,9 +23,9 @@ public class PunctuationRemover extends  AbstractDocumentProcessor{
 
         Pattern pattern = Pattern.compile("[\\p{P}]+");
         List<String> output = new ArrayList<String>();
-        for(String token:tokens) {
-            output.add(pattern.matcher(token).replaceAll(" "));
+        for (String token : tokens) {
+            output.add(pattern.matcher(token).replaceAll("").trim());
         }
-        document.setField(getOutputField(),output);
+        document.setField(getOutputField(), output);
     }
 }

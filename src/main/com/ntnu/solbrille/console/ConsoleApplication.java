@@ -11,11 +11,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.net.URI;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -155,12 +155,13 @@ public class ConsoleApplication {
 
         @Override
         void execute(String argument) throws Exception {
+            String[] args = argument.split(" ");
             try {
-                long docId = Long.parseLong(argument);
-                System.out.println(master.getSniplet(master.lookupStatistics(docId).getURI(), 0, Integer.MAX_VALUE));
+                long docId = Long.parseLong(args[0]);
+                System.out.println(master.getSniplet(master.lookupStatistics(docId).getURI(), Integer.parseInt(args[1]), Integer.MAX_VALUE));
             }
             catch (NumberFormatException e) {
-                System.out.println(master.getSniplet(new URI(argument), 0, Integer.MAX_VALUE));
+                System.out.println(master.getSniplet(new URI(args[0]), Integer.parseInt(args[1]), Integer.MAX_VALUE));
             }
         }
 

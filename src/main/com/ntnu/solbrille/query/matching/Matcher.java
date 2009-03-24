@@ -19,7 +19,6 @@ import com.ntnu.solbrille.utils.iterators.SkippableIterator;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -146,6 +145,8 @@ public class Matcher implements QueryProcessingComponent {
                             ((Closeable) nandTerms.poll()).close();
                         }
                         break;
+                    } else if (head.getCurrent().getDocumentId() < qr.getDocumentId() && !head.hasNext()) {
+                        ((Closeable) nandTerms.poll()).close();
                     }
 
                     head = nandTerms.peek();
@@ -184,7 +185,7 @@ public class Matcher implements QueryProcessingComponent {
                     if (mod == Modifier.AND && occ.getSecond() == Modifier.NAND) {
                         mod = occ.getSecond();
                     }
-                    if (mod == Modifier.PNAND){//an ugly hack by Simon
+                    if (mod == Modifier.PNAND) {//an ugly hack by Simon
                         mod = Modifier.OR;
                     }
                 }
