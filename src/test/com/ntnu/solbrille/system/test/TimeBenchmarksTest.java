@@ -8,6 +8,7 @@ import junit.framework.TestCase;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -136,6 +137,9 @@ public class TimeBenchmarksTest extends TestCase {
 
     private boolean isRelevant(QueryResult re, int[] rel) {
         String fileName = re.getStatisticsEntry().getURI().getPath();
-        return false;
+        int start = fileName.lastIndexOf("TIME-")+5;
+        int end = fileName.lastIndexOf(".txt");
+        int magic = Integer.parseInt(fileName.substring(start, end));
+        return Arrays.binarySearch(rel, magic) > -1;
     }
 }
