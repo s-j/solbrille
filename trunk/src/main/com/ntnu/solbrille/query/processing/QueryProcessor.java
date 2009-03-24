@@ -3,9 +3,9 @@ package com.ntnu.solbrille.query.processing;
 import com.ntnu.solbrille.query.QueryRequest;
 import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
-import org.apache.commons.collections.comparators.ReverseComparator;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
@@ -35,7 +35,7 @@ public class QueryProcessor {
 
             if (!src.loadQuery(query) || (rescnt <= 0)) return new QueryResult[0];
 
-            NavigableSet<QueryResult> results = new TreeSet<QueryResult>(new ReverseComparator());
+            NavigableSet<QueryResult> results = new TreeSet<QueryResult>(Collections.reverseOrder());
             float best = Float.NEGATIVE_INFINITY;
             while (src.hasNext()) {
                 QueryResult next = src.next();
@@ -52,7 +52,7 @@ public class QueryProcessor {
             }
             System.out.println("Best: " + best);
             QueryResult[] res = results.toArray(new QueryResult[results.size()]);
-            Arrays.sort(res, new ReverseComparator());
+            Arrays.sort(res, Collections.reverseOrder());
             if (start > res.length) return null;
             else if (end > res.length) {
                 end = res.length;
