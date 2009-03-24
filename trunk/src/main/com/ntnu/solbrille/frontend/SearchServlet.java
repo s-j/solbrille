@@ -111,7 +111,7 @@ class SearchServlet extends HttpServlet {
         String uri = result.getStatisticsEntry().getURI().toString();
         Pair<Integer, Integer> teaserData = result.getBestWindow();
         String teaser = master.getSniplet(new URI(uri), teaserData.getFirst(), teaserData.getSecond());
-        printDivWithA(outputStream,"uri",uri);
+        printDivWithA(outputStream,"uri","/media/time/" + uri.subSequence(uri.lastIndexOf("/") + 1, uri.length()));
         printDiv(outputStream, "teaser", teaser);
         printDiv(outputStream,"score",result.getScore());
         outputStream.println("</li>");    
