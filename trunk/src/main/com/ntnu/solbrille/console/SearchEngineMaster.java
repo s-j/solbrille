@@ -148,8 +148,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
 
     }
 
-    public QueryResult[] query(String query) {
-        return queryProcessor.processQuery(query, 0, 10);
+    public QueryResult[] query(String query, int offset, int hits) {
+        return queryProcessor.processQuery(query, offset, hits);
     }
 
     public LookupResult lookup(String term) throws IOException, InterruptedException {
