@@ -33,7 +33,6 @@ public class IndexerOutput implements FeederOutput {
             Map<String, ? extends List<Integer>> terms = (Map<String, ? extends List<Integer>>) document.getField("terms").getValue();
             List<String> tokens = (List<String>) document.getField("token");
             URI uri = (URI) document.getField("uri").getValue();
-            LOG.info("Feed ing document to index!");
             if (statisticIndex.getDocumentIdFor(uri) > -1) {
                 LOG.info("Duplicate document: " + uri);
             } else {
