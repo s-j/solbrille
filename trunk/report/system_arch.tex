@@ -5,6 +5,11 @@
 \usepackage{moreverb}
 \usepackage{amsmath}
 \usepackage[pdftex]{graphicx}
+\usepackage{
+	geometry, subfigure,
+	rotating,	listings,	hyperref,	float,		url,
+	appendix,	supertabular, multicol
+}
 
 \setlength{\parindent}{0.0in}
 \setlength{\parskip}{0.1in}
@@ -44,5 +49,18 @@ When the index is flushed, the index update that were built in the first phase i
 During this merge, the statistics for each document is calculated and stored in the statistics index. 
 
 When the merge is completed the dictionary is updated so that the pointers in the dictionary points into the new inverted file. 
+
+\begin{figure*}[htbp]
+	\begin{center}
+    \mbox{
+    \subfigure[Average QPS]{
+    	\label{fig:res31}
+    	    	\input{bench.tex}
+		%\includegraphics[width=0.75\textwidth]{../Master/include/expsum/levels/8_qps}
+	}
+	}
+	\caption{\label{fig:res3} Varied concurrency level using 8 nodes}
+	\end{center}
+\end{figure*}
 
 \end{document}
