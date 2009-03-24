@@ -125,7 +125,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
     public void feed(String document) {
         Struct doc = new Struct();
         try {
-            doc.setField("uri",new URI("dummydoc/" + dummyUriCounter.incrementAndGet()));
+            doc.setField("uri", new URI("dummydoc/" + dummyUriCounter.incrementAndGet()));
         } catch (URISyntaxException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -142,7 +142,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         String[] docs = collection.getTimeCollection(f, Integer.MAX_VALUE);
         for (int i = 0; i < docs.length; i++) {
             Struct doc = new Struct();
-            doc.setField("uri", new File(f.getPath(), collection.filenames[i]).toURI().toString());
+            doc.setField("uri", new File(f.getPath(), collection.filenames[i]).toURI());
             feeder.feed(doc);
         }
 
