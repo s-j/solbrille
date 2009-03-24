@@ -3,10 +3,11 @@ package com.ntnu.solbrille.query.processing;
 import com.ntnu.solbrille.query.QueryRequest;
 import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.query.preprocessing.QueryPreprocessor;
-import com.ntnu.solbrille.utils.Heap;
+import org.apache.commons.collections.comparators.ReverseComparator;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
@@ -27,20 +28,24 @@ public class QueryProcessor {
 
         if (!src.loadQuery(query) || (rescnt <= 0)) return new QueryResult[0];
 
-        Heap<QueryResult> results = new Heap<QueryResult>();
-        for (int i = 0; i < end && src.hasNext(); i++) {
+        NavigableSet<QueryResult> results = new TreeSet<QueryResult>(new ReverseComparator());
+        float best = Float.NEGATIVE_INFINITY;
+        while (src.hasNext()) {
             QueryResult next = src.next();
-            if (results.size() < rescnt)
+            best = Math.max(best, next.getScore());
+            if (results.size() > rescnt) {
+                QueryResult least = results.last();
+                if (least.compareTo(next) <= 0) {
+                    results.remove(least);
+                    results.add(next);
+                }
+            } else {
                 results.add(next);
-            else {
-                QueryResult least = results.remove();
-                results.add(least.compareTo(next) >= 0 ? least : next);
             }
         }
-        System.out.println("results: " + results.size());
+        System.out.println("Best: " + best);
         QueryResult[] res = results.toArray(new QueryResult[results.size()]);
-        Arrays.sort(res, Collections.reverseOrder());
-
+        Arrays.sort(res, new ReverseComparator());
         if (start > res.length) return null;
         else if (end > res.length) {
             end = res.length;
