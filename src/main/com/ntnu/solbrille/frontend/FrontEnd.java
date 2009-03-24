@@ -30,6 +30,7 @@ import java.net.URISyntaxException;
 import com.ntnu.solbrille.console.SearchEngineMaster;
 import com.ntnu.solbrille.buffering.BufferPool;
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
+import com.sun.corba.se.spi.activation._ActivatorImplBase;
 
 /**
  * //The web frontend, based on Jetty
@@ -72,10 +73,13 @@ public class FrontEnd {
             }
         }),"/dumpdict");
 
-
-
         server.addHandler(servletHandler);
-        
+
+        // Handles static files
+        // ResourceHandler resourceHandler = new ResourceHandler();
+        // resourceHandler.setResourceBase(".");
+        // server.addHandler(resourceHandler);
+
         try {
             master.start();
             server.start();
