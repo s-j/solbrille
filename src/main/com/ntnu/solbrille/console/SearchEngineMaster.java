@@ -124,7 +124,11 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
 
     public void feed(String document) {
         Struct doc = new Struct();
-        doc.setField("uri", "dummydoc/" + dummyUriCounter.incrementAndGet());
+        try {
+            doc.setField("uri",new URI("dummydoc/" + dummyUriCounter.incrementAndGet()));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         doc.setField("content", document);
         feeder.feed(doc);
     }
