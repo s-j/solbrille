@@ -7,8 +7,11 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.ArrayList;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -121,7 +124,9 @@ public class TimeBenchmarksTest extends TestCase {
         master.flush();
 
         int i = 0;
+        ArrayList<ArrayList<String>> traces = new ArrayList<ArrayList<String>>();
         for (String query : queries) {
+            ArrayList<String> trace = new ArrayList<String>();
             int[] rel = relevant[i++];
             System.out.println(i + ": Query: " + query + "(" + rel.length + ")");
             QueryResult[] res = master.query(query, 0, rel.length * 2);
@@ -132,16 +137,18 @@ public class TimeBenchmarksTest extends TestCase {
                 }
 
                 if (j >= rel.length){
-                    System.out.println(j + " results, relevant: " + relevantFound);
-                    System.out.println("Precision: " + ((double) relevantFound) / res.length);
-                    System.out.println("Recall: " + ((double) relevantFound / rel.length));
+                    double precision =  ((double) relevantFound) / j;
+                    double recall = ((double) relevantFound) / rel.length;
+                    trace.add((double)j + " " + precision + " " + recall);
                 }
             }
 
-
-
+            traces.add(trace);
         }
+        printTraces(queries, traces);
     }
+
+
 
     private boolean isRelevant(QueryResult re, int[] rel) {
         String fileName = re.getStatisticsEntry().getURI().getPath();
@@ -149,5 +156,30 @@ public class TimeBenchmarksTest extends TestCase {
         int end = fileName.lastIndexOf(".txt");
         int magic = Integer.parseInt(fileName.substring(start, end));
         return Arrays.binarySearch(rel, magic) > -1;
+    }
+
+    private void printTraces(String[] queries, ArrayList<ArrayList<String>> traces) {
+        try{
+            PrintWriter pwr = new PrintWriter(new FileWriter("bench.log"));
+
+            int maxlength=0;
+            for (ArrayList<String> trace: traces){
+                if (maxlength < trace.size()) maxlength = trace.size();
+            }
+
+            for (int i=0; i < maxlength; i++){
+                for (ArrayList<String> trace: traces){
+                    if ( trace.size() > i){
+                        pwr.print(trace.get(i)+"\t");
+                    } else {
+                        pwr.print(trace.get(trace.size()-1)+"\t");
+                    }
+                }
+                pwr.println();
+            }
+            pwr.close();
+        } catch(Exception e){
+            e.printStackTrace();
+        }
     }
 }
