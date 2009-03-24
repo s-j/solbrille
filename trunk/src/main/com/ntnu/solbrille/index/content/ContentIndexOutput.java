@@ -27,8 +27,6 @@ public class ContentIndexOutput implements FeederOutput {
     public void put(Struct document) {
         try {
             URI uri = (URI) document.getField("uri").getValue();
-            LOG.info("Storing content of document: " + uri + " in content index.");
-
             contentIndexBuilder.addDocument(uri, (List<String>) document.getField("tokens").getValue());
         } catch (IOException e) {
             e.printStackTrace();
