@@ -173,7 +173,7 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
         for (Map.Entry<Long, Float> docWeight : tfIdfAccumulator.entrySet()) {
             DocumentIdEntry idEntry = new DocumentIdEntry(docWeight.getKey());
             DocumentStatisticsEntry entry = statistics.get(idEntry);
-            entry.setTfIdfDocumentWeight(docWeight.getValue());
+            entry.setTfIdfVectorLength((float) Math.sqrt(docWeight.getValue()));
             // statistics.put(idEntry, entry); updated reference no need 
         }
     }

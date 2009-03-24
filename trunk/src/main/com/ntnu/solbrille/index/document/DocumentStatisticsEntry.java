@@ -25,7 +25,7 @@ public class DocumentStatisticsEntry implements IndexEntry {
             Pair<DictionaryTerm, Long> mostFrequent = new Pair<DictionaryTerm, Long>(TERM_DESC.readIndexEntry(buffer), buffer.getLong());
             DocumentStatisticsEntry statisticsEntry = new DocumentStatisticsEntry(
                     buffer.getLong(), buffer.getLong(), buffer.getLong(), mostFrequent, uri.getDocumentUri());
-            statisticsEntry.setTfIdfDocumentWeight(buffer.getFloat());
+            statisticsEntry.setTfIdfVectorLength(buffer.getFloat());
             return statisticsEntry;
         }
     }
@@ -93,11 +93,11 @@ public class DocumentStatisticsEntry implements IndexEntry {
         this.documentLength = documentLength;
     }
 
-    public float getTfIdfDocumentWeight() {
-        return (float) Math.sqrt(tfIdfWeight);
+    public float getTfIdfVectorLength() {
+        return tfIdfWeight;
     }
 
-    public void setTfIdfDocumentWeight(float weight) {
+    public void setTfIdfVectorLength(float weight) {
         tfIdfWeight = weight;
     }
 
@@ -121,7 +121,7 @@ public class DocumentStatisticsEntry implements IndexEntry {
     public String toString() {
         return "(uri: " + uriEntry.getDocumentUri()
                 + ", length: " + documentLength
-                + ", TF*IDF weight: " + getTfIdfDocumentWeight()
+                + ", TF*IDF weight: " + getTfIdfVectorLength()
                 + ", Unique terms: " + uniqueTerms
                 + ", Number of tokens: " + numberOfTokens
                 + ", Most frequent term: " + mostFrequentTerm + " )";
