@@ -78,7 +78,7 @@ public class ConsoleApplication {
 
         @Override
         void execute(String argument) throws Exception {
-            QueryResult[] result = master.query(argument);
+            QueryResult[] result = master.query(argument, 0, 10);
             for (QueryResult r : result) {
                 System.out.println("---------");
                 for (DictionaryTerm dt : r.getTerms()) {

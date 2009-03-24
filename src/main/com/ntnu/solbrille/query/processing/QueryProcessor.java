@@ -14,6 +14,12 @@ import java.util.TreeSet;
  * @version $Id $.
  */
 public class QueryProcessor {
+
+    private static final class QueryProcessorMutex {
+    }
+
+    private final Object mutex = new QueryProcessorMutex();
+
     private QueryPreprocessor preprocessor;
     private QueryProcessingComponent src;
 
@@ -23,39 +29,41 @@ public class QueryProcessor {
     }
 
     public QueryResult[] processQuery(String strquery, int start, int end) {
-        QueryRequest query = preprocessor.preprocess(strquery);
-        int rescnt = end - start;
+        synchronized (mutex) {
+            QueryRequest query = preprocessor.preprocess(strquery);
+            int rescnt = end - start;
 
-        if (!src.loadQuery(query) || (rescnt <= 0)) return new QueryResult[0];
+            if (!src.loadQuery(query) || (rescnt <= 0)) return new QueryResult[0];
 
-        NavigableSet<QueryResult> results = new TreeSet<QueryResult>(new ReverseComparator());
-        float best = Float.NEGATIVE_INFINITY;
-        while (src.hasNext()) {
-            QueryResult next = src.next();
-            best = Math.max(best, next.getScore());
-            if (results.size() > rescnt) {
-                QueryResult least = results.last();
-                if (least.compareTo(next) <= 0) {
-                    results.remove(least);
+            NavigableSet<QueryResult> results = new TreeSet<QueryResult>(new ReverseComparator());
+            float best = Float.NEGATIVE_INFINITY;
+            while (src.hasNext()) {
+                QueryResult next = src.next();
+                best = Math.max(best, next.getScore());
+                if (results.size() > rescnt) {
+                    QueryResult least = results.last();
+                    if (least.compareTo(next) <= 0) {
+                        results.remove(least);
+                        results.add(next);
+                    }
+                } else {
                     results.add(next);
                 }
-            } else {
-                results.add(next);
             }
-        }
-        System.out.println("Best: " + best);
-        QueryResult[] res = results.toArray(new QueryResult[results.size()]);
-        Arrays.sort(res, new ReverseComparator());
-        if (start > res.length) return null;
-        else if (end > res.length) {
-            end = res.length;
-            rescnt = end - start;
-        }
+            System.out.println("Best: " + best);
+            QueryResult[] res = results.toArray(new QueryResult[results.size()]);
+            Arrays.sort(res, new ReverseComparator());
+            if (start > res.length) return null;
+            else if (end > res.length) {
+                end = res.length;
+                rescnt = end - start;
+            }
 
-        QueryResult[] ret = new QueryResult[rescnt];
-        for (int i = 0; i < rescnt; i++) ret[i] = res[start + i];
+            QueryResult[] ret = new QueryResult[rescnt];
+            for (int i = 0; i < rescnt; i++) ret[i] = res[start + i];
 
-        return ret;
+            return ret;
+        }
     }
 
 }
