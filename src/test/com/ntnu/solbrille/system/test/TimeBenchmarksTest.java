@@ -119,9 +119,9 @@ public class TimeBenchmarksTest extends TestCase {
     }
 
     public void testBenchmark() throws InterruptedException {
-        master.feedTime(new File("time/"));
-        Thread.sleep(60 * 1000);
-        master.flush();
+      //  master.feedTime(new File("time/"));
+      //  Thread.sleep(60 * 1000);
+      //  master.flush();
 
         int i = 0;
         ArrayList<ArrayList<String>> traces = new ArrayList<ArrayList<String>>();
@@ -129,7 +129,7 @@ public class TimeBenchmarksTest extends TestCase {
             ArrayList<String> trace = new ArrayList<String>();
             int[] rel = relevant[i++];
             System.out.println(i + ": Query: " + query + "(" + rel.length + ")");
-            QueryResult[] res = master.query(query, 0, rel.length * 2);
+            QueryResult[] res = master.query(query, 0, 50);
             int relevantFound = 0;
             for (int j = 0; j < res.length; j++) {
                 if (isRelevant(res[j], rel)) {
@@ -146,6 +146,7 @@ public class TimeBenchmarksTest extends TestCase {
             traces.add(trace);
         }
         printTraces(queries, traces);
+       master.stop();
     }
 
 
