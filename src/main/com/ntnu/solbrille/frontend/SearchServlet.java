@@ -139,6 +139,7 @@ class SearchServlet extends HttpServlet {
     }
 
     private void printSearchForm(ServletOutputStream outputStream, String value) throws IOException {
+        if (value == null) value = "";
         outputStream.println("<form method=\"get\" action=\"\">");
         outputStream.println("<input type=\"text\" value=\""+value+"\"name=\"query\" />");
         outputStream.println("<input type=\"submit\" value=\"Feelin' lucky?! Punk!\" />");
