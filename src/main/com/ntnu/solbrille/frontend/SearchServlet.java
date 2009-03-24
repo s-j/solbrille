@@ -36,7 +36,7 @@ class SearchServlet extends HttpServlet {
 
         //Print header
         printHeader(response.getOutputStream(), query);
-        printSearchForm(response.getOutputStream());
+        printSearchForm(response.getOutputStream(), query);
         if(query == null) {
             response.setStatus(200);
             response.getOutputStream().println("Need to put something into the query");
@@ -138,9 +138,9 @@ class SearchServlet extends HttpServlet {
         outputStream.println("</a></div>");
     }
 
-    private void printSearchForm(ServletOutputStream outputStream) throws IOException {
+    private void printSearchForm(ServletOutputStream outputStream, String value) throws IOException {
         outputStream.println("<form method=\"get\" action=\"\">");
-        outputStream.println("<input type=\"text\" name=\"query\" />");
+        outputStream.println("<input type=\"text\" value=\""+value+"\"name=\"query\" />");
         outputStream.println("<input type=\"submit\" value=\"Feelin' lucky?! Punk!\" />");
         outputStream.println("</form>");
     }
