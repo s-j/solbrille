@@ -1,25 +1,6 @@
-\documentclass[]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{fullpage}
-\usepackage{listings}
-\usepackage{moreverb}
-\usepackage{amsmath}
-\usepackage[pdftex]{graphicx}
-\usepackage{
-	geometry, subfigure,
-	rotating,	listings,	hyperref,	float,		url,
-	appendix,	supertabular, multicol
-}
-
-\setlength{\parindent}{0.0in}
-\setlength{\parskip}{0.1in}
-
-\title{System architecture}
-\author{Ola Natvig}
-
-\begin{document}
-\maketitle
 \section{System architecture}
+\label{sec:architecture}
+\thispagestyle{fancy}
 The system is designed around three major data structures, or indices. These are the occurrence index which store inverted lists with positions. The content index stores the content of the documents, and is used for snippets and clustering. The last index is the statistics index which is used to store document statistics which may be used to calculate relevance. 
 
 All these indices are wrapped by one class \texttt{SearchEngineMaster}. The external interface for the system uses this master class to feed documents and to execute queries.  
@@ -69,19 +50,3 @@ To be able to solve our task we have implemented multiple feeding processors. Th
 	\item \textbf{Stemmer:} reduces tokens to their stems. 
 	\item \textbf{Termizer:} creates inverted documents, collecting position lists for each term in the document.
 \end{itemize}
-
-
-\begin{figure*}[htbp]
-	\begin{center}
-    \mbox{
-    \subfigure[Average QPS]{
-    	\label{fig:res31}
-    	    	\input{bench.tex}
-		%\includegraphics[width=0.75\textwidth]{../Master/include/expsum/levels/8_qps}
-	}
-	}
-	\caption{\label{fig:res3} Varied concurrency level using 8 nodes}
-	\end{center}
-\end{figure*}
-
-\end{document}
