@@ -1,0 +1,74 @@
+\documentclass[a4paper, twoside, titlepage, 11pt]{report}
+\usepackage[english]{babel}    
+\usepackage[T1]{fontenc} 
+\usepackage[latin1]{inputenc} 
+\usepackage{
+	multicol,	geometry,	amsmath,	amsfonts,
+	amssymb,	amsthm,		graphicx,	subfig,
+	rotating,	listings,	hyperref,	fancyhdr,
+	float,		url,		makeidx,
+	appendix,	supertabular
+}
+
+\makeindex       
+\lstset{basicstyle=\ttfamily\scriptsize,linewidth=\textwidth,breaklines,tabsize=4,captionpos=b}
+\begin{document}
+\pagenumbering{alph}
+\renewcommand{\footrulewidth}{0.4pt} 
+\pagestyle{empty}
+\thispagestyle{empty}
+\include{frontpage}
+\cleardoublepage
+
+\pagestyle{empty}
+\thispagestyle{empty}
+\include{abstract}
+\cleardoublepage
+
+\thispagestyle{empty}
+\include{preface}
+\cleardoublepage
+
+\pagenumbering{roman}
+\pagestyle{plain}
+\tableofcontents
+\cleardoublepage
+\listoffigures
+\cleardoublepage
+
+\pagestyle{fancy}
+\pagenumbering{arabic}
+\fancyfoot[C]{}
+\fancyhead[LE,RO]{\slshape \thepage}
+\fancyhead[RE]{\slshape \rightmark}
+\fancyhead[LO]{\slshape \leftmark}
+\fancyfoot[RO]{\slshape A. B. Fossaa, S. Jonassen, J. M. W. Kristiansen, O. Natvig}
+\fancyfoot[LE]{\slshape Solbrille}
+
+\cleardoublepage
+	\include{introduction}
+\cleardoublepage
+	\include{requirements}
+\cleardoublepage
+	\include{system_arch}
+\cleardoublepage
+	\include{implementation}
+\cleardoublepage
+	\include{evaluation}
+\cleardoublepage
+	\include{conclusions}
+\cleardoublepage
+\cleardoublepage
+	\pagestyle{fancy}
+	\bibliographystyle{alpha}
+	\addcontentsline{toc}{chapter}{Bibliography}
+	\pagestyle{fancy}
+	\bibliography{project}
+\cleardoublepage
+	\pagestyle{fancy}
+	\appendix
+%	\include{appendix}
+%	\include{code}
+\cleardoublepage
+
+\end{document}
