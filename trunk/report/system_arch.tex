@@ -1,17 +1,17 @@
-\section{System architecture}
+\chapter{System architecture}
 \label{sec:architecture}
 \thispagestyle{fancy}
 The system is designed around three major data structures, or indices. These are the occurrence index which store inverted lists with positions. The content index stores the content of the documents, and is used for snippets and clustering. The last index is the statistics index which is used to store document statistics which may be used to calculate relevance. 
 
 All these indices are wrapped by one class \texttt{SearchEngineMaster}. The external interface for the system uses this master class to feed documents and to execute queries.  
 
-\subsection{Statistics index structure}\label{sub:statistics_index_structure}
+\section{Statistics index structure}\label{sub:statistics_index_structure}
 The statistics index is a mapping from document id to a statistics object containing information such as most frequent term, document vector $tf*idf$ length and number of unique terms.
 
-\subsection{Content index structure}\label{sub:content_index_structure}
+\section{Content index structure}\label{sub:content_index_structure}
 The content index stores the content of the documents indexed, these documents are stored as lists of tokens. These are the raw tokens of the documents nothing is added or removed. By concatenating any consecutive subsequence of these tokens a section of the original document will be produced. This property are used when extracting snippets.  
 
-\subsection{Occurrence index structure}\label{sub:occurrence_index_structure}
+\section{Occurrence index structure}\label{sub:occurrence_index_structure}
 The occurrence index consists of two parts, the dictionary and the inverted file. The dictionary contains the terms of documents, and a pointer into the inverted file. The inverted file contains the inverted lists for each term in alphabetical order. The inverted list of a term contains the documents occurrences that contain the term sorted on increasing document id. Each document occurrence contains a list the positions within the document where the term occurred. The index structure is shown in Figure~\ref{fig:occ_index_struct}.
 
 \begin{figure}[h!!tb]
@@ -20,7 +20,7 @@ The occurrence index consists of two parts, the dictionary and the inverted file
 	\caption[Occurrence index structure]{Occurrence index structure.}\label{fig:occ_index_struct}
 \end{figure}
 
-\subsection{Index building}\label{sub:index_building}
+\section{Index building}\label{sub:index_building}
 When building indices, all documents fed to the system are given a unique document id from a global counter.
 
 The occurrence index is built in two phases, in the first phase documents are converted to inverted lists and combined into one inverted list representing one index update. 
