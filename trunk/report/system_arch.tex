@@ -40,8 +40,8 @@ The feeding pipeline of our solution is modeled around two main concepts. A docu
 	\caption[Feeding pipeline example]{Feeding pipeline example, a html to text processor strips away html from the input field ``content'', and puts the result into the ``cleaned'' field.}\label{fig:feeding_processor}
 \end{figure}
 
-\subsection{Implemented feeding processors}\label{sub:implemented_feeding_processors}
-To be able to solve our task we have implemented multiple feeding processors. These are:
+\subsection{Feeding processors}\label{sub:implemented_feeding_processors}
+To be able to solve the task the feeding pipeline has to implement multiple feeding processors. These are:
 
 \begin{itemize}
 	\item \textbf{HtmlToText:} strips away HTML tags.
@@ -50,3 +50,38 @@ To be able to solve our task we have implemented multiple feeding processors. Th
 	\item \textbf{Stemmer:} reduces tokens to their stems. 
 	\item \textbf{Termizer:} creates inverted documents, collecting position lists for each term in the document.
 \end{itemize}
+
+\section{Query Processing}
+The query processing part of the system is designed to be both flexible and extensible. The main idea is to have a query processor which uses a query preprocessor and a (number of) query processing components to produce and sort the query results. A query preprocessor uses a number of built-in stages (similar to those used for the document processing) to transform a textual query into a query structure.
+
+A query processing component, on the other hand, is an abstract component that may be used to pull query results. Each component may include another component as a source, and it is possible to construct a chain of such components. To begin with, a minimal number of processing components include:
+\begin{itemize}
+	\item {\bf Matcher:} produces a number of combined results for a given query. These match inclusion and exclusion of terms based on AND, OR and NAND modifiers.
+	\item {\bf Score Combiner:} pulls from its source and scores them according to a number of score modules that can be added to the system. The system may implement a number of different similarity models (both dynamic and static) and a score combiner can calculate a weighted average from these.
+	\item {\bf Filters:} may filter out some of the results based on a number of abstract filters that can be later implemented and added to the system.
+\end{itemize}
+
+The most important point here is that the query processor does not have to know what components are used in the query processing, and a system implementation is free to extend the number of components, add several instances of the same component in the processing pipeline or change the processing order of these. 
+
+In future, the system may be extended by a merger that enables to merge a number of processing pipelines into one. In this case, the system may become distributed. For example, it may run a number of basic matchers, scorers and filters on a number of different nodes, then results from these may be pulled together by a new merger component which may combine the results. If required, the processing pipeline may be extended by a couple of new filters and scorers used to re-weight and filter the combined results. However, due to the project duration limits the target search engine is chosen to run only on a single computer.
+
+The rest of this section explains the basic processing components and the ideas behind.
+
+\subsection{Matcher Component}
+
+\subsubsection{An alternative approach}
+
+\subsection{Score Combiner and Scorer Components}
+
+\subsection{Filters and Phrase Search}
+To demonstrate the idea with filters the system is intended to present two types of filters, a non-negative filter and a phrase filter. A non-negative filter is rather a demonstation of the concept and it can just filter out the results which have a score value less or equal to zero. However, using the scorer components specified above, this situation is impossible. 
+
+A phrase filter has a more practical application. The main intention is to filter results based on + and - phrases.
+
+
+\subsection{Final Details}
+
+\section{Extended System}
+
+\section{Testing and Front-End Design}
+
