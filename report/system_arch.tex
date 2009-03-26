@@ -77,9 +77,9 @@ The matcher component allows us to support a limited subset of boolean queries, 
 A problem suggested with a more general scheme were that index term would be read twice. However, this is not a case with the proposed design for buffer manager and processing component. Since the results are pulled one by one and combined as soon as possible, a repeated request to the same term will be cached in the buffer manager. Therefore this method can be quite efficient.
 
 \subsection{Score Combiner and Scorer Components}
-The idea with score combiner is to retrieve a number of score values from different scorers, and then combine these into a total score. The main intention here is that the system may implement different scoring models or even combine these. A scorer may implement a cosine model, a probabilistic model such as Okapi BM-25, a static link-analysis models such as PageRank or HITS, or even an Opt model\footnoe{the optimal model, an inside joke}.
+The idea with score combiner is to retrieve a number of score values from different scorers, and then combine these into a total score. The main intention here is that the system may implement different scoring models or even combine these. A scorer may implement a cosine model, a probabilistic model such as Okapi BM-25, a static link-analysis models such as PageRank or HITS, or even an Opt model\footnote{the optimal model, an inside joke}.
 
-To be fast, some of the document collection statistics later required by scorers has to be stored in the query requests and query results, since the access to global statistics on demand may be too slow. 
+To be fast, some of the document collection statistics later required by scorers has to be stored in the query requests and query results, since theaccess to global statistics on demand may be too slow. 
 
 \subsection{Filters and Phrase Search}
 To demonstrate the idea with filters the system is intended to present two types of filters, a non-negative filter and a phrase filter. A non-negative filter is rather a demonstation of the concept and it can just filter out the results which have a score value less or equal to zero. However, using the scorer components specified above, this situation is impossible.
