@@ -173,6 +173,7 @@ public class Matcher implements QueryProcessingComponent {
     public boolean loadQuery(QueryRequest query) {
         clean();
         this.query = query;
+        requiredAndTerms = 0;
         for (DictionaryTerm dt : this.query.getTerms()) {
             try {
                 Modifier mod = Modifier.OR;
@@ -188,6 +189,9 @@ public class Matcher implements QueryProcessingComponent {
                     if (mod == Modifier.PNAND) {//an ugly hack by Simon
                         mod = Modifier.OR;
                     }
+                }
+                if (mod == Modifier.AND) {
+                    requiredAndTerms++;
                 }
                 LookupResult result = index.lookup(dt);
                 SkippableIterator<DocumentOccurence> si = result.getIterator();
@@ -208,7 +212,6 @@ public class Matcher implements QueryProcessingComponent {
             }
 
         }
-        requiredAndTerms = andTerms.size();
         return true;
     }
 
