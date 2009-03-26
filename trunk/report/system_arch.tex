@@ -69,15 +69,23 @@ The rest of this section explains the basic processing components and the ideas 
 
 \subsection{Matcher Component}
 
-\subsubsection{An alternative approach}
+\subsubsection{Critique and an alternative approach}
 
 \subsection{Score Combiner and Scorer Components}
 
 \subsection{Filters and Phrase Search}
-To demonstrate the idea with filters the system is intended to present two types of filters, a non-negative filter and a phrase filter. A non-negative filter is rather a demonstation of the concept and it can just filter out the results which have a score value less or equal to zero. However, using the scorer components specified above, this situation is impossible. 
+To demonstrate the idea with filters the system is intended to present two types of filters, a non-negative filter and a phrase filter. A non-negative filter is rather a demonstation of the concept and it can just filter out the results that have a score value less or equal to zero. However, using the scorer components specified above, this situation is rather impossible. 
 
-A phrase filter has a more practical application. The main intention is to filter results based on + and - phrases.
+A phrase filter has a more practical application. The main intention is to filter results based on + and - phrases, where results matching negative phrases or results not matching positive phrases will be removed. A problem arise in how to represent the phrases.
 
+A simple case for the phrase search is either a phrase such as {\it +''kari bremnes''} or a phrase like {\it kari +''kari bremnes''}. The solution for both of these is to represent AND phrases as lists of terms in the query structure, match and score the corresponding terms just as normal terms, and then finally check if these terms occur in the required order using the document occurrence part of the inverted index.
+
+A more problematic case for the phrase search is a query such as {\it kari -''kari bremnes''}. In this case the user wants to retrieve all the documents containing word {\it kari}, but not the word {\it kari} followed by the word {\it bremnes}. 
+
+The solution is to introduce a fourth modifier type, PNAND. As for the AND phrases, the query structure has to store a number of phrases represented as a modifier (AND or NAND) and a list of terms. All the terms represented in a phrase has the same modifier as the phrase itself, and terms having both PNAND and an other modifier have to loose the PNAND modifier. The matcher component has to perform a match on both NAND, OR and AND terms, and also PNAND terms interpreted as OR terms. Any scorer component has then to ignore PNAND terms, giving 0 in the score impact of these. Finally, any results matching either NAND phrases of only PNAND terms have to be removed in the phrase filter.
+
+\subsubsection{Critique and an Alternative Approach}
+The approach described above is chosen to be implemented, just to demonstrate the idea behind the filtering component. However, as the phrase filtering is now performed during all the stages of the query processing pipeline this method is rather impractical. A better solution that can be applied in future is to use a separate phrase matcher, and then combine the matched phrase results and the ordinary term results before sending these to a scorer component. A problem suggested earlier were reading the same index term twice. However, this is not a case with the proposed design for buffer manager and processing component. Since the results are pulled one by one and combined as soon as possible, a repeated request to the same term will be cached in the buffer manager. Therefore this method can be quite efficient.
 
 \subsection{Final Details}
 
