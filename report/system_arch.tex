@@ -31,6 +31,9 @@ During this merge, the statistics for each document is calculated and stored in 
 
 When the merge is completed the dictionary is updated so that the pointers in the dictionary points into the newly created inverted file. 
 
+\section{Buffered IO}\label{sec:buffered_io}
+One bottleneck of search engines is disk-IO. To use disk-IO as effectively as possible, a buffer manager were designed. The buffer manager splits the files into blocks. When a part of a file is requested for reading or writing it might be buffered. Buffers are managed in a LRU\footnote{LRU: Least Recently Used} fashion. The technicalities of the buffer manager is not deemed interesting in the context of this assignment. 
+
 \section{Feeding pipeline}\label{sec:feeding_pipeline}
 The feeding pipeline of our solution is modeled around two main concepts. A document structure which is a object containing various objects with various keys (fields), it's basically a map. A processor is a processing unit in our feeding pipeline which transforms a field in a document structure, and places the result in another. An example of a feeding processor is shown in Figure~\ref{fig:feeding_processor}.
 
@@ -51,7 +54,7 @@ To be able to solve the task the feeding pipeline has to implement multiple feed
 	\item \textbf{Termizer:} creates inverted documents, collecting position lists for each term in the document.
 \end{itemize}
 
-\section{Query Processing}
+\section{Query processing}
 The query processing part of the system is designed to be both flexible and extensible. The main idea is to have a query processor which uses a query preprocessor and a (number of) query processing components to produce and sort the query results. A query preprocessor uses a number of built-in stages (similar to those used for the document processing) to transform a textual query into a query structure.
 
 A query processing component, on the other hand, is an abstract component that may be used to pull query results. Each component may include another component as a source, and it is possible to construct a chain of such components. To begin with, a minimal number of processing components include:
@@ -61,25 +64,34 @@ A query processing component, on the other hand, is an abstract component that m
 	\item {\bf Filters:} may filter out some of the results based on a number of abstract filters that can be later implemented and added to the system.
 \end{itemize}
 
+The query processing structure implemented in the initial implementation of solbrille is shown in Figure~\ref{fig:query_processing}.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.9\textwidth]{include/query_processing.pdf}
+	\caption{Query processing subsystem.}\label{fig:query_processing}
+\end{figure}
+
 The most important point here is that the query processor does not have to know what components are used in the query processing, and a system implementation is free to extend the number of components, add several instances of the same component in the processing pipeline or change the processing order of these. 
 
 In future, the system may be extended by a merger that enables to merge a number of processing pipelines into one. In this case, the system may become distributed. For example, it may run a number of basic matchers, scorers and filters on a number of different nodes, then results from these may be pulled together by a new merger component which may combine the results. If required, the processing pipeline may be extended by a couple of new filters and scorers used to re-weight and filter the combined results. However, due to the project duration limits the target search engine is chosen to run only on a single computer.
 
 The rest of this section explains the basic processing components and the ideas behind.
 
-\subsection{Matcher Component}
+\subsection{Matcher component}
 The matcher component is the part of the processing pipeline which performs the actual lookups into the inverted index (OccurenceIndex). The matcher extracts the various terms referenced in a query and executes one lookup for each of the terms. It also recognizes the modifiers associated with the terms (\emph{AND}, \emph{OR} and \emph{NAND}). The matchers purpose is to create candidate results for further filtering and ranking. A candidate result is a document which satisfies the query. That is, a document where \emph{all} terms with a \emph{AND} modifier is present and \emph{no} terms with a \emph{NAND} modifier. In addition the terms with \emph{OR} modifiers are appended to the documents which satisfies the \emph{AND} and \emph{NAND} requirements.
 
 The matcher component allows us to support a limited subset of boolean queries, however, since it has no aspect of parenthesises the subset is rather small. For vector space queries, all terms are treated with \emph{OR} modifiers.
 
-\subsubsection{Critique and an Alternative Approach}\label{sssub:matcher_critique}
+\subsubsection{Critique and an alternative approach}\label{sssub:matcher_critique}
+To support the full range of boolean queries a tree of \emph{AND}, \emph{OR} and \emph{NAND} matching components could have been constructed. This would have been a much more flexible way of building result candidates. Merging all functionality for doing matching into one component  also leads to one piece of very complex code. While implementing the matcher we had quite a few subtile bugs which took us quite some time to figure out. 
 
-A problem suggested with a more general scheme were that index term would be read twice. However, this is not a case with the proposed design for buffer manager and processing component. Since the results are pulled one by one and combined as soon as possible, a repeated request to the same term will be cached in the buffer manager. Therefore this method can be quite efficient.
+The reason we did not use a more general scheme were that index term could have ben looked up multiple times. However, this is not a issue with the proposed design for buffer manager and processing component. Since the results are pulled one by one and combined as soon as possible, a repeated request to the same term will be cached in the buffer manager. Therefore the performance impact of this general scheme is close to nothing. 
 
 \subsection{Score Combiner and Scorer Components}
 The idea with score combiner is to retrieve a number of score values from different scorers, and then combine these into a total score. The main intention here is that the system may implement different scoring models or even combine these. A scorer may implement a cosine model, a probabilistic model such as Okapi BM-25, a static link-analysis models such as PageRank or HITS, or even an Opt model\footnote{the optimal model, an inside joke}.
 
-To be fast, some of the document collection statistics later required by scorers has to be stored in the query requests and query results, since theaccess to global statistics on demand may be too slow. 
+To be fast, some of the document collection statistics later required by scorers has to be stored in the query requests and query results, since the access to global statistics on demand may be too slow. 
 
 \subsection{Filters and Phrase Search}
 To demonstrate the idea with filters the system is intended to present two types of filters, a non-negative filter and a phrase filter. A non-negative filter is rather a demonstation of the concept and it can just filter out the results which have a score value less or equal to zero. However, using the scorer components specified above, this situation is impossible.
@@ -101,7 +113,6 @@ The approach described above is chosen to be implemented, just to demonstrate th
 To save memory the results pulled by the query processor are stored into a priority queue. As a query is expected to be a query string and a page range {\it startpage} end {\it endpage}, the maximum queue size is limited by {\it endpage}. When the queue size has reached this value a new candidate has to be compared with the least scored result contained in the queue. If the candidates value is greatest of these two, the candidate has to replace the least scored result in the priority queue.
 
 When all the results are processed, up-to {\it endpage} - {\it startpage} results has to be extracted from the queue, sorted in descending order and returned to the user.
-
 
 \section{Extended System}
 
