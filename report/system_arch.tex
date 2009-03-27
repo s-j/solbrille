@@ -109,6 +109,16 @@ Finally, in the current design a result says to be filtered out if one of the fi
 \subsubsection{Critique and an Alternative Approach}
 The approach described above is chosen to be implemented, just to demonstrate the idea behind the filtering component. However, as the phrase filtering is now performed during all the stages of the query processing pipeline this method is rather impractical. A better solution that can be applied in future is to use a separate phrase matcher, and then combine the matched phrase results and the ordinary term results before sending these to a scorer component. The same critique mentioned in Section~\ref{sssub:matcher_critique} with respect to multiple index lookups applies for this as well.
 
+\subsection{Snippet extraction}\label{sub:snippet_extraction}
+To ensure a pleasant user experience; search results should contain a short piece of the original document. This snippet could be the beginning of the document, however, since the occurrence index contains the positions of the various terms it should be possible to select more suitable snippets. 
+
+The simple scheme selected for snippet extraction is that the position lists of all the terms in the query is merged to one list. Then the snippet ``window'' which contains the highest number of queries terms. The length of the window is a predefined constant, and the unit of the window dimensions is number of terms. 
+
+\subsubsection{Critique and an Alternative Approach}
+Selecting the window with the highest number of matching tokens is not a good measure of snippet relevance. Common words and stop-words will be counted as much as any other word. Treating the various possible snippet-windows as documents and calculating their relevancy to the query could be a better solution, however, efficient algorithms to do this have not been studied. 
+
+To produce visual appealing search result presentations the length of the snippet windows could have been calculated in number of characters rather than number of tokens. Using tokens as the unit of measure the variance of the snippet lengths might be high. 
+
 \subsection{Final Details}
 To save memory the results pulled by the query processor are stored into a priority queue. As a query is expected to be a query string and a page range {\it startpage} end {\it endpage}, the maximum queue size is limited by {\it endpage}. When the queue size has reached this value a new candidate has to be compared with the least scored result contained in the queue. If the candidates value is greatest of these two, the candidate has to replace the least scored result in the priority queue.
 
