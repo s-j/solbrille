@@ -126,5 +126,20 @@ When all the results are processed, up-to {\it endpage} - {\it startpage} result
 
 \section{Extended System}
 
-\section{Testing and Front-End Design}
+\section{Front-End Design}
+The main responsibilities to the front-end is to handle and provide search functionality to a user. This is done through embedding Jetty in the system. Jetty is a compact java web server which supports both embedded and stand-alone deployment of applications. Embedding Jetty gives us advantages such as reducing the complexity of the development environment, requires no installation, and in-line configuration of the web server. However, it increases the complexity of writing views because of the in-line configuration.
+
+Jetty is configured and started in {\tt com.ntnu.solbrille.FrontEnd}. The current configuration consists of two context paths. A context path is a domain where a given set of services are accessible. The two different context paths are used for servlets and serving of static content such as documents and images. The currently implemented servlets are:
+
+\begin{itemize}
+\item {\tt com.ntnu.solbrille.SearchServlet}: This is the main servlet that handles the search functionality of the application.
+\item {\tt com.ntnu.solbrille.FeederServlet}: A hook for feeding the search application with documents.
+\end{itemize}
+
+The current system embeds mark-up generation in the servlets. This is a huge disadvantage as the code complexity of each servlet increases drastically. A future improvement would be to introduce the Model-View-Controller architectural pattern, and separate the servlet and the markup. Another improvement would be to not embedding jetty, and create a generic web application which is able to run using any java web server. However, this would require a installation of the chosen web server.
+
+\section{Testing}
+Test-driven development is used as an approach to ensure the quality of the most important components. During development, the tests are designed and made before each component is implemented. A test is composed of one or several test cases, and in order to pass, all conditions must be correct. {\bf JUnit} is used for implementing test cases, and they are located in {\tt test.com.ntnu.solbrille}.
+
+The current test coverage is rather limited. Currently, only the {\it feeder}, {\it index}, {\it buffering} and {\it system} components are covered by tests. This is due to the fact that test development takes time, and were substituted by manual testing at the end of this project when time became limited. A future improvement would be to improve the test coverage.
 
