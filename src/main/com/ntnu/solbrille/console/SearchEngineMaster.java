@@ -284,8 +284,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
     }
 
     public static SearchEngineMaster createMaster() throws IOException {
-        BufferPool indexPool = new BufferPool(100, 1024);
-        BufferPool contentPool = new BufferPool(50, 1024);
+        BufferPool indexPool = new BufferPool(300, 1024);
+        BufferPool contentPool = new BufferPool(100, 1024);
 
         File dictionaryFile = new File("dict.bin");
         if (dictionaryFile.createNewFile()) {

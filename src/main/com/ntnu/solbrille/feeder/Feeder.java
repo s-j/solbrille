@@ -116,8 +116,8 @@ public class Feeder {
     }
 
 
-    public void feed(Struct document) {
-        docCompService.submit(new CallableDoc(document, processors));
+    public Future feed(Struct document) {
+        return docCompService.submit(new CallableDoc(document, processors));
     }
 
 

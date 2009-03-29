@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 
 import com.ntnu.solbrille.feeder.Feeder;
 import com.ntnu.solbrille.feeder.Struct;
@@ -71,8 +72,15 @@ public class StemmingUtil {
         public HashMap<String, IntArray> stem(String text) {
             Struct struct = new Struct();
             struct.setField("content", text);
-            feed(struct);
-            while (!output.isDone()) { }
+            try {
+                feed(struct).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                System.exit(-1);
+            } catch (ExecutionException e) {
+                System.exit(-1);
+            }
+            //while (!output.isDone()) { }
             return output.getOutput();
         }
     }
