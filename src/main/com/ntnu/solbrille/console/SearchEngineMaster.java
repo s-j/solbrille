@@ -43,6 +43,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -166,6 +168,34 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         while (sniplet.hasNext()) {
             sb.append(sniplet.next());
         }
+        sniplet.close();
+        return sb.toString();
+    }
+
+    public String getSniplet(URI uri, long start, int length, int[] positions) throws IOException, InterruptedException, URISyntaxException {
+        ContentIndexDataFileIterator sniplet = contentIndex.getContent(uri, start, length);
+        if (sniplet == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        int counter = 0;
+        int pos = 0;
+        while (sniplet.hasNext() && pos < positions.length) {
+            if (positions[pos] == counter) {
+                sb.append("<span class=\"highlight\">");
+                sb.append(sniplet.next());
+                sb.append("</span>");
+                pos++;
+            } else {
+                sb.append(sniplet.next());
+            }
+            counter++;
+        }
+
+        while(sniplet.hasNext()) {
+            sb.append(sniplet.next());    
+        }
+        
         sniplet.close();
         return sb.toString();
     }

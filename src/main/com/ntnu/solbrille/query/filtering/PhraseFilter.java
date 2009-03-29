@@ -52,7 +52,7 @@ public class PhraseFilter implements Filter{
             ptrs[0]=-1;
             while(!end && !occurs){
                 ptrs[0]++;
-                if (ptrs[0] > lists.get(0).size()){
+                if (ptrs[0] >= lists.get(0).size()){
                    end = true;
                    break;
                }

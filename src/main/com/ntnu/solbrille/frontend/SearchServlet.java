@@ -5,6 +5,7 @@ import com.ntnu.solbrille.query.filtering.Filter;
 import com.ntnu.solbrille.query.QueryResult;
 import com.ntnu.solbrille.console.SearchEngineMaster;
 import com.ntnu.solbrille.utils.Pair;
+import com.ntnu.solbrille.utils.StemmingUtil;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -73,6 +74,8 @@ class SearchServlet extends HttpServlet {
             System.arraycopy(allResults, 0, results, 0, 10);
         }
 
+        String clean = query.replaceAll("\"", " \" ");
+
         printDiv(response.getOutputStream(),"numresults","Number of results: " + String.valueOf(allResults.length));
         printDiv(response.getOutputStream(),"showing","Showing results " + start + " to " + end + ".");
         if (results.length > 0) {
@@ -80,7 +83,7 @@ class SearchServlet extends HttpServlet {
             for(QueryResult result:results) {
                 if (!hasClusters) {
                     try {
-                        printResult(response.getOutputStream(),result);
+                        printResult(response.getOutputStream(),result, clean);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -96,7 +99,7 @@ class SearchServlet extends HttpServlet {
 
         // print pages
         if (allResults.length > 10) {
-            response.getOutputStream().println("<ul>");
+            response.getOutputStream().println("<ul id=\"paginator\">");
             for (int i = 0; i <= allResults.length / 10; i++) {
                 response.getOutputStream().println("<a href=\"?query="+query+"&offset=" + (i*10) + "\">" + (i+1) + "</a>");
             }
@@ -106,23 +109,32 @@ class SearchServlet extends HttpServlet {
         printFooter(response.getOutputStream());
     }
 
-    private void printResult(ServletOutputStream outputStream, QueryResult result) throws IOException, InterruptedException, URISyntaxException{
+    private void printResult(ServletOutputStream outputStream, QueryResult result, String query) throws IOException, InterruptedException, URISyntaxException{
         outputStream.println("<li class=\"" + result.getDocumentId() +"\">");
         String uri = result.getStatisticsEntry().getURI().toString();
         Pair<Integer, Integer> teaserData = result.getBestWindow();
-        String teaser = master.getSniplet(new URI(uri), teaserData.getFirst(), teaserData.getSecond());
+        String temp = master.getSniplet(new URI(uri), teaserData.getFirst(), teaserData.getSecond());
+        int[] positions = StemmingUtil.createPositionList(query, temp);
+        String teaser = master.getSniplet(new URI(uri), teaserData.getFirst(), teaserData.getSecond(), positions);
         printDivWithA(outputStream,"uri","/media/time/" + uri.subSequence(uri.lastIndexOf("/") + 1, uri.length()));
         printDiv(outputStream, "teaser", teaser);
-        printDiv(outputStream,"score",result.getScore());
+        printDiv(outputStream,"score","Score: "+result.getScore());
         outputStream.println("</li>");    
     }
 
     private void printHeader(ServletOutputStream output, String query) throws IOException {
-        output.println("<html><head><title>Results for query: \"" + query + "\"</title></head><body>");
+        output.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
+        output.println("<html><head><title>Results for query: \"" + query + "\"</title><link rel=\"stylesheet\" type=\"text/css\" href=\"http://localhost:8080/media/web/css/style.css\" />");
+
+        output.println("<script src=\"http://localhost:8080/media/web/js/jquery-1.3.2.min.js\" type=\"text/javascript\"></script>");
+        output.println("<script src=\"http://localhost:8080/media/web/js/highlight.js\" type=\"text/javascript\"></script>");
+        output.println("</head><body>");
+        output.println("<div id=\"wrapper\">");
+        output.println("<h1 id=\"header\"><span>Solbrille</span></h1>");
     }
 
     private void printFooter(ServletOutputStream output) throws IOException {
-        output.println("</body></html>");
+        output.println("</div></body></html>");
     }
 
     private void printDiv(ServletOutputStream outputStream,String clazz,Object value) throws IOException{
@@ -141,7 +153,7 @@ class SearchServlet extends HttpServlet {
     private void printSearchForm(ServletOutputStream outputStream, String value) throws IOException {
         if (value == null) value = "";
         outputStream.println("<form method=\"get\" action=\"\">");
-        outputStream.println("<input type=\"text\" value=\""+value+"\"name=\"query\" />");
+        outputStream.println("<input type=\"text\" value=\""+value+"\" name=\"query\" />");
         outputStream.println("<input type=\"submit\" value=\"Feelin' lucky?! Punk!\" />");
         outputStream.println("</form>");
     }
