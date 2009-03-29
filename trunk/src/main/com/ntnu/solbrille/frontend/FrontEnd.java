@@ -64,7 +64,7 @@ public class FrontEnd {
         ServletHandler servletHandler = new ServletHandler();
         servletHandler.addServletWithMapping(new ServletHolder(new SearchServlet(master)),"/search");
         servletHandler.addServletWithMapping(new ServletHolder(new FeederServlet(master)),"/feed");
-        servletHandler.addServletWithMapping(new ServletHolder(new StemmingServlet()), "/stem");
+        
         servletHandler.addServletWithMapping(new ServletHolder(new HttpServlet() {
             protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
                 master.flush();
