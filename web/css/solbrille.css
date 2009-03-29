@@ -2,6 +2,17 @@ body {
 	font-size: 62.5%;
 }
 
+h1 {
+    background: url('http://localhost:8080/media/web/img/logo.png');
+    width: 615px;
+    height: 290px;
+    margin: 2em auto;
+}
+
+h1 span {
+    display: none;
+}
+
 div#wrapper {
 	width: 960px;
 	margin: 0 auto 3em auto;
@@ -57,5 +68,8 @@ div#paginator {
 }
 
 .highlight {
-	background: #f00;
+	background: #FFFF66;
+    font-weight: bold;
+    padding: 2px;
+    color: #FF3300;
 }
