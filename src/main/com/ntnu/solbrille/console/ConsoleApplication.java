@@ -10,17 +10,10 @@ import com.ntnu.solbrille.query.QueryResult;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
-import java.io.FileReader;
 import java.net.URI;
-import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import org.tartarus.snowball.SnowballStemmer;
-import org.tartarus.snowball.ext.porterStemmer;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -148,9 +141,11 @@ public class ConsoleApplication {
 
         @Override
         void execute(String argument) throws Exception {
-            File f = new File(argument);
+            File f = new File("time");
             if (f.exists() && f.isDirectory()) {
                 master.feedTime(f);
+            } else {
+                System.out.println("TIME collection not present on system. Should be placed in \"deploy/time/\".");
             }
         }
 
@@ -191,10 +186,11 @@ public class ConsoleApplication {
     private static void help() {
         System.out.println("---- Usage <action> args ");
         System.out.println("---- Supported actions: ");
-        System.out.println("----      Feed: \"feed <string>\" to feed the string as a document.");
+        System.out.println("----      Feed: \"feed <string>\" to feed a string as a document.");
         System.out.println("----      Flush: \"flush\" to flush documents fed into the searchable index.");
         System.out.println("----      Lookup: \"lookup <term>\" To lookup the term in the index.");
         System.out.println("----      Query: \"query <query>\" Execute matched query (ask Simon for query language :p).");
+        System.out.println("----      Feed time: \"feedtime\" Feed the time collection to the system.");
         System.out.println("----      Help: \"help\" To show this message.");
         System.out.println("----      Stats: \"stat\" To show statistics.");
         System.out.println("----      Dump dictionary: \"dump\" Dump dictionary.");
@@ -206,7 +202,7 @@ public class ConsoleApplication {
     public static void main(String[] args) throws Exception {
         System.out.println("---- Sample console application for the SOLbRille search engine");
         help();
-        indexPool = new BufferPool(100, 1024);
+/*        indexPool = new BufferPool(100, 1024);
         contentPool = new BufferPool(50, 1024);
 
         File dictionaryFile = new File("dict.bin");
@@ -271,7 +267,7 @@ public class ConsoleApplication {
         String line;
         BufferedReader br = new BufferedReader(new FileReader(stopWordFile));
         SnowballStemmer stemmer = new porterStemmer();
-        while((line = br.readLine()) != null) {
+        while ((line = br.readLine()) != null) {
             stemmer.setCurrent(line);
             stemmer.stem();
             stopWords.add(stemmer.getCurrent());
@@ -281,7 +277,8 @@ public class ConsoleApplication {
                 dictionaryFileNumber, inv1FileNumber, inv2FileNumber,
                 sysinfoFileNumber, idMappingNumber, statisticsFileNumber,
                 contentIndexFileNumber, contentIndexDataFileNumber, stopWords);
-
+*/
+        master = SearchEngineMaster.createMaster();
         master.start();
         actionMap.put("help", new Help());
         actionMap.put("feed", new Feed());
@@ -292,7 +289,7 @@ public class ConsoleApplication {
         actionMap.put("dump", new DumpDict());
         actionMap.put("dumpdoc", new DumpDocument());
         actionMap.put("restart", new Restart());
-        actionMap.put("ft", new FeedTime());
+        actionMap.put("feedtime", new FeedTime());
         actionMap.put("exit", new Exit());
 
         BufferedReader inp = new BufferedReader(new InputStreamReader(System.in));

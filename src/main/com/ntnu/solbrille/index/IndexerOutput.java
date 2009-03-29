@@ -17,6 +17,11 @@ import java.util.Map;
  * @version $Id $.
  */
 public class IndexerOutput implements FeederOutput {
+    private static final class IndexerOutputMutex {
+    }
+
+    private final Object mutex = new IndexerOutputMutex();
+
     private final OccurenceIndexBuilder indexBuilder;
     private final DocumentStatisticsIndex statisticIndex;
 
@@ -28,20 +33,26 @@ public class IndexerOutput implements FeederOutput {
     }
 
 
+    @Override
     public void put(Struct document) {
         try {
+            if (document.getField("flush") != null) {
+                LOG.info("Flushing!");
+                indexBuilder.updateIndex();
+                LOG.info("Flushed index phase " + indexBuilder.getIndexPhase());
+                return;
+            }
+
 
             Map<String, ? extends List<Integer>> terms = (Map<String, ? extends List<Integer>>) document.getField("terms").getValue();
-            List<String> tokens = (List<String>) document.getField("token");
             URI uri = (URI) document.getField("uri").getValue();
             LOG.info("Feeded document: " + uri);
             if (statisticIndex.getDocumentIdFor(uri) > -1) {
                 LOG.info("Duplicate document: " + uri);
             } else {
                 long documentId = statisticIndex.getNextDocumentId();
-                indexBuilder.addDocument(documentId, uri, ((String) document.getField("cleanedContent").getValue()).length(), terms);
+                indexBuilder.addDocument(documentId, uri, ((CharSequence) document.getField("cleanedContent").getValue()).length(), terms);
             }
-            
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);

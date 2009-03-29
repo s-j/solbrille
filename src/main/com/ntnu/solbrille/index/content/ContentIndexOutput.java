@@ -26,6 +26,9 @@ public class ContentIndexOutput implements FeederOutput {
     @Override
     public void put(Struct document) {
         try {
+            if (document.getField("flush") != null) {
+                return;
+            }
             URI uri = (URI) document.getField("uri").getValue();
             contentIndexBuilder.addDocument(uri, (List<String>) document.getField("tokens").getValue());
         } catch (IOException e) {

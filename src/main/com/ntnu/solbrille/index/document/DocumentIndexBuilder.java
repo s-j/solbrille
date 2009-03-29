@@ -3,6 +3,7 @@ package com.ntnu.solbrille.index.document;
 import com.ntnu.solbrille.index.occurence.InvertedDocumentInfo;
 import com.ntnu.solbrille.utils.AbstractLifecycleComponent;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class DocumentIndexBuilder extends AbstractLifecycleComponent {
         }
     }
 
-    public void updateIndex(Map<Long, Float> tfIdfAccumulator) {
+    public void updateIndex(Map<Long, Float> tfIdfAccumulator) throws IOException, InterruptedException {
         StaticInformationEntry oldDelta;
         synchronized (mutex) {
             oldDelta = globalStatisticsDelta;
