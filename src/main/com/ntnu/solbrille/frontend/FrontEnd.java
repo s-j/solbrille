@@ -1,37 +1,26 @@
 package com.ntnu.solbrille.frontend;
 
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.handler.*;
-import org.mortbay.jetty.servlet.ServletHandler;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.servlet.DefaultServlet;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.bio.SocketConnector;
-import org.mortbay.resource.URLResource;
-import org.mortbay.resource.FileResource;
-import org.mortbay.resource.Resource;
+import com.ntnu.solbrille.console.SearchEngineMaster;
+import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.bio.SocketConnector;
+import org.mortbay.jetty.handler.ContextHandler;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
+import org.mortbay.jetty.handler.DefaultHandler;
+import org.mortbay.jetty.handler.HandlerCollection;
+import org.mortbay.jetty.servlet.DefaultServlet;
+import org.mortbay.jetty.servlet.ServletHandler;
+import org.mortbay.jetty.servlet.ServletHolder;
 
-
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.ServletException;
 import java.io.IOException;
-import java.io.File;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.util.logging.Logger;
 import java.util.Iterator;
-import java.net.URL;
-import java.net.URISyntaxException;
-
-import com.ntnu.solbrille.console.SearchEngineMaster;
-import com.ntnu.solbrille.buffering.BufferPool;
-import com.ntnu.solbrille.index.occurence.DictionaryTerm;
-import com.sun.corba.se.spi.activation._ActivatorImplBase;
 
 /**
  * //The web frontend, based on Jetty
@@ -44,7 +33,7 @@ public class FrontEnd {
 
     public static Log LOG = LogFactory.getLog(FrontEnd.class);
 
-    public static void main(String args[]) throws IOException{
+    public static void main(String args[]) throws IOException {
         Server server = new Server();
         final SearchEngineMaster master = SearchEngineMaster.createMaster();
 
@@ -62,24 +51,24 @@ public class FrontEnd {
 
         //Now we have to decide how to handle stuff
         ServletHandler servletHandler = new ServletHandler();
-        servletHandler.addServletWithMapping(new ServletHolder(new SearchServlet(master)),"/search");
-        servletHandler.addServletWithMapping(new ServletHolder(new FeederServlet(master)),"/feed");
-        
+        servletHandler.addServletWithMapping(new ServletHolder(new SearchServlet(master)), "/search");
+        servletHandler.addServletWithMapping(new ServletHolder(new FeederServlet(master)), "/feed");
+
         servletHandler.addServletWithMapping(new ServletHolder(new HttpServlet() {
             protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
                 master.flush();
             }
-        }),"/flush");
+        }), "/flush");
 
         servletHandler.addServletWithMapping(new ServletHolder(new HttpServlet() {
             protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
                 Iterator<DictionaryTerm> iter = master.getDict().iterator();
-                while(iter.hasNext()) {
+                while (iter.hasNext()) {
                     response.setContentType("text");
                     response.getOutputStream().println(iter.next().getTerm());
                 }
             }
-        }),"/dumpdict");
+        }), "/dumpdict");
 
         servlets.setHandler(servletHandler);
 
@@ -88,17 +77,16 @@ public class FrontEnd {
         sh.setInitParameter("dirAllowed", String.valueOf(true));
         sh.setInitParameter("resourceBase", System.getProperty("user.dir"));
         mediaHandler.addServletWithMapping(sh, "/*");
-        
+
         media.setHandler(mediaHandler);
 
         ContextHandlerCollection contexts = new ContextHandlerCollection();
-        contexts.setHandlers(new Handler[] {servlets, media});
+        contexts.setHandlers(new Handler[]{servlets, media});
 
         HandlerCollection handlers = new HandlerCollection();
-        handlers.setHandlers(new Handler[]{contexts,new DefaultHandler()});
+        handlers.setHandlers(new Handler[]{contexts, new DefaultHandler()});
 
         server.setHandler(handlers);
-        
         try {
             master.start();
             server.start();
