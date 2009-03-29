@@ -15,6 +15,9 @@ public class Cluster {
     private List<String> tags = new ArrayList<String>();
     private double score = 0.0;
 
+    public int getSize() {
+        return results.size();
+    }
 
     public List<QueryResult> getResults() {
         return results;

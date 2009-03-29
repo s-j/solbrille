@@ -13,6 +13,10 @@ h1 span {
     display: none;
 }
 
+h2 {
+    font-size: 1.7em;
+}
+
 div#wrapper {
 	width: 960px;
 	margin: 0 auto 3em auto;
@@ -27,11 +31,13 @@ div#wrapper {
 	text-align: center;
 }
 
-ol#results li {
+ol.results li {
 	text-align: left;
+    background: #eeeeee;
+    padding: 1em;
 }
 
-ol#results li {
+ol.results li {
 	margin: 1.5em;
 }
 
@@ -59,7 +65,7 @@ div.teaser:after {
 	content: "...\"";
 }
 
-div.score {
+.score {
 	color: #777;
 }
 
@@ -72,4 +78,34 @@ div#paginator {
     font-weight: bold;
     padding: 2px;
     color: #FF3300;
+}
+
+.tag {
+	background: #99CCFF;
+    font-weight: bold;
+    padding: 2px;
+    color: #003399;
+}
+
+div#clusterwrap {
+    width: 250px;
+    text-align: left;
+    float: left;
+}
+
+div#resultwrap {
+    width: 700px;
+    text-align: left;
+    float: right;
+}
+
+div#clusterwrap li {
+    padding: 0.5em;
+    lineheight: 1.3em;
+    border-top: 1px solid #eee;
+    font-size: 1.3em;
+}
+
+div#clusterwrap li:hover {
+    background: #ddd;
 }

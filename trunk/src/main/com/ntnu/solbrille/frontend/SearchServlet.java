@@ -83,7 +83,7 @@ class SearchServlet extends HttpServlet {
         if (results.length > 0) {
 
             if(!hasClusters) {
-                response.getOutputStream().println("<ol id=\"results\">");
+                response.getOutputStream().println("<ol class=\"results\">");
                 for(QueryResult result:results) {
                     try {
                         printResult(response.getOutputStream(),result, clean);
@@ -94,28 +94,32 @@ class SearchServlet extends HttpServlet {
                 response.getOutputStream().println("</ol>");
             } else {
                 ClusterList list = results[0].getClusterList();
-                response.getOutputStream().println("<div id=\"clusterwrap\"><ol id=\"clusterlist\">");
+                response.getOutputStream().println("<div id=\"clusterwrap\"><h2>Clusters</h2><ol id=\"clusterlist\">");
                 for (Cluster cluster:list) {
                     StringBuilder sb = new StringBuilder();
                     for(String tag:cluster.getTags()) {
                         sb.append(tag);
                     }
 
-                    response.getOutputStream().println("<li class=\""+sb.toString()+"\">" + sb.toString() + "</li>");
+                    response.getOutputStream().println("<li class=\""+sb.toString()+"\"><a href=\"#\">" + sb.toString() + " ("+ cluster.getSize() +")</a></li>");
                 }
                 response.getOutputStream().println("</ol></div>");
-                response.getOutputStream().println("<ol id=\"clusters\">");
+                response.getOutputStream().println("<div id=\"resultwrap\"><ol id=\"clusters\">");
 
 
                 for(Cluster cluster:list) {
-                    response.getOutputStream().println("<li class=\"cluster\">");
-                    response.getOutputStream().println("<span class=\"score\">" + cluster.getScore() + "</span>");
-
-                    response.getOutputStream().println("<ol class=\"tags\">");
+                    StringBuilder id = new StringBuilder();
                     for(String tag:cluster.getTags()) {
-                        response.getOutputStream().println("<li class=\"tag\">" + tag + "</li>");
+                        id.append(tag);
                     }
-                    response.getOutputStream().println("</ol>");
+                    response.getOutputStream().println("<li class=\"cluster "+id.toString()+"\">");
+                    response.getOutputStream().println("");
+
+                    response.getOutputStream().println("<h2>Showing cluster with tags: ");
+
+                    response.getOutputStream().println("<span class=\"tag\">" + id.toString() + "</span>  ");
+
+                    response.getOutputStream().println("- <span class=\"score\">Score: " + cluster.getScore() + "</span></h2>");
                     response.getOutputStream().println("<ol class=\"results\">");
                     for(QueryResult result:cluster.getResults()) {
                         try {
@@ -127,34 +131,16 @@ class SearchServlet extends HttpServlet {
                         }
                     }
                     response.getOutputStream().println("</ol>");
-
-
-
-
-
-
-
-                    /*
-                    <li class="cluster">
-                        <ol class="tags">
-
-                        </ol>
-
-                        <ol class="results">
-                            //printresult
-                        </ol>
-
-                    </li>
-                     */
-
                     response.getOutputStream().println("</li>");
                 }
+
+                response.getOutputStream().println("</div>");
             }
 
         }
 
         // print pages
-        if (allResults.length > 10) {
+        if (allResults.length > 10 && !hasClusters) {
             response.getOutputStream().println("<ul id=\"paginator\">");
             for (int i = 0; i <= allResults.length / 10; i++) {
                 response.getOutputStream().println("<a href=\"?query="+query+"&offset=" + (i*10) + "\">" + (i+1) + "</a>");
