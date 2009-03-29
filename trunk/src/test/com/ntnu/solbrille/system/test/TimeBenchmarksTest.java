@@ -9,9 +9,15 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import org.tartarus.snowball.SnowballStemmer;
+import org.tartarus.snowball.ext.porterStemmer;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -111,10 +117,22 @@ public class TimeBenchmarksTest extends TestCase {
         FileChannel contentIndexDataChannel = new RandomAccessFile(contentIndexDataFile, "rw").getChannel();
         int contentIndexDataFileNumber = contentPool.registerFile(contentIndexDataChannel, contentIndexDataFile);
 
+        File stopWordFile = new File("TIME-stopwords.txt");
+        Set<String> stopWords = new HashSet<String>();
+        String line;
+        BufferedReader br = new BufferedReader(new FileReader(stopWordFile));
+        SnowballStemmer stemmer = new porterStemmer();
+        while((line = br.readLine()) != null) {
+            stemmer.setCurrent(line);
+            stemmer.stem();
+            stopWords.add(stemmer.getCurrent());
+        }
+
+
         master = new SearchEngineMaster(indexPool, contentPool,
                 dictionaryFileNumber, inv1FileNumber, inv2FileNumber,
                 sysinfoFileNumber, idMappingNumber, statisticsFileNumber,
-                contentIndexFileNumber, contentIndexDataFileNumber);
+                contentIndexFileNumber, contentIndexDataFileNumber, stopWords);
         master.start();
     }
 

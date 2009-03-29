@@ -204,6 +204,7 @@ public class BufferPool extends AbstractLifecycleComponent {
      * @param buffer The buffer to be unpinned.
      */
     public void unPinBuffer(Buffer buffer) {
+        synchronized(mutex) {
         if (buffer.decrementAndReturnPinnedCount() == 0) {
             buffer.setIsPinned(false);
             if (buffer.isDirty()) {
@@ -211,6 +212,7 @@ public class BufferPool extends AbstractLifecycleComponent {
             } else {
                 cleanBuffers.offer(buffer);
             }
+        }
         }
     }
 

@@ -24,6 +24,7 @@ import com.ntnu.solbrille.index.occurence.LookupResult;
 import com.ntnu.solbrille.index.occurence.OccurenceIndex;
 import com.ntnu.solbrille.index.occurence.OccurenceIndexBuilder;
 import com.ntnu.solbrille.query.QueryResult;
+import com.ntnu.solbrille.query.clustering.SuffixTree;
 import com.ntnu.solbrille.query.filtering.Filter;
 import com.ntnu.solbrille.query.filtering.Filters;
 import com.ntnu.solbrille.query.filtering.NonNegativeFilter;
@@ -39,12 +40,17 @@ import com.ntnu.solbrille.utils.LifecycleComponent;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.Iterator;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import org.tartarus.snowball.SnowballStemmer;
+import org.tartarus.snowball.ext.porterStemmer;
 
 /**
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
@@ -90,6 +96,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
     private QueryProcessor queryProcessor;
     private final Matcher matcher;
 
+    private Set<String> stopWords;
+
     private final LifecycleComponent[] components;
 
     public SearchEngineMaster(
@@ -98,7 +106,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             int invertedListFile1, int invertedListFile2,
             int systemInfoFile, int idMappingFile, int statisticsFile,
             int contentIndexFile,
-            int contentIndexDataFile) {
+            int contentIndexDataFile, Set<String> stopWords) {
         this.indexPool = indexPool;
         this.contentPool = contentPool;
         occurenceIndex = new OccurenceIndex(indexPool, dictionaryFileNumber, invertedListFile1, invertedListFile2);
@@ -119,6 +127,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         feeder = new SearchEngineFeeder(output, statisticIndex, contentOutput);
 
         matcher = new Matcher(occurenceIndex, statisticIndex);
+
+        this.stopWords = stopWords;
     }
 
     public void feed(String document) {
@@ -193,9 +203,9 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         }
 
         while(sniplet.hasNext()) {
-            sb.append(sniplet.next());    
+            sb.append(sniplet.next());
         }
-        
+
         sniplet.close();
         return sb.toString();
     }
@@ -260,10 +270,14 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             scm.addSource(matcher);
             fs.addSource(scm);
 
-            DynamicSnipletExtractor sniplets = new DynamicSnipletExtractor(60);
+            DynamicSnipletExtractor sniplets = new DynamicSnipletExtractor(150);
             sniplets.addSource(fs);
 
-            queryProcessor = new QueryProcessor(sniplets, new QueryPreprocessor());
+            SuffixTree st = new SuffixTree(contentIndex,occurenceIndex,statisticIndex,500,stopWords);
+            st.addSource(sniplets);
+
+
+            queryProcessor = new QueryProcessor(st, new QueryPreprocessor());
 
             System.out.println("Master started!");
         }
@@ -287,66 +301,77 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         BufferPool indexPool = new BufferPool(300, 1024);
         BufferPool contentPool = new BufferPool(100, 1024);
 
-        File dictionaryFile = new File("dict.bin");
-        if (dictionaryFile.createNewFile()) {
-            System.out.println("Dictionary file created at: " + dictionaryFile.getAbsolutePath());
-        }
-        FileChannel dictionaryChannel = new RandomAccessFile(dictionaryFile, "rw").getChannel();
-        int dictionaryFileNumber = indexPool.registerFile(dictionaryChannel, dictionaryFile);
+                File dictionaryFile = new File("dict.bin");
+                if (dictionaryFile.createNewFile()) {
+                    System.out.println("Dictionary file created at: " + dictionaryFile.getAbsolutePath());
+                }
+                FileChannel dictionaryChannel = new RandomAccessFile(dictionaryFile, "rw").getChannel();
+                int dictionaryFileNumber = indexPool.registerFile(dictionaryChannel, dictionaryFile);
 
-        File inv1File = new File("inv1.bin");
-        if (inv1File.createNewFile()) {
-            System.out.println("Inverted list 1 created at: " + inv1File.getAbsolutePath());
-        }
-        FileChannel inv1Channel = new RandomAccessFile(inv1File, "rw").getChannel();
-        int inv1FileNumber = indexPool.registerFile(inv1Channel, inv1File);
+                File inv1File = new File("inv1.bin");
+                if (inv1File.createNewFile()) {
+                    System.out.println("Inverted list 1 created at: " + inv1File.getAbsolutePath());
+                }
+                FileChannel inv1Channel = new RandomAccessFile(inv1File, "rw").getChannel();
+                int inv1FileNumber = indexPool.registerFile(inv1Channel, inv1File);
 
-        File inv2File = new File("inv2.bin");
-        if (inv2File.createNewFile()) {
-            System.out.println("Inverted list 2 created at: " + inv2File.getAbsolutePath());
-        }
-        FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
-        int inv2FileNumber = indexPool.registerFile(inv2Channel, inv2File);
+                File inv2File = new File("inv2.bin");
+                if (inv2File.createNewFile()) {
+                    System.out.println("Inverted list 2 created at: " + inv2File.getAbsolutePath());
+                }
+                FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
+                int inv2FileNumber = indexPool.registerFile(inv2Channel, inv2File);
 
-        File sysinfoFile = new File("sysinfo.bin");
-        if (sysinfoFile.createNewFile()) {
-            System.out.println("Sysinfo created at: " + sysinfoFile.getAbsolutePath());
-        }
-        FileChannel sysinfoChannel = new RandomAccessFile(sysinfoFile, "rw").getChannel();
-        int sysinfoFileNumber = indexPool.registerFile(sysinfoChannel, sysinfoFile);
+                File sysinfoFile = new File("sysinfo.bin");
+                if (sysinfoFile.createNewFile()) {
+                    System.out.println("Sysinfo created at: " + sysinfoFile.getAbsolutePath());
+                }
+                FileChannel sysinfoChannel = new RandomAccessFile(sysinfoFile, "rw").getChannel();
+                int sysinfoFileNumber = indexPool.registerFile(sysinfoChannel, sysinfoFile);
 
-        File idMappingFile = new File("idMapping.bin");
-        if (idMappingFile.createNewFile()) {
-            System.out.println("idMapping file created at: " + idMappingFile.getAbsolutePath());
-        }
-        FileChannel idMappingChannel = new RandomAccessFile(idMappingFile, "rw").getChannel();
-        int idMappingNumber = indexPool.registerFile(idMappingChannel, idMappingFile);
+                File idMappingFile = new File("idMapping.bin");
+                if (idMappingFile.createNewFile()) {
+                    System.out.println("idMapping file created at: " + idMappingFile.getAbsolutePath());
+                }
+                FileChannel idMappingChannel = new RandomAccessFile(idMappingFile, "rw").getChannel();
+                int idMappingNumber = indexPool.registerFile(idMappingChannel, idMappingFile);
 
-        File statisticsFile = new File("statistics.bin");
-        if (statisticsFile.createNewFile()) {
-            System.out.println("statistics file created at: " + statisticsFile.getAbsolutePath());
-        }
-        FileChannel statisticsChannel = new RandomAccessFile(statisticsFile, "rw").getChannel();
-        int statisticsFileNumber = indexPool.registerFile(statisticsChannel, statisticsFile);
+                File statisticsFile = new File("statistics.bin");
+                if (statisticsFile.createNewFile()) {
+                    System.out.println("statistics file created at: " + statisticsFile.getAbsolutePath());
+                }
+                FileChannel statisticsChannel = new RandomAccessFile(statisticsFile, "rw").getChannel();
+                int statisticsFileNumber = indexPool.registerFile(statisticsChannel, statisticsFile);
 
-        File contentIndexFile = new File("contentIndex.bin");
-        if (contentIndexFile.createNewFile()) {
-            System.out.println("Content index created at: " + contentIndexFile.getAbsolutePath());
-        }
-        FileChannel contentIndexChannel = new RandomAccessFile(contentIndexFile, "rw").getChannel();
-        int contentIndexFileNumber = contentPool.registerFile(contentIndexChannel, contentIndexFile);
+                File contentIndexFile = new File("contentIndex.bin");
+                if (contentIndexFile.createNewFile()) {
+                    System.out.println("Content index created at: " + contentIndexFile.getAbsolutePath());
+                }
+                FileChannel contentIndexChannel = new RandomAccessFile(contentIndexFile, "rw").getChannel();
+                int contentIndexFileNumber = contentPool.registerFile(contentIndexChannel, contentIndexFile);
 
-        File contentIndexDataFile = new File("contentIndexData.bin");
-        if (contentIndexDataFile.createNewFile()) {
-            System.out.println("Content index data file created at: " + contentIndexDataFile.getAbsolutePath());
-        }
-        FileChannel contentIndexDataChannel = new RandomAccessFile(contentIndexDataFile, "rw").getChannel();
-        int contentIndexDataFileNumber = contentPool.registerFile(contentIndexDataChannel, contentIndexDataFile);
+                File contentIndexDataFile = new File("contentIndexData.bin");
+                if (contentIndexDataFile.createNewFile()) {
+                    System.out.println("Content index data file created at: " + contentIndexDataFile.getAbsolutePath());
+                }
+                FileChannel contentIndexDataChannel = new RandomAccessFile(contentIndexDataFile, "rw").getChannel();
+                int contentIndexDataFileNumber = contentPool.registerFile(contentIndexDataChannel, contentIndexDataFile);
+
+            File stopWordFile = new File("TIME-stopwords.txt");
+            Set<String> stopWords = new HashSet<String>();
+            String line;
+            BufferedReader br = new BufferedReader(new FileReader(stopWordFile));
+            SnowballStemmer stemmer = new porterStemmer();
+            while((line = br.readLine()) != null) {
+                stemmer.setCurrent(line.toLowerCase());
+                stemmer.stem();
+                stopWords.add(stemmer.getCurrent());
+            }
 
         return new SearchEngineMaster(indexPool, contentPool,
                 dictionaryFileNumber, inv1FileNumber, inv2FileNumber,
                 sysinfoFileNumber, idMappingNumber, statisticsFileNumber,
-                contentIndexFileNumber, contentIndexDataFileNumber);
+                contentIndexFileNumber, contentIndexDataFileNumber,stopWords);
 
 
     }

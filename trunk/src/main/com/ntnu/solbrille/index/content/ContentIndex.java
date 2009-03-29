@@ -32,7 +32,7 @@ public class ContentIndex extends AbstractLifecycleComponent {
         this.contentDataFileNumber = contentDataFileNumber;
     }
 
-    public ContentIndexDataFileIterator getContent(URI uri, long offset, int length)
+    public synchronized ContentIndexDataFileIterator getContent(URI uri, long offset, int length)
             throws IOException, InterruptedException {
         ContentIndexDataFilePointer pointer = contentIndex.get(new DocumentUriEntry(uri));
         if (pointer != null) {

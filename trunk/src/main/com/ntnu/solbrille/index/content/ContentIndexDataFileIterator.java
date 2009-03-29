@@ -39,6 +39,7 @@ public class ContentIndexDataFileIterator implements Iterator<String>, Closeable
         skipTokens(offset);
     }
 
+
     private void skipTokens(long offset) throws IOException, InterruptedException {
         while (hasNext() && offset > 0) { // TODO: optimize
             next();

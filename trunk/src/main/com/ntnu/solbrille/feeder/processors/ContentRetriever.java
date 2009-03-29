@@ -39,7 +39,7 @@ public class ContentRetriever extends AbstractDocumentProcessor {
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) {
-                sb.append(line);
+                sb.append(line + " ");
             }
 
             document.setField(getOutputField(), sb.toString());

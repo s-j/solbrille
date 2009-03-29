@@ -3,6 +3,8 @@ package com.ntnu.solbrille.frontend;
 import com.ntnu.solbrille.query.processing.QueryProcessor;
 import com.ntnu.solbrille.query.filtering.Filter;
 import com.ntnu.solbrille.query.QueryResult;
+import com.ntnu.solbrille.query.clustering.ClusterList;
+import com.ntnu.solbrille.query.clustering.Cluster;
 import com.ntnu.solbrille.console.SearchEngineMaster;
 import com.ntnu.solbrille.utils.Pair;
 import com.ntnu.solbrille.utils.StemmingUtil;
@@ -79,22 +81,65 @@ class SearchServlet extends HttpServlet {
         printDiv(response.getOutputStream(),"numresults","Number of results: " + String.valueOf(allResults.length));
         printDiv(response.getOutputStream(),"showing","Showing results " + start + " to " + end + ".");
         if (results.length > 0) {
-            response.getOutputStream().println("<ol id=\"results\">");
-            for(QueryResult result:results) {
-                if (!hasClusters) {
+
+            if(!hasClusters) {
+                response.getOutputStream().println("<ol id=\"results\">");
+                for(QueryResult result:results) {
                     try {
                         printResult(response.getOutputStream(),result, clean);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                } else {
-                    // For each cluster:
-                    // <li class="clustername">
-                    //      ... results ...
-                    // </li>
+                }
+                response.getOutputStream().println("</ol>");
+            } else {                                                                    
+                response.getOutputStream().println("<ol id=\"clusters\">");
+
+                ClusterList list = results[0].getClusterList();
+                for(Cluster cluster:list) {
+                    response.getOutputStream().println("<li class=\"cluster\">");
+                    response.getOutputStream().println("<span class=\"score\">" + cluster.getScore() + "</span>");
+
+                    response.getOutputStream().println("<ol class=\"tags\">");
+                    for(String tag:cluster.getTags()) {
+                        response.getOutputStream().println("<li class=\"tag\">" + tag + "</li>");
+                    }
+                    response.getOutputStream().println("</ol>");
+                    response.getOutputStream().println("<ol class=\"results\">");
+                    for(QueryResult result:cluster.getResults()) {
+                        try {
+                            printResult(response.getOutputStream(),result,query);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        } catch (URISyntaxException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                    }
+                    response.getOutputStream().println("</ol>");
+
+
+
+
+
+
+
+                    /*
+                    <li class="cluster">
+                        <ol class="tags">
+
+                        </ol>
+
+                        <ol class="results">
+                            //printresult
+                        </ol>
+
+                    </li>
+                     */
+
+                    response.getOutputStream().println("</li>");
                 }
             }
-            response.getOutputStream().println("</ol>");
+
         }
 
         // print pages
