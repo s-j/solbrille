@@ -1,4 +1,21 @@
 \chapter{Introduction}
 \thispagestyle{fancy}
 \label{sec:introduction}
-something fishy
+
+The assignment given for the project in TDT4215 {\it Web-Intelligence} were to develop a search application using an inverted index file, a vector ranking model and a clustering technique to improve the search. Background knowledge for these topics is partially covered by the course curriculum which includes the a bible of information retrieval, 'Modern Information Retrieval' \cite{553876} and a number of papers.
+
+However, \cite{553876} gives rather a broad overview of the field of IR, rather a detailed description of how inverted index based search works. For these purpose, a reader may be consider to look at \cite{1132959} and \cite{323905}, which describe both basic concepts and advanced techniques for performance improvement.
+
+Two another knowledge sources used early in this project were Terrier \cite{ounis06terrier-osir} and Brille \cite{truls} search engines. The inspiration from Terrier lies in a modular design of the processing components, as it will be demonstrated later. Terrier also splits query processing into several steps such as preprocessing, matching, scoring and postprocessing. A modular design allows developers to change small fractions of code (modules or components) in order to evaluate a different architecture concept.
+
+Brille Search Engine was originally produced during a similar project the same course, couple of years ago, and later altered by one of its authors, Truls Amundsen Bjørklundm, as a part of his Ph.D. research. The version known to the authors of this report is accessible from Truls' Home Page (\url{http://www.idi.ntnu.no/~trulsamu/brille.tar.gz}).
+
+As the available version was mainly focused on hierarchical indexes and index freshness \cite{truls}, the corresponding search engine was more fast index handler with a good buffer manager. (According to rumors, Brille handles TREC GOV2 more effectively than Lucene Search Engine).
+
+The ideas taken from Brille are within Buffer management and performance issues of Java's standard implementation of ArrayLists (which is quite storage inefficient and slow). The concept of the search engine itself, feeding, indexing, processing and presenting were conducted by the authors on their own.
+
+\section{Target Goals and Motivation}
+As two of the four group members are graduate students, where one is working at a search-oriented company and the other one is taking a PhD within search, and other two are fourth grade students, where one has a part time job in yet another search-oriented company, the main motivation was not just complete the project, but actually produce a well working search engine. However, as there exist a large number of freely available search engines such as Lucene, Solr, Terrier, Zettair, MG4J, etc., it is not the product, but the process and the ideas behind that is of the highest value. Also due to the project limits it was impossible to achieve a great execution performance of the resulting product, but all the decisions to be presented will always consider about how the performance can be improved later, and how the search engine application can be extended to become a worthy product.
+
+\section{Reading Guide}
+So far this chapter has introduced the assignment itself and listed the background theory and inspiration sources used for this project. Section \ref{sec:requirements} will now present a short summary of the assignment text. The design and the system architecture will be outlined in Section \ref{sec:architecture}. Section \ref{sec:implementation} will describe the application implementation at a very high level. The application will be further evaluated in Section \ref{sec:results}. Any conclusions and a number of suggestions to further improvements will be listed in section \ref{sec:conclusions}.
