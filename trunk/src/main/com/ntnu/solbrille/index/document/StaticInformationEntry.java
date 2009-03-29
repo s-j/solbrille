@@ -34,7 +34,6 @@ public class StaticInformationEntry implements IndexEntry {
     }
 
     public void serializeToByteBuffer(ByteBuffer buffer) {
-        System.out.println("Write DocIdCounter: " + documentIdCounter);
         buffer.putLong(documentIdCounter.get());
         buffer.putLong(totalNumberOfTokens.get());
         buffer.putLong(totalNumberOfDocuments.get());

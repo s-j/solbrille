@@ -67,14 +67,18 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
     public void stop() {
         setIsRunning(false);
         try {
-            infoIndex.writeToFile(bufferPool, systemInfoFileNumber, 0);
-            idMapping.writeToFile(bufferPool, idMappingFileNumber, 0);
-            statistics.writeToFile(bufferPool, documentStatisticFileNumber, 0);
+            writeToDisk();
         } catch (IOException e) {
             setFailCause(e);
         } catch (InterruptedException e) {
             setFailCause(e);
         }
+    }
+
+    private void writeToDisk() throws IOException, InterruptedException {
+        infoIndex.writeToFile(bufferPool, systemInfoFileNumber, 0);
+        idMapping.writeToFile(bufferPool, idMappingFileNumber, 0);
+        statistics.writeToFile(bufferPool, documentStatisticFileNumber, 0);
     }
 
     /**
@@ -165,7 +169,7 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
                         docUri));
     }
 
-    void updateGlobalStatistics(StaticInformationEntry delta, Map<Long, Float> tfIdfAccumulator) {
+    void updateGlobalStatistics(StaticInformationEntry delta, Map<Long, Float> tfIdfAccumulator) throws IOException, InterruptedException {
         infoIndex.registerDocumentsIndexed(
                 delta.getTotalNumberOfDocuments(),
                 delta.getTotalDocumentLength(),
@@ -176,5 +180,6 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
             entry.setTfIdfVectorLength((float) Math.sqrt(docWeight.getValue()));
             // statistics.put(idEntry, entry); updated reference no need 
         }
+        writeToDisk();
     }
 }

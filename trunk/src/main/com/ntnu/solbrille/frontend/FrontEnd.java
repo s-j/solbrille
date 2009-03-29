@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Iterator;
 
 /**
@@ -53,10 +54,13 @@ public class FrontEnd {
         ServletHandler servletHandler = new ServletHandler();
         servletHandler.addServletWithMapping(new ServletHolder(new SearchServlet(master)), "/search");
         servletHandler.addServletWithMapping(new ServletHolder(new FeederServlet(master)), "/feed");
-
         servletHandler.addServletWithMapping(new ServletHolder(new HttpServlet() {
             protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-                master.flush();
+                try {
+                    master.flush();
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
             }
         }), "/flush");
 

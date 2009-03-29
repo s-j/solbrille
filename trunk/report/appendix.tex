@@ -1,3 +1,28 @@
 \chapter{Appendix}
 \thispagestyle{fancy}
-etc
+\section{How to run Solbrille, a short guide}\label{sec:how_to_run}
+This section contains a short introduction on how to use Solbrille. The guide will include the steps required to install, feed and search, using the solbrille search engine. 
+
+\subsection{System requirements}\label{sub:system_requirements}
+Solbrille uses functionality which is only accesible using Java version 1.6. Any modern computer capable of running java applications should be able to run Solbrille.  
+
+\subsection{Installation}\label{sub:installation}
+The electronic delivery from this project contains a folder called \texttt{delivery}, copy this folder to wherever you want to have solbrille installed. This folder contains the solbrille binaries, the TIME collection and some content files used by the web front-end.
+
+\subsection{Initial startup and feeding}\label{sub:initial_startup_and_feeding}
+To feed the TIME collection to the system you should start the console Solbrille application. Place a command-line inside the deploy folder on your system and start the \texttt{SolbrilleConsole.jar}.
+
+\begin{verbatim} 
+> java -jar SolbrilleConsole.jar
+\end{verbatim} 
+
+Then, to feed the time collection enter the \texttt{feedtime} command. When the log message: \texttt{INFO: Flushed index phase 1} appears the index has been built. Then exit the console application with the \texttt{exit} command. 
+
+\subsection{Running the web front-end}\label{sub:running_the_web_front_end}
+To run the web front end the \texttt{SolbrilleServer.jar} has to be run. 
+
+\begin{verbatim} 
+> java -jar SolbrilleServer.jar
+\end{verbatim}
+
+Then point your favorite web browser to \url{http://localhost:8080/servlets/search}. 

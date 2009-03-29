@@ -10,6 +10,8 @@ import com.ntnu.solbrille.utils.iterators.CachedIterator;
 import com.ntnu.solbrille.utils.iterators.CachedIteratorAdapter;
 import com.ntnu.solbrille.utils.iterators.SkipAdaptor;
 import com.ntnu.solbrille.utils.iterators.VoidIterator;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -21,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version $Id $.
  */
 public class OccurenceIndex extends AbstractLifecycleComponent {
+
+    private Log LOG = LogFactory.getLog(this.getClass());
 
     private final AtomicInteger indexPhase = new AtomicInteger();
 
@@ -45,13 +49,12 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
 
     public void start() {
         try {
-            System.out.println("Read dict!");
+            LOG.info("Loading occurence index from disk.");
             dictionary.initializeFromFile(bufferPool, dictionaryFileNumber, 0);
-            System.out.println("Dict done!");
             evenInvertedList.initializeFromFile(bufferPool, evenInvertedListFileNumber, 0);
             oddInvertedList.initializeFromFile(bufferPool, oddInvertedListFileNumber, 0);
             indexPhase.set(Math.max(evenInvertedList.getIndexPhase(), oddInvertedList.getIndexPhase()));
-            System.out.println("Started with index phase: " + indexPhase.get());
+            LOG.info("Occurence index started at phase: " + indexPhase.get());
             setIsRunning(true);
         } catch (IOException e) {
             setFailCause(e);
@@ -62,17 +65,21 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
 
     public void stop() {
         try {
-            System.out.println("Write dict!");
-            dictionary.writeToFile(bufferPool, dictionaryFileNumber, 0);
-            System.out.println("Dict write done!");
-            evenInvertedList.writeToFile(bufferPool, evenInvertedListFileNumber, 0);
-            oddInvertedList.writeToFile(bufferPool, oddInvertedListFileNumber, 0);
+            LOG.info("Writing occurence index to disk.");
+            writeOutToDisk();
+            LOG.info("Occurence index stopped at phase: " + indexPhase.get());
             setIsRunning(true);
         } catch (IOException e) {
             setFailCause(e);
         } catch (InterruptedException e) {
             setFailCause(e);
         }
+    }
+
+    private void writeOutToDisk() throws IOException, InterruptedException {
+        dictionary.writeToFile(bufferPool, dictionaryFileNumber, 0);
+        evenInvertedList.writeToFile(bufferPool, evenInvertedListFileNumber, 0);
+        oddInvertedList.writeToFile(bufferPool, oddInvertedListFileNumber, 0);
     }
 
     public LookupResult lookup(String term) throws IOException, InterruptedException {
@@ -141,7 +148,7 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
      *
      * @param newPointers Iterator with the new inverted list pointers.
      */
-    void updateDictionaryEntries(Iterator<Pair<DictionaryTerm, InvertedListPointer>> newPointers) {
+    void updateDictionaryEntries(Iterator<Pair<DictionaryTerm, InvertedListPointer>> newPointers) throws IOException, InterruptedException {
         CachedIterator<Map.Entry<DictionaryTerm, DictionaryEntry>> entries
                 = new CachedIteratorAdapter<Map.Entry<DictionaryTerm, DictionaryEntry>>(dictionary.entrySet().iterator());
         CachedIterator<Pair<DictionaryTerm, InvertedListPointer>> updates
@@ -168,7 +175,7 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
         indexPhase.incrementAndGet();
         getActiveList().setIndexPhase(indexPhase.get());
         getInactiveList().setIndexPhase(indexPhase.get());
-
+        writeOutToDisk();
     }
 
     private DictionaryEntry buildDictionaryEntry(InvertedListPointer pointer) {

@@ -332,5 +332,7 @@ public class OccurenceIndexBuilder extends AbstractLifecycleComponent {
         return false;
     }
 
-
+    public int getIndexPhase() {
+        return index.getActiveList().getIndexPhase();
+    }
 }
