@@ -14,7 +14,7 @@
   <component name="CodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS">
       <value>
-        <ADDITIONAL_INDENT_OPTIONS fileType="java">
+        <ADDITIONAL_INDENT_OPTIONS fileType="">
           <option name="INDENT_SIZE" value="4" />
           <option name="CONTINUATION_INDENT_SIZE" value="8" />
           <option name="TAB_SIZE" value="4" />
@@ -23,7 +23,7 @@
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
-        <ADDITIONAL_INDENT_OPTIONS fileType="jsp">
+        <ADDITIONAL_INDENT_OPTIONS fileType="java">
           <option name="INDENT_SIZE" value="4" />
           <option name="CONTINUATION_INDENT_SIZE" value="8" />
           <option name="TAB_SIZE" value="4" />
@@ -248,7 +248,10 @@
   <component name="ProjectDetails">
     <option name="projectName" value="solbrille" />
   </component>
-  <component name="ProjectFileVersion" converted="true" />
+  <component name="ProjectFileVersion" converted="true">
+    <converter id="ror-modules" />
+    <converter id="SelenaRunConfToDiana" />
+  </component>
   <component name="ProjectKey">
     <option name="state" value="https://solbrille.googlecode.com/svn/trunk/solbrille.ipr" />
   </component>
@@ -294,7 +297,6 @@
       </map>
     </option>
     <option name="myVersion" value="124" />
-    <option name="mySupportsUserInfoFilter" value="true" />
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="svn" />

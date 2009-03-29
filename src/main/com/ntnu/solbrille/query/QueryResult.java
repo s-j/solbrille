@@ -4,6 +4,7 @@ import com.ntnu.solbrille.index.document.DocumentStatisticsEntry;
 import com.ntnu.solbrille.index.occurence.DictionaryTerm;
 import com.ntnu.solbrille.index.occurence.DocumentOccurence;
 import com.ntnu.solbrille.utils.Pair;
+import com.ntnu.solbrille.query.clustering.ClusterList;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class QueryResult implements Comparable<QueryResult> {
     private float score;
 
     private Pair<Integer, Integer> bestWindow;
+    private ClusterList clusterList;
 
     public QueryResult(long documentId) {
         this.documentId = documentId;
@@ -75,6 +77,14 @@ public class QueryResult implements Comparable<QueryResult> {
 
     public void setBestWindow(Pair<Integer, Integer> bestWindow) {
         this.bestWindow = bestWindow;
+    }
+
+    public void setClusterList(ClusterList cl) {
+        this.clusterList = cl;
+    }
+
+    public ClusterList getClusterList() {
+        return clusterList;
     }
 }
 

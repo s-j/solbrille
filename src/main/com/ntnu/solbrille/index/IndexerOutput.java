@@ -30,15 +30,18 @@ public class IndexerOutput implements FeederOutput {
 
     public void put(Struct document) {
         try {
+
             Map<String, ? extends List<Integer>> terms = (Map<String, ? extends List<Integer>>) document.getField("terms").getValue();
             List<String> tokens = (List<String>) document.getField("token");
             URI uri = (URI) document.getField("uri").getValue();
+            LOG.info("Feeded document: " + uri);
             if (statisticIndex.getDocumentIdFor(uri) > -1) {
                 LOG.info("Duplicate document: " + uri);
             } else {
                 long documentId = statisticIndex.getNextDocumentId();
                 indexBuilder.addDocument(documentId, uri, ((String) document.getField("cleanedContent").getValue()).length(), terms);
             }
+            
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);
