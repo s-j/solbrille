@@ -1,0 +1,61 @@
+body {
+	font-size: 62.5%;
+}
+
+div#wrapper {
+	width: 960px;
+	margin: 0 auto 3em auto;
+	background-color: #fff;
+	color: #444;
+	text-decoration: none;
+	word-spacing: normal;
+	text-align: left;
+	letter-spacing: 0;
+	line-height: 1.2em;
+	font-size: 1.3em;
+	text-align: center;
+}
+
+ol#results li {
+	text-align: left;
+}
+
+ol#results li {
+	margin: 1.5em;
+}
+
+div.uri a {
+	font-family: georgia;
+	font-size: 1.3em;
+	text-decoration: none;
+	color: #00508d;
+}
+
+div.uri a:hover {
+	color: #3488c8;
+}
+
+div.teaser {
+	font-variant: small-caps;
+	margin: 0.5em 0 0.5em 0;
+}
+
+div.teaser:before {
+	content: "\"... ";
+}
+
+div.teaser:after {
+	content: "...\"";
+}
+
+div.score {
+	color: #777;
+}
+
+div#paginator {
+	text-align: center;
+}
+
+.highlight {
+	background: #f00;
+}
