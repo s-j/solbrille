@@ -92,10 +92,21 @@ class SearchServlet extends HttpServlet {
                     }
                 }
                 response.getOutputStream().println("</ol>");
-            } else {                                                                    
+            } else {
+                ClusterList list = results[0].getClusterList();
+                response.getOutputStream().println("<div id=\"clusterwrap\"><ol id=\"clusterlist\">");
+                for (Cluster cluster:list) {
+                    StringBuilder sb = new StringBuilder();
+                    for(String tag:cluster.getTags()) {
+                        sb.append(tag);
+                    }
+
+                    response.getOutputStream().println("<li class=\""+sb.toString()+"\">" + sb.toString() + "</li>");
+                }
+                response.getOutputStream().println("</ol></div>");
                 response.getOutputStream().println("<ol id=\"clusters\">");
 
-                ClusterList list = results[0].getClusterList();
+
                 for(Cluster cluster:list) {
                     response.getOutputStream().println("<li class=\"cluster\">");
                     response.getOutputStream().println("<span class=\"score\">" + cluster.getScore() + "</span>");
