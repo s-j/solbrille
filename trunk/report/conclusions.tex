@@ -1,4 +1,22 @@
 \chapter{Conclusions and Further Work}
 \label{sec:conclusions}
 \thispagestyle{fancy}
-whatever
+
+As it has been presented so far, {\bf Solbrille} is already a working search engine designed and implemented according to the concepts covered by curriculum and sources mentioned in the introduction section. However, there are number of issues for further development, redesign and improvement:
+
+\begin{itemize}
+	\item Feeder can be redesigned and improved to provide a better performance.
+	\item Index reading and writing part may be improved to provide a better performance and handle concurrent index updates. More efficient methods for storing and retrieving statistics information may be required.
+	\item Stop word removal should be implemented in future. 
+	\item Matcher can be redesigned according to the ideas proposed in the system architecture section. In future a matcher will also perform phrase matching. Another issues that can be considered here is the ordering in which the inverted lists are processed (query optimization) and skip lists.
+	\item Scorer can be extended with link-based scoring schemes, proximity scorers, etc. At the moment the score values are not normalized by the implemented scorers, to be correct all the scorers has to return score values in the same range.
+	\item Sniplet generation and clustering may be improved to provide better performance and result quality
+	\item Front End may be improved to provide a better usability and performance
+	\item Overall system performance with respect to processing time, disk and memory usage may be significantly improved. System profiling may be used to detect critical sections in the processing cycle.  
+\end{itemize} 
+
+The current implementation has only been tested on the provided version of TIME collection. In future the authors plan to index and evaluate the performance of {\bf Solbrille} on 500GB large TREC GOV2 collection. At the moment, as the statistics information is kept in memory, this is rather impossible. A redesign of some of the components may be important to be able to index and search in large document collections.
+
+Also a number of advanced techniques such as caching (results, inverted lists, intersections, cluster data, sniplets, etc), and distributed processing (\cite{master}, \cite{risvik}) will be implemented and evaluated in future.
+
+As all four of the group members have expressed their interest in working with {\bf Solbrille} as a hobby project, the project will be hosted by the Google Code and the authors may add and complete tasks they would found important and interesting for a future development. There is a hope that at some point {\bf Solbrille} will gain significant performance or become a working product, otherwise it will be a good toy for testing ideas and concepts. 
