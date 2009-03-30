@@ -1,14 +1,14 @@
 \chapter{Evaluation Experiments and Results}
 \label{sec:results}
 \thispagestyle{fancy}
-The system have been evaluated on the TIME collection (\cite{TIME}) provided by the course staff. The collection consist of 423 documents and 10 queries with specified relevant documents.
+The system has been evaluated on the TIME collection (\cite{TIME}) provided by the course staff. The collection consist of 423 documents and 10 queries with specified relevant documents.
 
 \section{Basic System}
-The basic system has been evaluated using only precision and recall, no performance considerations has been made. The results from a default implementation using cosine scoring mode are demonstrated by Figure \ref{fig:cosine}. The figure plots a line for each of the queries, x and y axis correspond to recall and precision, and point $i$ on each line correspond to a (precision,recall) value after inspecting top $i$ results. The diagram plots up-to 50 top results for each query.
+The basic system has been evaluated using only precision and recall, no performance considerations has been made. The results from a default implementation using cosine scoring mode are demonstrated by Figure \ref{fig:cosine}. The figure plots a line for each of the queries, $x$ and $y$ axis correspond to recall and precision, and point $i$ on each line correspond to a (precision,recall) value after inspecting top $i$ results. The diagram plots up-to 50 top results for each query.
 
 The diagram is quite easy to understand by keeping in mind that a correct result will either increase both the precision and recall or keep them at 1.0. After the maximum number of correct results is achieved, the recall will stay at 1.0, while precision will drop. Wrong results always result in a drop in precision, while the recall value is kept at the same level.
 
-As Figure \ref{fig:cosine} shows, the total search quality is somewhat poor - for two out of ten queries the ferst result is already irrelevant, and the highest possible recall value at precision level 1.0 is 0.6, while it is impossible to achieve a precision higher than 0.6 for a recall level at 1.0. The best combination of precision and recall altogether is slightly off (0.8, 0.8)
+As Figure \ref{fig:cosine} shows, the total search quality is somewhat poor - for two out of ten queries the first result is already irrelevant, and the highest possible recall value at precision level 1.0 is 0.6, while it is impossible to achieve a precision higher than 0.6 for a recall level at 1.0. The best combination of precision and recall altogether is slightly off (0.8, 0.8)
 
 \begin{sidewaysfigure}[h]
 \includegraphics[width=1.0\textwidth]{include/bench_cosine}
