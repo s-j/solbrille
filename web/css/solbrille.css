@@ -15,6 +15,11 @@ h1 span {
 
 h2 {
     font-size: 1.7em;
+    margin-left: 1em;
+}
+
+a {
+    text-decoration: none;
 }
 
 div#wrapper {
@@ -27,8 +32,14 @@ div#wrapper {
 	text-align: left;
 	letter-spacing: 0;
 	line-height: 1.2em;
-	font-size: 1.3em;
+	font-size: 1.2em;
 	text-align: center;
+    clear: both;
+}
+
+div#wrapheader {
+    width: 480px;
+    margin: 3em auto 5em auto;
 }
 
 ol.results li {
@@ -43,7 +54,8 @@ ol.results li {
 
 div.uri a {
 	font-family: georgia;
-	font-size: 1.3em;
+	font-size: 1.4em;
+    font-weight: bold;
 	text-decoration: none;
 	color: #00508d;
 }
@@ -99,6 +111,10 @@ div#resultwrap {
     float: right;
 }
 
+div#clusterwrap ol {
+    margin-top: 1em;
+}
+
 div#clusterwrap li {
     padding: 0.5em;
     lineheight: 1.3em;
@@ -107,5 +123,17 @@ div#clusterwrap li {
 }
 
 div#clusterwrap li:hover {
-    background: #ddd;
+    background: #eee;
+}
+
+form {
+    margin: 2em auto;
+}
+
+img {
+    float: left;
+}
+
+div#headwrap form {
+    float: right;
 }
