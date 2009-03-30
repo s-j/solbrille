@@ -1,13 +1,13 @@
 \chapter{Implementation}\label{sec:implementation}
 \thispagestyle{fancy}
 
-This chapter will describe implementation specific matters. However, it's not the purpose of this chapter to give a total understanding of all the implementation specific details. To get a in depth understanding the source code should be consulted. 
+This chapter describes some of the implementation specific matters. However, it's not the purpose of this chapter to give a total understanding of all the implementation specific details. To get a in depth understanding the source code should be consulted. 
 
 \section{Programming language and code}\label{sec:programming_language_and_code}
 The \emph{Java} programming language were chosen as the platform for the solution. In addition there are \emph{HTML}, \emph{JavaScript} and \emph{CSS} code in the frontend. 
 
 \section{Structure of solution}\label{sec:structure_of_solution}
-There are five six level packages in the Solbrille source tree. These packages represent separate pieces of functionality and their roles may be summarized as following.
+There are five six level packages in the {\bf Solbrille}'s source tree. These packages represent separate pieces of functionality and their roles may be summarized as following.
 
 \begin{itemize}
 	\item \texttt{com.ntnu.solbrille.buffering}: Used to do buffered IO and thread safe sharing of IO resources (Section~\ref{sec:buffered_io}).
@@ -27,9 +27,9 @@ The relationships between these packages is summarized in Figure~\ref{fig:high_l
 \end{figure}
 
 \section{Index building and update algorithm}
-The algorithm used for incrementally building and the occurrence index is as mentioned in Section~\ref{sub:index_building} a two phase algorithm. Initially one index update is built in memory, then when the index is flushed this update is merged with the existing index.
+The algorithm used for incrementally building of the occurrence index is, as mentioned in Section~\ref{sub:index_building}, a two phase algorithm. Initially one index update is built in memory, then when the index is flushed this update is merged with the existing index.
 
-The way this is managed to assure concurrent searches and index updating is that the system uses  two inverted files. One inverted file which is searched, and another one which is updated. To make the index consistent the concept of a \emph{Index phase} is introduced. A index phase is the identifier of the current searchable index. Each entry in the dictionary contains a double set of inverted list pointers, the current active set of pointers are determined by the parity of the current index phase. While merging the old inverted list and the new index update the inactive pointer of each dictionary entry is updated. When the update completes; the index phase is incremented and the active set of inverted list pointers are swapped (due to parity).
+The way this is managed to assure concurrent searches and index updating is that the system uses two inverted files. One inverted file which is searched, and another one which is updated. To make the index consistent the concept of a \emph{Index phase} is introduced. A index phase is the identifier of the current searchable index. Each entry in the dictionary contains a double set of inverted list pointers, the current active set of pointers are determined by the parity of the current index phase. While merging the old inverted list and the new index update the inactive pointer of each dictionary entry is updated. When the update completes; the index phase is incremented and the active set of inverted list pointers are swapped (due to parity).
 
 \section{External libraries}\label{sec:external_libraries}
 To ease the implementation some external libraries have been used. These libraries have been run past the course staff for verification.
@@ -42,4 +42,4 @@ To ease the implementation some external libraries have been used. These librari
 \end{itemize}
 
 \section{Deployment and binaries}\label{sec:deployment_and_binaries}
-The Solbrille search engine is deployed as two standalone applications, one \emph{ConsoleApplication} and a \emph{FronEnd} which runs a web-server. The console application includes the functionality required to feed documents to the system, in additional some convenience methods for feeding the TIME-collection. In Section~\ref{sec:how_to_run} describes how to run the search-engine.
+The {\bf Solbrille} search engine is deployed as two standalone applications, one \emph{ConsoleApplication} and a \emph{FronEnd} which runs a web-server. The console application includes the functionality required to feed documents to the system, in additional some convenience methods for feeding the TIME-collection. In Section~\ref{sec:how_to_run} describes how to run the search-engine.
