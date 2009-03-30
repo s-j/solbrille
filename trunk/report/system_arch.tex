@@ -121,24 +121,21 @@ Selecting the window with the highest number of matching tokens is not a good me
 To produce visual appealing search result presentations the length of the snippet windows could have been calculated in number of characters rather than number of tokens. Using tokens as the unit of measure the variance of the snippet lengths might be high. 
 
 \section{Extended System}
-
-For the extended system,  a clustering technique that is based on suffix trees is used. The methods is presented in \cite{zamir} which have been used as a reference when developing the clustering technique.
+For the extended system,  a clustering technique that is based on suffix trees is proposed to be used. The methods is presented in \cite{zamir} which have been used as a reference for designing the clustering solution.
 
 \subsubsection{Suffix Tree} 
-
 A suffix tree is a representation of a text which speeds up several string algorithms. In a suffix tree, all suffixes of a text is held in  a trie to speed up string comparisons, meaning that algorithms like substring comparison can be done in $O(m)$ time (where $m$ is the size of the substring). In a naive implementation of a suffix tree, creation time and space would be $O(n^2)$, but when using an algorithm called Ukkonen's algorithm, both time and space can constraints can be reduced to $O(n)$. More information can be found in \cite{suffixtreebook}.
 
 Usually in a suffix tree, charcters is chosen as the most atomic part of a text. For this project words was chosen as the most atomic part. The primary reason for this is that substring matches is not of interset, since term frequency is used to score matches. To support using words as atomic parts, and to support having multiple documents in a tree, a variant of suffix trees called Generalized Suffix Tree is used . This is a tree that resembles a normal suffix tree, but which also has a bit set on each node, which describes which documents contain that node. 
 
 \subsubsection{Suffix Tree Clustering}
+The proposed clustering method itself is based on the method as presented in \cite{zamir}. The main idea is that for every document in the result set, the snippet can be extracted and put into the suffix tree. For all terms and phrases that exists in more than one document, the tree will then contain a node where the cardinality of the bit set is more than 1. A simple iteration over the tree will then extract all common phrases and terms. This is again used to create clusters of documents, where all the documents have a set of phrases in common.
 
-The clustering method itself is based on the method as presented in \cite{zamir}. What is basically done is that for every document in the result set, the snippet is extracted and put into the suffix tree. For all terms and phrases that excists in more than one document, the tree will then contain a node where the cardinality of the bit set is more than 1. A simple iteration over the tree will then extract all common phrases and terms. This is again used to create clusters of documents, where all the documents have a set of phrases in common.
+Since there are usually a lot of garbage nodes (common words, words/phrases that only occur in one document, or nodes which contains every result in the result set), every node is scored. The score function depends on the number of words in phrase, if the words are common or not, the score calculated by the scorer and the number of documents that share the phrase. 
 
-Since there are usually a lot of "garbage" nodes (common words, words/phrases that only occur in one document, or nodes which contains every result in the result set), every node is scored. The score function depends on the number of words in phrase, if the words are common or not, the score calculated by the scorer and the number of documents that share the phrase. 
+The $N$ best nodes can then chosen and joined. All nodes where more than half of each set are in both sets are then joined. For the joined sets,  all nodes where the phrases are simple subsets of each-other is removed. For example, if "president kennedy" and "kennedy" contains the same documents, "kennedy" is removed, to leave the most expressive of the two.
 
-The N best nodes is then chosen and joined. All nodes where more than half of each set are in both sets are then joined. For the joined sets,  all nodes where the phrases are simple subsets of eachother is removed. For example, if "president kennedy" and "kennedy" containes the same documents, "kennedy" is removed, to leave the most expressive of the two.
-
-Finally, all the clusters (joined nodes) are rescored, and all clusters which has a score that wis more than 1/5th of the maximum cluster score.
+Finally, all the clusters (joined nodes) are re-scored, and all clusters which has a score that wis more than 1/5th of the maximum cluster score.
 
 \section{Front-End Design}
 The main responsibilities to the front-end is to handle and provide search functionality to a user. This can be done through embedding Jetty in the system. Jetty is a compact java web server which supports both embedded and stand-alone deployment of applications. Embedding Jetty gives us advantages such as reducing the complexity of the development environment, requires no installation, and in-line configuration of the web server. However, it increases the complexity of writing views because of the in-line configuration.
