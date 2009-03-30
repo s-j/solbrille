@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 
 /**
  * @author <a href="mailto:arnebef@yahoo-inc.com">Arne Bergene Fossaa</a>
+ * @author @author <a href="mailto:janmaxim@gmail.coms">Jan Maximilian W. Kristiansen</a>
  * @version $Id$.
  */
 
@@ -122,7 +123,7 @@ class SearchServlet extends HttpServlet {
 
                     response.getOutputStream().println("<span class=\"tag\">" + id.toString() + "</span>  ");
 
-                    response.getOutputStream().println("- <span class=\"score\">Score: " + cluster.getScore() + "</span></h2>");
+                    response.getOutputStream().println("</h2><h3><span class=\"score\">Score: " + cluster.getScore() + "</span></h3>");
                     response.getOutputStream().println("<ol class=\"results\">");
                     for(QueryResult result:cluster.getResults()) {
                         try {

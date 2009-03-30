@@ -1,3 +1,5 @@
+/* author: Jan Maximilian Winther Kristiansen */
+
 body {
 	font-size: 62.5%;
 }
@@ -16,6 +18,14 @@ h1 span {
 h2 {
     font-size: 1.7em;
     margin-left: 1em;
+    line-height: 1.7em;
+}
+
+h3 {
+    font-size: 1.5em;
+    margin-left: 1em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 a {
@@ -128,6 +138,7 @@ div#clusterwrap li:hover {
 
 form {
     margin: 2em auto;
+    font-size: 1.3em;
 }
 
 img {
