@@ -172,7 +172,7 @@ class SearchServlet extends HttpServlet {
         output.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
         output.println("<html><head><title>Results for query: \"" + query + "\"</title><link rel=\"stylesheet\" type=\"text/css\" href=\"/media/web/css/style.css\" />");
 
-        output.println("<script src=\"/media/web/js/jquery-1.3.2.min.js\" type=\"text/javascript\"></script>");
+        output.println("<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.3/jquery.min.js\" type=\"text/javascript\"></script>");
         output.println("<script src=\"/media/web/js/highlight.js\" type=\"text/javascript\"></script>");
         output.println("</head><body>");
         if (query == null) {
