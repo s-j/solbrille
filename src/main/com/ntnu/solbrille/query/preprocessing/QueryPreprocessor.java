@@ -9,6 +9,8 @@ import org.tartarus.snowball.ext.porterStemmer;
 
 import java.util.ArrayList;
 import java.util.StringTokenizer;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,9 +21,11 @@ import java.util.regex.Pattern;
 public class QueryPreprocessor {
 
     SnowballStemmer stemmer;
+    Set<String> stopWords;
 
-    public QueryPreprocessor() {
+    public QueryPreprocessor(Set<String> stopWords) {
         stemmer = new porterStemmer();
+        this.stopWords = stopWords;
     }
 
     public ArrayList<String> processTerm(String in) {
@@ -39,8 +43,10 @@ public class QueryPreprocessor {
             stemmer.setCurrent(sub);
             stemmer.stem();
             String sout = stemmer.getCurrent();
-            if (sout.length() > 0) out.add(sout);
+            if (sout.length() > 0 && !stopWords.contains(sout)) out.add(sout);
         }
+
+
 
         return out;
     }
@@ -144,7 +150,7 @@ public class QueryPreprocessor {
 
     public static void main(String args[]) {
         String test = " lazy, dog +jump over -quick +\"hello dolly\" -foxy moo +bar +--kaa-boom-pang! +moo-cow";
-        QueryPreprocessor pre = new QueryPreprocessor();
+        QueryPreprocessor pre = new QueryPreprocessor(new HashSet<String>());
         pre.preprocess(test);
     }
 }
