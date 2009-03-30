@@ -100,11 +100,13 @@ class SearchServlet extends HttpServlet {
                 response.getOutputStream().println("<div id=\"clusterwrap\"><h2>Clusters</h2><ol id=\"clusterlist\">");
                 for (Cluster cluster : list) {
                     StringBuilder sb = new StringBuilder();
-                    for (String tag : cluster.getTags()) {
+                    StringBuilder commaSb = new StringBuilder();
+                    for(String tag:cluster.getTags()) {
                         sb.append(tag);
+                        commaSb.append("\"" + tag.trim() + "\" ");
                     }
 
-                    response.getOutputStream().println("<li class=\"" + sb.toString() + "\"><a href=\"#\">" + sb.toString() + " (" + cluster.getSize() + ")</a></li>");
+                    response.getOutputStream().println("<li class=\""+sb.toString()+"\"><a href=\"#\">" + commaSb + " ("+ cluster.getSize() +")</a></li>");
                 }
                 response.getOutputStream().println("</ol></div>");
                 response.getOutputStream().println("<div id=\"resultwrap\"><ol id=\"clusters\">");
