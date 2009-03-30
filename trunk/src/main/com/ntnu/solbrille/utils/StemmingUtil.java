@@ -15,6 +15,7 @@ import com.ntnu.solbrille.feeder.outputs.FeederOutput;
 import com.ntnu.solbrille.feeder.processors.Tokenizer;
 import com.ntnu.solbrille.feeder.processors.PunctuationRemover;
 import com.ntnu.solbrille.feeder.processors.Termizer;
+import com.ntnu.solbrille.feeder.processors.DocumentProcessor;
 
 /**
  * Created by IntelliJ IDEA.
@@ -55,33 +56,30 @@ public class StemmingUtil {
         return returnValues;
     }
 
-    private class Stemmer extends Feeder {
+    private class Stemmer {
 
-        private StemmerOutput output;
+       List<DocumentProcessor> processors = new ArrayList<DocumentProcessor>();
 
         public Stemmer() {
-            output = new StemmerOutput();
-
             processors.add(new Tokenizer("content", "tokens"));
             processors.add(new PunctuationRemover("tokens", "cleanedTokens"));
             processors.add(new com.ntnu.solbrille.feeder.processors.Stemmer("cleanedTokens", "stemmedTokens"));
             processors.add(new Termizer("stemmedTokens", "terms"));
-            outputs.add(output);
         }
 
         public HashMap<String, IntArray> stem(String text) {
             Struct struct = new Struct();
             struct.setField("content", text);
-            try {
-                feed(struct).get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                System.exit(-1);
-            } catch (ExecutionException e) {
-                System.exit(-1);
+            for(DocumentProcessor processor:processors) {
+                try {
+                    processor.process(struct);
+                } catch (Exception e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
             }
+
             //while (!output.isDone()) { }
-            return output.getOutput();
+            return (HashMap<String,IntArray>) struct.getField("terms").getValue();
         }
     }
 
