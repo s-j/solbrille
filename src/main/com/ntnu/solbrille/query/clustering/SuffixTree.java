@@ -117,11 +117,13 @@ public class SuffixTree implements QueryProcessingComponent{
         } else {
             score = maxlength;
         }
-        double maxLabel=0.0;
+
+
+        double sumLabel=0.0;
         for(int[] label:cluster.labels) {
-            maxLabel = Math.max(scoreLabel(label,wl),maxLabel);
+            sumLabel += scoreLabel(label,wl);
         }
-        score *= maxLabel;
+        score *= sumLabel/cluster.labels.size();
 
         double maxScore = 0.0;
         double avgScore = 0.0;
@@ -129,7 +131,8 @@ public class SuffixTree implements QueryProcessingComponent{
                 maxScore = Math.max(results.get(i).getScore(),maxScore);
                 avgScore += results.get(i).getScore();
         }
-        score *=avgScore*1.0/numdocs;
+        //score +=maxScore;
+        score *= 0.3*avgScore/numdocs;
 
         return score;
 
@@ -299,7 +302,7 @@ public class SuffixTree implements QueryProcessingComponent{
                 label[i] = sequence.objectAt(i);
             }
             cluster.labels.add(label);
-            clusterScores.put(cluster,scoreCluster(cluster,wl,6,results));
+            clusterScores.put(cluster,scoreCluster(cluster,wl,15,results));
             clusters.add(cluster);
         }
 
@@ -318,7 +321,7 @@ public class SuffixTree implements QueryProcessingComponent{
         ArrayList<SuffixCluster> mergeList = new ArrayList<SuffixCluster>();
         for(int i = 0;i<clusters.size();i++) {
             SuffixCluster cluster = clusters.get(i);
-            scoreCluster(cluster,wl,6,results);
+            
             mergeList.clear();
 
             Iterator<SuffixCluster> mergeClusters = clusters.listIterator(i+1);
@@ -343,15 +346,37 @@ public class SuffixTree implements QueryProcessingComponent{
 
         ClusterList cl = new ClusterList();
         double maxScore = clusterScores.get(clusters.get(0));
-        for(SuffixCluster suffixCluster:clusters) {
-            if(clusterScores.get(suffixCluster) < maxScore/5) {
+
+        BitSet takenDocs = new BitSet();
+        double takenWeight = 0.2;
+        while(clusters.size() > 0) {
+
+            //find the best suffixCluster, scored by scoreCluster and by which clusters haven't been taken yet
+            double bestScore = 0;
+            SuffixCluster suffixCluster = null;
+            for(SuffixCluster testCluster:clusters) {
+                BitSet takenClone = (BitSet)takenDocs.clone();
+                takenClone.and(testCluster.docs);
+                double takenScore = (testCluster.docs.cardinality()-takenClone.cardinality())*1.0/testCluster.docs.cardinality();
+                double score = (1 + (takenWeight*takenScore))*clusterScores.get(testCluster);
+                if(score > bestScore) {
+                    suffixCluster = testCluster;
+                    bestScore = score;
+                }
+            }
+            takenDocs.and(suffixCluster.docs);
+
+            clusters.remove(suffixCluster);
+            if(clusterScores.get(suffixCluster) < maxScore/10) {
                 break;
             }
             Cluster cluster = new Cluster();
-            cluster.setScore(clusterScores.get(suffixCluster));
+            cluster.setScore(bestScore);
             for(int i=suffixCluster.docs.nextSetBit(0); i>=0; i=suffixCluster.docs.nextSetBit(i+1)) {
                 cluster.getResults().add(results.get(i));
             }
+            Collections.sort(cluster.getResults());
+            Collections.reverse(cluster.getResults());
 
             //Create tags
 
