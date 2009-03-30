@@ -194,7 +194,7 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        int counter = 0;
+        int counter = (int) start;
         int pos = 0;
         while (sniplet.hasNext() && pos < positions.length) {
             if (positions[pos] == counter) {
@@ -279,8 +279,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             st.addSource(sniplets);
 
 
-            queryProcessor = new QueryProcessor(st, new QueryPreprocessor(stopWords));
-
+            //queryProcessor = new QueryProcessor(st, new QueryPreprocessor(stopWords));
+            queryProcessor = new QueryProcessor(st, new QueryPreprocessor());
             System.out.println("Master started!");
         }
     }

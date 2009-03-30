@@ -1,24 +1,23 @@
 package com.ntnu.solbrille.frontend;
 
-import com.ntnu.solbrille.query.processing.QueryProcessor;
-import com.ntnu.solbrille.query.filtering.Filter;
-import com.ntnu.solbrille.query.QueryResult;
-import com.ntnu.solbrille.query.clustering.ClusterList;
-import com.ntnu.solbrille.query.clustering.Cluster;
 import com.ntnu.solbrille.console.SearchEngineMaster;
+import com.ntnu.solbrille.index.occurence.DictionaryTerm;
+import com.ntnu.solbrille.query.QueryResult;
+import com.ntnu.solbrille.query.clustering.Cluster;
+import com.ntnu.solbrille.query.clustering.ClusterList;
 import com.ntnu.solbrille.utils.Pair;
-import com.ntnu.solbrille.utils.StemmingUtil;
+import com.ntnu.solbrille.utils.iterators.IteratorMerger;
 
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletConfig;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author <a href="mailto:arnebef@yahoo-inc.com">Arne Bergene Fossaa</a>
@@ -40,8 +39,8 @@ class SearchServlet extends HttpServlet {
 
         //Print header
         printHeader(response.getOutputStream(), query);
-        
-        if(query == null) {
+
+        if (query == null) {
             response.setStatus(200);
             response.getOutputStream().println("Need to put something into the query");
             printFooter(response.getOutputStream());
@@ -80,17 +79,17 @@ class SearchServlet extends HttpServlet {
         String clean = query.replaceAll("\"", " \" ");
 
         if (!hasClusters) {
-            printDiv(response.getOutputStream(),"numresults","Number of results: " + String.valueOf(allResults.length));
-            printDiv(response.getOutputStream(),"showing","Showing results " + start + " to " + end + ".");
+            printDiv(response.getOutputStream(), "numresults", "Number of results: " + String.valueOf(allResults.length));
+            printDiv(response.getOutputStream(), "showing", "Showing results " + start + " to " + end + ".");
         }
-        
+
         if (results.length > 0) {
 
-            if(!hasClusters) {
+            if (!hasClusters) {
                 response.getOutputStream().println("<ol class=\"results\">");
-                for(QueryResult result:results) {
+                for (QueryResult result : results) {
                     try {
-                        printResult(response.getOutputStream(),result, clean);
+                        printResult(response.getOutputStream(), result, clean);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -99,24 +98,24 @@ class SearchServlet extends HttpServlet {
             } else {
                 ClusterList list = results[0].getClusterList();
                 response.getOutputStream().println("<div id=\"clusterwrap\"><h2>Clusters</h2><ol id=\"clusterlist\">");
-                for (Cluster cluster:list) {
+                for (Cluster cluster : list) {
                     StringBuilder sb = new StringBuilder();
-                    for(String tag:cluster.getTags()) {
+                    for (String tag : cluster.getTags()) {
                         sb.append(tag);
                     }
 
-                    response.getOutputStream().println("<li class=\""+sb.toString()+"\"><a href=\"#\">" + sb.toString() + " ("+ cluster.getSize() +")</a></li>");
+                    response.getOutputStream().println("<li class=\"" + sb.toString() + "\"><a href=\"#\">" + sb.toString() + " (" + cluster.getSize() + ")</a></li>");
                 }
                 response.getOutputStream().println("</ol></div>");
                 response.getOutputStream().println("<div id=\"resultwrap\"><ol id=\"clusters\">");
 
 
-                for(Cluster cluster:list) {
+                for (Cluster cluster : list) {
                     StringBuilder id = new StringBuilder();
-                    for(String tag:cluster.getTags()) {
+                    for (String tag : cluster.getTags()) {
                         id.append(tag);
                     }
-                    response.getOutputStream().println("<li class=\"cluster "+id.toString()+"\">");
+                    response.getOutputStream().println("<li class=\"cluster " + id.toString() + "\">");
                     response.getOutputStream().println("");
 
                     response.getOutputStream().println("<h2>Showing cluster with tags: ");
@@ -125,9 +124,9 @@ class SearchServlet extends HttpServlet {
 
                     response.getOutputStream().println("</h2><h3><span class=\"score\">Score: " + cluster.getScore() + "</span></h3>");
                     response.getOutputStream().println("<ol class=\"results\">");
-                    for(QueryResult result:cluster.getResults()) {
+                    for (QueryResult result : cluster.getResults()) {
                         try {
-                            printResult(response.getOutputStream(),result,query);
+                            printResult(response.getOutputStream(), result, query);
                         } catch (InterruptedException e) {
                             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                         } catch (URISyntaxException e) {
@@ -147,7 +146,7 @@ class SearchServlet extends HttpServlet {
         if (allResults.length > 10 && !hasClusters) {
             response.getOutputStream().println("<ul id=\"paginator\">");
             for (int i = 0; i <= allResults.length / 10; i++) {
-                response.getOutputStream().println("<a href=\"?query="+query+"&offset=" + (i*10) + "\">" + (i+1) + "</a>");
+                response.getOutputStream().println("<a href=\"?query=" + query + "&offset=" + (i * 10) + "\">" + (i + 1) + "</a>");
             }
             response.getOutputStream().println("</ul>");
         }
@@ -155,17 +154,33 @@ class SearchServlet extends HttpServlet {
         printFooter(response.getOutputStream());
     }
 
-    private void printResult(ServletOutputStream outputStream, QueryResult result, String query) throws IOException, InterruptedException, URISyntaxException{
-        outputStream.println("<li class=\"" + result.getDocumentId() +"\">");
+    private void printResult(ServletOutputStream outputStream, QueryResult result, String query) throws IOException, InterruptedException, URISyntaxException {
+        outputStream.println("<li class=\"" + result.getDocumentId() + "\">");
         String uri = result.getStatisticsEntry().getURI().toString();
         Pair<Integer, Integer> teaserData = result.getBestWindow();
         String temp = master.getSniplet(new URI(uri), teaserData.getFirst(), teaserData.getSecond());
-        int[] positions = StemmingUtil.createPositionList(query, temp);
+        int numPositions = 0;
+        int i = 0;
+        Iterator<Integer>[] positionIterators = new Iterator[result.getTerms().size()];
+        for (DictionaryTerm term : result.getTerms()) {
+            List<Integer> positions = result.getOccurences(term).getPositionList();
+            positionIterators[i++] = positions.iterator();
+            numPositions += positions.size();
+
+        }
+        Iterator<Integer> merged = new IteratorMerger(positionIterators);
+        int[] positions = new int[numPositions];
+        int j = 0;
+        while (merged.hasNext()) {
+            int pos = merged.next();
+            if (pos >= teaserData.getFirst()) positions[j++] = pos;
+        }
+
         String teaser = master.getSniplet(new URI(uri), teaserData.getFirst(), teaserData.getSecond(), positions);
-        printDivWithA(outputStream,"uri","/media/time/" + uri.subSequence(uri.lastIndexOf("/") + 1, uri.length()));
+        printDivWithA(outputStream, "uri", "/media/time/" + uri.subSequence(uri.lastIndexOf("/") + 1, uri.length()));
         printDiv(outputStream, "teaser", teaser);
-        printDiv(outputStream,"score","Score: "+result.getScore());
-        outputStream.println("</li>");    
+        printDiv(outputStream, "score", "Score: " + result.getScore());
+        outputStream.println("</li>");
     }
 
     private void printHeader(ServletOutputStream output, String query) throws IOException {
@@ -194,14 +209,14 @@ class SearchServlet extends HttpServlet {
         output.println("</div></body></html>");
     }
 
-    private void printDiv(ServletOutputStream outputStream,String clazz,Object value) throws IOException{
-        outputStream.print("<div class=\""+clazz+"\">");
+    private void printDiv(ServletOutputStream outputStream, String clazz, Object value) throws IOException {
+        outputStream.print("<div class=\"" + clazz + "\">");
         outputStream.print(value.toString());
         outputStream.println("</div>");
     }
 
-    private void printDivWithA(ServletOutputStream outputStream,String clazz,Object value) throws IOException {
-        outputStream.print("<div class=\""+clazz+"\">");
+    private void printDivWithA(ServletOutputStream outputStream, String clazz, Object value) throws IOException {
+        outputStream.print("<div class=\"" + clazz + "\">");
         outputStream.print("<a href=\"" + value.toString() + "\">");
         outputStream.print(value.toString());
         outputStream.println("</a></div>");
@@ -210,7 +225,7 @@ class SearchServlet extends HttpServlet {
     private void printSearchForm(ServletOutputStream outputStream, String value) throws IOException {
         if (value == null) value = "";
         outputStream.println("<form method=\"get\" action=\"\">");
-        outputStream.println("<input type=\"text\" value=\""+value+"\" name=\"query\" />");
+        outputStream.println("<input type=\"text\" value=\"" + value + "\" name=\"query\" />");
         outputStream.println("Clusters? <input type=\"checkbox\" name=\"cluster\" value=\"clusters?\" />");
         outputStream.println("<input type=\"submit\" value=\"Feelin' lucky?! Punk!\" />");
         outputStream.println("</form>");
