@@ -25,3 +25,11 @@ As the Okapi BM-25 has also been implemented, it was quite interesting to evalua
 \end{sidewaysfigure}
 
 \section{Extended System}
+
+Suffix tree clustering is usually good when trying to score quite simple queries, so that different interpretations of a query can be split up. A good example in our dataset is when you search for "khrushchev". The first results are then "mao tse tung sino soviet split","frol kozlov","ilya ehrenburg ruler modern","government","mikhail suslov","nuclear test ban current begin","evtushenko poet","literary journal novy mir veteran ", which all describe cases where khrushchev has been mentioned.
+
+It is hard to fairly evaluate the success of a clustered results versus a non-clustered result, papers like \cite{zamir} usually compare the results to other clustering algorithms. There are several reasons for this. First, the clustered result contains information that the non-clustered result does not contain (the name of the cluster, the knowledge that the results are clustered together). Secondly, if standard precision/recall evaluation is used, several problems arise. The most important is in which order the results should be tried. Since the course of action for a human user using a clustered result would be to first check the label of the cluster, and then check the results, evaluation of the results only would not make sense. Whatever is done to evaluate the results will need human interaction. 
+
+Because of the problems with using standard precision/recall to score clustered queries, as well as suffix tree clustering not being good on long queries (and the queries in the test set was quite long), it was chosen not to do a quantitative test with the suffix tree clustering method. 
+
+The suffix tree implementation still needs a bit of tweaking when it comes to the scoring function that selects the ranking of the clusters, as well as testing with a more diverse data set. E.g. in the dataset, words like "Kennedy" is actually a quite common word, 
