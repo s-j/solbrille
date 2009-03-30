@@ -26,17 +26,16 @@ As the Okapi BM-25 has also been implemented, it was quite interesting to evalua
 
 \section{Extended System}
 
-Suffix tree clustering is usually good when trying to score quite simple queries, so that different interpretations of a query can be split up. A good example in the dataset used is when a search for "khrushchev" is done. The first results are then "mao tse tung sino soviet split","frol kozlov","ilya ehrenburg ruler modern","government","mikhail suslov","nuclear test ban current begin","evtushenko poet","literary journal novy mir veteran ", which all describe different clusters  containing articles described quite well by the cluster titles.
-
 It is hard to fairly evaluate the success of a clustered results versus a non-clustered result, papers like \cite{zamir} usually compare the results to other clustering algorithms. There are several reasons for this. First, the clustered result contains information that the non-clustered result does not contain (the name of the cluster, the knowledge that the results are clustered together). Secondly, if standard precision/recall evaluation is used, several problems arise. The most important is in which order the results should be tried. Since the course of action for a human user using a clustered result would be to first check the label of the cluster, and then check the results, evaluation of the results only would not make sense. Whatever is done to evaluate the results will need human interaction. 
+
+Evaluating simple queries with suffix tree clustering shows that short queries are usually the best when trying to find good clusters. With longer queries, there are more "garbage" nodes, which not necessarily contains documents which should be clustered together.
 
 Because of the problems with using standard precision/recall to score clustered queries, as well as suffix tree clustering not being good on long queries (and the queries in the test set was quite long), it was chosen not to do a quantitative test with the suffix tree clustering method. 
 
-If a simple qualitative test is done, by doing random queries like "buddhist", "war" or "britain", the clusters that come up all seems quite good. The examples can be seen in 
+If a simple qualitative test is done, by doing random queries like "buddhist", "war" or "britain", many (but not all) of the clusters that are returned have articles that are grouped together. The examples can be seen in \ref{fig:clusterresults}.
 
-\begin{center}
-
-\begin{tabular}{|l|p{0.5\textwidth}|}
+\begin{table}
+\begin{tabular}{|l|p{0.8\textwidth}|}
 \hline
 Query & Clusters \\
 \hline
@@ -45,8 +44,9 @@ war & \{"war south viet nam" "viet cong"\}, \{"international red cross"\}, \{"go
 britain & \{"osteopath stephen ward" "profumo case" "john profumo was" "mentor" "christine keeler" "trial charges"\}, \{"government"\}, \{"harold macmillan"\}, \{"national"\}, \{"intention" "common market britain" "efta" "tariff" "outer" "regard" "join"\},\{"sir alec douglas home" "luton" "plain" "proof" "campaign" "seat" "labor years" "next day"\} \\ \hline
 
 \end{tabular}
+\label{fig:clusterresults}
+\caption{Cluster tags for clusters returned in the TIME document set}
+\end{table}
 
 
-\end{center}
-
-The suffix tree implementation still needs a bit of tweaking when it comes to the scoring function that selects the ranking of the clusters, as well as testing with a more diverse data set. The method still fulfills its mission, it clusters articles that contain much of the same information.
+The suffix tree implementation still needs a bit of tweaking when it comes to the scoring function that selects the ranking of the clusters, as well as testing with a more diverse data set. However, the clustering method still fulfills its mission, clustering articles with similar subject.
