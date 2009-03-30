@@ -18,6 +18,7 @@ import junit.framework.TestCase;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.util.HashSet;
 
 /**
  * @author <a href="mailto:simonj@idi.ntnu.no">Simon Jonassen</a>
@@ -72,7 +73,7 @@ public class TestQueryProcessor extends TestCase {
         scm.addSource(qm);
         fs.addSource(scm);
 
-        QueryPreprocessor preproc = new QueryPreprocessor();
+        QueryPreprocessor preproc = new QueryPreprocessor(new HashSet<String>());
         QueryProcessor qproc = new QueryProcessor(fs, preproc);
 
 
