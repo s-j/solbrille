@@ -3,7 +3,7 @@ body {
 }
 
 h1 {
-    background: url('http://localhost:8080/media/web/img/logo.png');
+    background: url('/media/web/img/logo.png');
     width: 615px;
     height: 290px;
     margin: 2em auto;
