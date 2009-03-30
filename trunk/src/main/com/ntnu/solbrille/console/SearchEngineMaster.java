@@ -279,8 +279,8 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             st.addSource(sniplets);
 
 
-            //queryProcessor = new QueryProcessor(st, new QueryPreprocessor(stopWords));
-            queryProcessor = new QueryProcessor(st, new QueryPreprocessor());
+            queryProcessor = new QueryProcessor(st, new QueryPreprocessor(stopWords));
+            //queryProcessor = new QueryProcessor(st, new QueryPreprocessor());
             System.out.println("Master started!");
         }
     }
