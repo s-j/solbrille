@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="all" name="SolbrilleConsole runnable">
+
+    <target name="all" depends="create_console_jar,create_server_jar"/>
+
+    <target name="create_console_jar">
+        <jar destfile="SolbrilleConsole.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="com.ntnu.solbrille.console.ConsoleApplication"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="../bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/junit-4.5.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/htmlparser.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/commons-logging-1.1.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/jaws-bin-1.2.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/jetty-util.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/jetty.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/servlet-api.jar"/>
+        </jar>
+    </target>
+
+    <target name="create_server_jar">
+        <jar destfile="SolbrilleServer.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="com.ntnu.solbrille.frontend.FrontEnd"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="../bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/junit-4.5.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/htmlparser.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/commons-logging-1.1.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/jaws-bin-1.2.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/jetty-util.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/jetty.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="../lib/servlet-api.jar"/>
+        </jar>
+    </target>
+</project>
