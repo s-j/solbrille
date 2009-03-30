@@ -1,18 +1,20 @@
 \chapter{System architecture}
 \label{sec:architecture}
 \thispagestyle{fancy}
-The system is designed around three major data structures, or indices. These are the occurrence index which store inverted lists with positions. The content index stores the content of the documents, and is used for snippets and clustering. The last index is the statistics index which is used to store document statistics which may be used to calculate relevance. 
 
-All these indices are wrapped by one class \texttt{SearchEngineMaster}. The external interface for the system uses this master class to feed documents and to execute queries.  
+To satisfy the requirements specified in the previous section a system can be designed in terms of a number of data structures used to store the index and statistics data and a number of major components. For data the data structures it is chosen to implement three types of indices - content index, occurrence index, and document statistics index. The major components of the system are chosen to be a buffer manager to handle disk I/O, a feeder chosen to feed the text files into the system, an indexer chosen to construct and store index, a query retrieval part chosen to process textual queries using the stored index, score the candidate results and generate {\it snippets} for the top-scored results, a clustering component that may perform result clustering and cluster scoring based on provided snippets, and finally a front end part chosen to be a dedicated web-server. In addition the system has to contain a number of components for performance evaluation, unit testing and debugging.
 
-\section{Document and statistics index structure}\label{sub:statistics_index_structure}
+\section{Index Structures}
+The system is designed around three major data structures, or indices. These are the occurrence index which stores inverted lists with positions. The content index stores the content of the documents, and is used for snippets and clustering. The last index is the statistics index which is used to store document statistics which may be used to calculate relevance. 
+
+\subsection{Document and statistics index structure}\label{sub:statistics_index_structure}
 The statistics index is a mapping from document id to a statistics object containing information such as most frequent term, document vector $tf*idf$ length and number of unique terms.
 
-\section{Content index structure}\label{sub:content_index_structure}
-The content index stores the content of the documents indexed, these documents are stored as lists of tokens. These are the raw tokens of the documents nothing is added or removed. By concatenating any consecutive subsequence of these tokens a section of the original document will be produced. This property are used when extracting snippets.  
+\subsection{Content index structure}\label{sub:content_index_structure}
+The content index stores the content of the documents indexed, these documents are stored as lists of raw document tokens, with nothing being added or removed. By concatenating any consecutive subsequence of tokens a section of the original document can be produced. The last property is used when extracting snippets.  
 
-\section{Occurrence index structure}\label{sub:occurrence_index_structure}
-The occurrence index consists of two parts, the dictionary and the inverted file. The dictionary contains the terms of documents, and a pointer into the inverted file. The inverted file contains the inverted lists for each term in alphabetical order. The inverted list of a term contains the documents occurrences that contain the term sorted on increasing document id. Each document occurrence contains a list the positions within the document where the term occurred. The index structure is shown in Figure~\ref{fig:occ_index_struct}.
+\subsection{Occurrence index structure}\label{sub:occurrence_index_structure}
+The occurrence index consists of two parts, a dictionary and an inverted file. The dictionary contains the indexed terms, and a pointer into the inverted file. The inverted file contains an inverted list for each term stored in alphabetical order. The inverted list of a term contains all the documents occurrences of this term sorted by increasing document ID. Each document occurrence contains a list the positions within the document where the term occurs. The index structure is shown in Figure~\ref{fig:occ_index_struct}.
 
 \begin{figure}[h!!tb]
 	\centering
@@ -20,22 +22,13 @@ The occurrence index consists of two parts, the dictionary and the inverted file
 	\caption[Occurrence index structure]{Occurrence index structure.}\label{fig:occ_index_struct}
 \end{figure}
 
-\section{Index building}\label{sub:index_building}
-When building indices, all documents fed to the system are given a unique document id from a global counter.
-
-The occurrence index is built in two phases, in the first phase documents are converted to inverted lists and combined into one inverted list representing one index update. 
-
-When the index is flushed, the index update that were built in the first phase is merged with the existing inverted index. Since the inverted lists are sorted on term, document and position merging the lists is a trivial task. 
-
-During this merge, the statistics for each document is calculated and stored in the statistics index. 
-
-When the merge is completed the dictionary is updated so that the pointers in the dictionary points into the newly created inverted file. 
-
 \section{Buffered IO}\label{sec:buffered_io}
-One bottleneck of search engines is disk-IO. To use disk-IO as effectively as possible, a buffer manager were designed. The buffer manager splits the files into blocks. When a part of a file is requested for reading or writing it might be buffered. Buffers are managed in a LRU\footnote{LRU: Least Recently Used} fashion. The technicalities of the buffer manager is not deemed interesting in the context of this assignment. 
+To solve one of the major bottlenecks of search, namely disk I/O a buffer manager can be used. A buffer manager can split files into blocks and, when a part of a file is requested for reading or writing, it may fetch it entirely from disk into a memory buffer, eventually saving time on later requests to the same file area. However, the memory used by a buffer manager is limited to a certain number of buffers and a buffer size; newly fetched buffers has to replace already stored buffers. The easiest way to handle buffers replacement is to use a Least Recently Used (LRU) replacement policy. In addition, the buffer manager has to implement flushing of dirty buffers, but the technicalities of the buffer manager implementation are quite irrelevant for the context of this assignment and, if needed, they can be obtained from the source code itself.
 
 \section{Feeding pipeline}\label{sec:feeding_pipeline}
-The feeding pipeline of our solution is modeled around two main concepts. A document structure which is a object containing various objects with various keys (fields), it's basically a map. A processor is a processing unit in our feeding pipeline which transforms a field in a document structure, and places the result in another. An example of a feeding processor is shown in Figure~\ref{fig:feeding_processor}.
+An important processing stage during the document indexing is feeding of the data into the indexer. The approach of transforming of the input data into a stream of document terms is chosen to use a {\it feeding pipeline}. The pipeline proposed as a solution is based on two main concepts. Frist, the structure chosen to represent a document is an object containing various objects with various keys (fields), which is basically a map. Second, a pipeline processor can transform a field in a document structure, and place the result in an other processor. 
+
+An example of a feeding processor is illustrated by Figure~\ref{fig:feeding_processor}. Finally, the output of the feeding pipeline is submitted to the indexer process described in next section. 
 
 \begin{figure}[htb]
 	\centering
@@ -48,23 +41,26 @@ To be able to solve the task the feeding pipeline has to implement multiple feed
 
 \begin{itemize}
 	\item \textbf{HtmlToText:} strips away HTML tags.
-	\item \textbf{Tokenizer:} brakes the documents into tokens. These tokens are the raw tokens of the documents, that is, no characters are removed from the text, the text is only split into pieces.
-	\item \textbf{PunctuationRemover:} removes punctuations and whitespaces from tokens. 
+	\item \textbf{Tokenizer:} breaks the documents into tokens. These tokens are raw document tokens with no characters removed from the text, the text is only split into pieces.
+	\item \textbf{PunctuationRemover:} removes punctuation and whitespace characters from tokens. 
 	\item \textbf{Stemmer:} reduces tokens to their stems. 
 	\item \textbf{Termizer:} creates inverted documents, collecting position lists for each term in the document.
 \end{itemize}
 
-\section{Query processing}
-The query processing part of the system is designed to be both flexible and extensible. The main idea is to have a query processor which uses a query preprocessor and a (number of) query processing components to produce and sort the query results. A query preprocessor uses a number of built-in stages (similar to those used for the document processing) to transform a textual query into a query structure.
+\section{Index building}\label{sub:index_building}
+When building the indices, all the documents fed into the system are given a unique document ID from a global counter.
 
-A query processing component, on the other hand, is an abstract component that may be used to pull query results. Each component may include another component as a source, and it is possible to construct a chain of such components. To begin with, a minimal number of processing components include:
+The occurrence index is built in two phases: in the first phase documents are converted to inverted lists and combined into one inverted list representing one index update. When the index is flushed, the index update that was built in the first phase is merged with the existing inverted index. Since the inverted lists are sorted on term, document and position merging the lists is a trivial task. However, during this merge, the statistics for each document have to be re-calculated and stored in the statistics index. Finally, when the merge is completed, the dictionary is updated so that the pointers in the dictionary point into the newly created inverted file.
+
+\section{Query processing}
+The query processing part of the system is designed to be both flexible and extensible. The main idea is to have a query processor which uses a query preprocessor and a number of query processing components to produce and sort query results. A query preprocessor uses a number of built-in stages (similar to those used for the document processing) to transform a textual query into a query structure.
+
+A query processing component, on the other hand, is an abstract component that may be used to pull query results. Each component may include another component as a source, and it is possible to construct a chain of such components. To begin with, a minimal number of processing components has to include:
 \begin{itemize}
 	\item {\bf Matcher:} produces a number of combined results for a given query. These match inclusion and exclusion of terms based on AND, OR and NAND modifiers.
-	\item {\bf Score Combiner:} pulls from its source and scores them according to a number of score modules that can be added to the system. The system may implement a number of different similarity models (both dynamic and static) and a score combiner can calculate a weighted average from these.
+	\item {\bf Score Combiner:} pulls results from its source and scores them according to a number of score modules that can be added to the system. The system may implement a number of different similarity models (both dynamic and static) and a score combiner can calculate a weighted average from these.
 	\item {\bf Filters:} may filter out some of the results based on a number of abstract filters that can be later implemented and added to the system.
 \end{itemize}
-
-The query processing structure implemented in the initial implementation of solbrille is shown in Figure~\ref{fig:query_processing}.
 
 \begin{figure}[ht]
 	\centering
@@ -76,22 +72,22 @@ The most important point here is that the query processor does not have to know 
 
 In future, the system may be extended by a merger that enables to merge a number of processing pipelines into one. In this case, the system may become distributed. For example, it may run a number of basic matchers, scorers and filters on a number of different nodes, then results from these may be pulled together by a new merger component which may combine the results. If required, the processing pipeline may be extended by a couple of new filters and scorers used to re-weight and filter the combined results. However, due to the project duration limits the target search engine is chosen to run only on a single computer.
 
-The rest of this section explains the basic processing components and the ideas behind.
+The query processing structure proposed for an initial implementation of Solbrille is illustrated by Figure~\ref{fig:query_processing}. The rest of this section explains the basic processing components and the ideas behind.
 
 \subsection{Matcher component}
-The matcher component is the part of the processing pipeline which performs the actual lookups into the inverted index (OccurenceIndex). The matcher extracts the various terms referenced in a query and executes one lookup for each of the terms. It also recognizes the modifiers associated with the terms (\emph{AND}, \emph{OR} and \emph{NAND}). The matchers purpose is to create candidate results for further filtering and ranking. A candidate result is a document which satisfies the query. That is, a document where \emph{all} terms with a \emph{AND} modifier is present and \emph{no} terms with a \emph{NAND} modifier. In addition the terms with \emph{OR} modifiers are appended to the documents which satisfies the \emph{AND} and \emph{NAND} requirements.
+The matcher component is the part of the processing pipeline which performs the actual lookups in the inverted index. The matcher extracts the various terms referenced in a query and executes one lookup for each term. It also recognizes the modifiers associated with the terms (\emph{AND}, \emph{OR} and \emph{NAND}). The matchers purpose is to create candidate results for further filtering and ranking. A candidate result is a document which satisfies the query. That is, a document where \emph{all} terms with a \emph{AND} modifier is present and \emph{no} terms with a \emph{NAND} modifier. In addition the terms with \emph{OR} modifiers are appended to the documents which satisfies the \emph{AND} and \emph{NAND} requirements.
 
-The matcher component allows us to support a limited subset of boolean queries, however, since it has no aspect of parenthesises the subset is rather small. For vector space queries, all terms are treated with \emph{OR} modifiers.
+The matcher component allows to support a limited subset of boolean queries, however, since it has no aspect of parenthesises the subset is rather small. For vector space queries, all terms are treated with \emph{OR} modifiers.
 
-\subsubsection{Critique and an alternative approach}\label{sssub:matcher_critique}
-To support the full range of boolean queries a tree of \emph{AND}, \emph{OR} and \emph{NAND} matching components could have been constructed. This would have been a much more flexible way of building result candidates. Merging all functionality for doing matching into one component  also leads to one piece of very complex code. While implementing the matcher we had quite a few subtile bugs which took us quite some time to figure out. 
+\subsubsection{Critique and an alternative approach (A Postnote)}\label{sssub:matcher_critique}
+To support the full range of boolean queries a tree of \emph{AND}, \emph{OR} and \emph{NAND} matching components could be constructed. This would be a much more flexible way of building result candidates. Merging all functionality for doing matching into one component also leads to one piece of very complex code.
 
-The reason we did not use a more general scheme were that index term could have ben looked up multiple times. However, this is not a issue with the proposed design for buffer manager and processing component. Since the results are pulled one by one and combined as soon as possible, a repeated request to the same term will be cached in the buffer manager. Therefore the performance impact of this general scheme is close to nothing. 
+The reason a more general scheme was not used were that an index term could have been looked up multiple times. However, this is not a issue with the proposed design of the buffer manager and processing component. Since the results are pulled one by one and combined as soon as possible, a repeated request to the same term will be cached in the buffer manager. Therefore the performance impact of this general scheme is close to nothing. 
 
 \subsection{Score Combiner and Scorer Components}
-The idea with score combiner is to retrieve a number of score values from different scorers, and then combine these into a total score. The main intention here is that the system may implement different scoring models or even combine these. A scorer may implement a cosine model, a probabilistic model such as Okapi BM-25, a static link-analysis models such as PageRank or HITS, or even an Opt model\footnote{the optimal model, an inside joke}.
+The idea with score combiner is to retrieve a number of score values from different scorers, and then combine these into a total score. The main intention here is that the system may implement different scoring models or even combine these. A scorer may implement a cosine model, a probabilistic model such as Okapi BM-25, a static link-analysis models such as PageRank or HITS, or even an Opt model\footnote{the optimal model with 1.0 in both precision and recall, an inside joke}.
 
-To be fast, some of the document collection statistics later required by scorers has to be stored in the query requests and query results, since the access to global statistics on demand may be too slow. 
+To be fast, some of the document collection statistics later required by scorers have to be stored in the query requests and query results, since the access to global statistics on demand may be too slow. 
 
 \subsection{Filters and Phrase Search}
 To demonstrate the idea with filters the system is intended to present two types of filters, a non-negative filter and a phrase filter. A non-negative filter is rather a demonstation of the concept and it can just filter out the results which have a score value less or equal to zero. However, using the scorer components specified above, this situation is impossible.
@@ -106,40 +102,40 @@ The solution is to introduce a fourth modifier type, PNAND. As for the AND phras
 
 Finally, in the current design a result says to be filtered out if one of the filters does not approve the result. This approach can be later extended to use a boolean expression of filter constraints, represented as a tree or similar.
 
-\subsubsection{Critique and an Alternative Approach}
-The approach described above is chosen to be implemented, just to demonstrate the idea behind the filtering component. However, as the phrase filtering is now performed during all the stages of the query processing pipeline this method is rather impractical. A better solution that can be applied in future is to use a separate phrase matcher, and then combine the matched phrase results and the ordinary term results before sending these to a scorer component. The same critique mentioned in Section~\ref{sssub:matcher_critique} with respect to multiple index lookups applies for this as well.
+\subsubsection{Critique and an Alternative Approach (A Postnote)}
+The approach described above was chosen to be implemented, just to demonstrate the idea behind the filtering component. However, as the phrase filtering is now performed during all the stages of the query processing pipeline this method is rather impractical. A better solution that can be applied in future is to use a separate phrase matcher, and then combine the matched phrase results and the ordinary term results before sending these to a scorer component. The same alternative solution as the one mentioned in Section~\ref{sssub:matcher_critique} with respect to multiple index lookups applies here as well.
 
-\subsection{Snippet extraction}\label{sub:snippet_extraction}
-To ensure a pleasant user experience; search results should contain a short piece of the original document. This snippet could be the beginning of the document, however, since the occurrence index contains the positions of the various terms it should be possible to select more suitable snippets. 
-
-The simple scheme selected for snippet extraction is that the position lists of all the terms in the query is merged to one list. Then the snippet ``window'' which contains the highest number of queries terms. The length of the window is a predefined constant, and the unit of the window dimensions is number of terms. 
-
-\subsubsection{Critique and an Alternative Approach}
-Selecting the window with the highest number of matching tokens is not a good measure of snippet relevance. Common words and stop-words will be counted as much as any other word. Treating the various possible snippet-windows as documents and calculating their relevancy to the query could be a better solution, however, efficient algorithms to do this have not been studied. 
-
-To produce visual appealing search result presentations the length of the snippet windows could have been calculated in number of characters rather than number of tokens. Using tokens as the unit of measure the variance of the snippet lengths might be high. 
-
-\subsection{Final Details}
+\subsection{Final Details for Result Scoring}
 To save memory the results pulled by the query processor are stored into a priority queue. As a query is expected to be a query string and a page range {\it startpage} end {\it endpage}, the maximum queue size is limited by {\it endpage}. When the queue size has reached this value a new candidate has to be compared with the least scored result contained in the queue. If the candidates value is greatest of these two, the candidate has to replace the least scored result in the priority queue.
 
 When all the results are processed, up-to {\it endpage} - {\it startpage} results has to be extracted from the queue, sorted in descending order and returned to the user.
 
+\subsection{Snippet extraction}\label{sub:snippet_extraction}
+To ensure a pleasant user experience, search results should contain a short piece of the original document. This snippet could be the beginning of the document, however, since the occurrence index contains the positions of the various terms it should be possible to select more suitable snippets. 
+
+The simple scheme selected for the snippet extraction is that the position lists for all the terms in the query are merged to one list. Then a {\it snippet window} which contains the greatest number of queries terms. The length of the window is a predefined constant, and the unit of the window dimensions is number of terms.
+
+\subsubsection{Critique and an Alternative Approach (A Postnote)}
+Selecting the window with the highest number of matching tokens is not a good measure of snippet relevance. Common words and stop-words will be counted as much as any other word. Treating the various possible snippet-windows as documents and calculating their relevancy to the query could be a better solution, however, efficient algorithms to do this have not been studied. 
+
+To produce visual appealing search result presentations the length of the snippet windows could have been calculated in number of characters rather than number of tokens. Using tokens as the unit of measure the variance of the snippet lengths might be high. 
+
 \section{Extended System}
 
 \section{Front-End Design}
-The main responsibilities to the front-end is to handle and provide search functionality to a user. This is done through embedding Jetty in the system. Jetty is a compact java web server which supports both embedded and stand-alone deployment of applications. Embedding Jetty gives us advantages such as reducing the complexity of the development environment, requires no installation, and in-line configuration of the web server. However, it increases the complexity of writing views because of the in-line configuration.
+The main responsibilities to the front-end is to handle and provide search functionality to a user. This can be done through embedding Jetty in the system. Jetty is a compact java web server which supports both embedded and stand-alone deployment of applications. Embedding Jetty gives us advantages such as reducing the complexity of the development environment, requires no installation, and in-line configuration of the web server. However, it increases the complexity of writing views because of the in-line configuration.
 
-Jetty is configured and started in {\tt com.ntnu.solbrille.FrontEnd}. The current configuration consists of two context paths. A context path is a domain where a given set of services are accessible. The two different context paths are used for servlets and serving of static content such as documents and images. The currently implemented servlets are:
+Jetty is configured and started by a front-end component. The idea is to have two context paths, where a context path is a domain where a given set of services are accessible. The two different context paths are used for servlets and serving of static content such as documents and images. The currently proposed servlets are:
 
 \begin{itemize}
-\item {\tt com.ntnu.solbrille.SearchServlet}: This is the main servlet that handles the search functionality of the application.
-\item {\tt com.ntnu.solbrille.FeederServlet}: A hook for feeding the search application with documents.
+\item {\tt A search servlet}: This is the main servlet that handles the search functionality of the application.
+\item {\tt A feeder servlet}: A hook for feeding the search application with documents.
 \end{itemize}
 
-The current system embeds mark-up generation in the servlets. This is a huge disadvantage as the code complexity of each servlet increases drastically. A future improvement would be to introduce the Model-View-Controller architectural pattern, and separate the servlet and the markup. Another improvement would be to not embedding jetty, and create a generic web application which is able to run using any java web server. However, this would require a installation of the chosen web server.
+The current system proposal embeds mark-up generation in the servlets. This is a huge disadvantage as the code complexity of each servlet increases drastically. A future improvement would be to introduce the Model-View-Controller architectural pattern, and separate the servlet and the markup. Another improvement would be to not embedding jetty, and create a generic web application which is able to run using any java web server. However, this would require a installation of the chosen web server.
 
 \section{Testing}
-Test-driven development is used as an approach to ensure the quality of the most important components. During development, the tests are designed and made before each component is implemented. A test is composed of one or several test cases, and in order to pass, all conditions must be correct. {\bf JUnit} is used for implementing test cases, and they are located in {\tt test.com.ntnu.solbrille}.
+Test-driven development is proposed to be used to ensure the quality of the most important components. During development, the tests can be designed and made before each component is implemented. A test is composed of one or several test cases, and in order to pass, all conditions must be correct. {\bf JUnit} is used for implementing test cases, and they will be located in a separate web-tree.
 
-The current test coverage is rather limited. Currently, only the {\it feeder}, {\it index}, {\it buffering} and {\it system} components are covered by tests. This is due to the fact that test development takes time, and were substituted by manual testing at the end of this project when time became limited. A future improvement would be to improve the test coverage.
-
+\subsection{A Postnote}
+The current test coverage is rather limited. Currently, only the {\it feeder}, {\it index}, {\it buffering} and {\it system} components are covered by tests. This is due to the fact that test development takes time, and were substituted by manual testing at the end of this project when time became limited. In future, the test coverage can be improved.
