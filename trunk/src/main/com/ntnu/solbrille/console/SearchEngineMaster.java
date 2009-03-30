@@ -272,14 +272,14 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
             scm.addSource(matcher);
             fs.addSource(scm);
 
-            DynamicSnipletExtractor sniplets = new DynamicSnipletExtractor(150);
+            DynamicSnipletExtractor sniplets = new DynamicSnipletExtractor(300);
             sniplets.addSource(fs);
 
-            SuffixTree st = new SuffixTree(contentIndex, occurenceIndex, statisticIndex, 500, stopWords);
+            SuffixTree st = new SuffixTree(contentIndex, occurenceIndex, statisticIndex, 50, stopWords);
             st.addSource(sniplets);
 
 
-            queryProcessor = new QueryProcessor(st, new QueryPreprocessor());
+            queryProcessor = new QueryProcessor(st, new QueryPreprocessor(stopWords));
 
             System.out.println("Master started!");
         }
