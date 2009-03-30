@@ -280,7 +280,6 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
 
 
             queryProcessor = new QueryProcessor(st, new QueryPreprocessor(stopWords));
-            //queryProcessor = new QueryProcessor(st, new QueryPreprocessor());
             System.out.println("Master started!");
         }
     }
@@ -303,56 +302,59 @@ public class SearchEngineMaster extends AbstractLifecycleComponent {
         BufferPool indexPool = new BufferPool(300, 1024);
         BufferPool contentPool = new BufferPool(100, 1024);
 
-        File dictionaryFile = new File("dict.bin");
+        File dataDirectory = new File("SOLBRILLE_DATA/");
+        dataDirectory.mkdirs();
+
+        File dictionaryFile = new File(dataDirectory, "dict.bin");
         if (dictionaryFile.createNewFile()) {
             System.out.println("Dictionary file created at: " + dictionaryFile.getAbsolutePath());
         }
         FileChannel dictionaryChannel = new RandomAccessFile(dictionaryFile, "rw").getChannel();
         int dictionaryFileNumber = indexPool.registerFile(dictionaryChannel, dictionaryFile);
 
-        File inv1File = new File("inv1.bin");
+        File inv1File = new File(dataDirectory, "inv1.bin");
         if (inv1File.createNewFile()) {
             System.out.println("Inverted list 1 created at: " + inv1File.getAbsolutePath());
         }
         FileChannel inv1Channel = new RandomAccessFile(inv1File, "rw").getChannel();
         int inv1FileNumber = indexPool.registerFile(inv1Channel, inv1File);
 
-        File inv2File = new File("inv2.bin");
+        File inv2File = new File(dataDirectory, "inv2.bin");
         if (inv2File.createNewFile()) {
             System.out.println("Inverted list 2 created at: " + inv2File.getAbsolutePath());
         }
         FileChannel inv2Channel = new RandomAccessFile(inv2File, "rw").getChannel();
         int inv2FileNumber = indexPool.registerFile(inv2Channel, inv2File);
 
-        File sysinfoFile = new File("sysinfo.bin");
+        File sysinfoFile = new File(dataDirectory, "sysinfo.bin");
         if (sysinfoFile.createNewFile()) {
             System.out.println("Sysinfo created at: " + sysinfoFile.getAbsolutePath());
         }
         FileChannel sysinfoChannel = new RandomAccessFile(sysinfoFile, "rw").getChannel();
         int sysinfoFileNumber = indexPool.registerFile(sysinfoChannel, sysinfoFile);
 
-        File idMappingFile = new File("idMapping.bin");
+        File idMappingFile = new File(dataDirectory, "idMapping.bin");
         if (idMappingFile.createNewFile()) {
             System.out.println("idMapping file created at: " + idMappingFile.getAbsolutePath());
         }
         FileChannel idMappingChannel = new RandomAccessFile(idMappingFile, "rw").getChannel();
         int idMappingNumber = indexPool.registerFile(idMappingChannel, idMappingFile);
 
-        File statisticsFile = new File("statistics.bin");
+        File statisticsFile = new File(dataDirectory, "statistics.bin");
         if (statisticsFile.createNewFile()) {
             System.out.println("statistics file created at: " + statisticsFile.getAbsolutePath());
         }
         FileChannel statisticsChannel = new RandomAccessFile(statisticsFile, "rw").getChannel();
         int statisticsFileNumber = indexPool.registerFile(statisticsChannel, statisticsFile);
 
-        File contentIndexFile = new File("contentIndex.bin");
+        File contentIndexFile = new File(dataDirectory, "contentIndex.bin");
         if (contentIndexFile.createNewFile()) {
             System.out.println("Content index created at: " + contentIndexFile.getAbsolutePath());
         }
         FileChannel contentIndexChannel = new RandomAccessFile(contentIndexFile, "rw").getChannel();
         int contentIndexFileNumber = contentPool.registerFile(contentIndexChannel, contentIndexFile);
 
-        File contentIndexDataFile = new File("contentIndexData.bin");
+        File contentIndexDataFile = new File(dataDirectory, "contentIndexData.bin");
         if (contentIndexDataFile.createNewFile()) {
             System.out.println("Content index data file created at: " + contentIndexDataFile.getAbsolutePath());
         }
