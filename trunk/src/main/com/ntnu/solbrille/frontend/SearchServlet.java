@@ -39,7 +39,7 @@ class SearchServlet extends HttpServlet {
 
         //Print header
         printHeader(response.getOutputStream(), query);
-        printSearchForm(response.getOutputStream(), query);
+        
         if(query == null) {
             response.setStatus(200);
             response.getOutputStream().println("Need to put something into the query");
@@ -78,8 +78,11 @@ class SearchServlet extends HttpServlet {
 
         String clean = query.replaceAll("\"", " \" ");
 
-        printDiv(response.getOutputStream(),"numresults","Number of results: " + String.valueOf(allResults.length));
-        printDiv(response.getOutputStream(),"showing","Showing results " + start + " to " + end + ".");
+        if (!hasClusters) {
+            printDiv(response.getOutputStream(),"numresults","Number of results: " + String.valueOf(allResults.length));
+            printDiv(response.getOutputStream(),"showing","Showing results " + start + " to " + end + ".");
+        }
+        
         if (results.length > 0) {
 
             if(!hasClusters) {
@@ -171,8 +174,19 @@ class SearchServlet extends HttpServlet {
         output.println("<script src=\"/media/web/js/jquery-1.3.2.min.js\" type=\"text/javascript\"></script>");
         output.println("<script src=\"/media/web/js/highlight.js\" type=\"text/javascript\"></script>");
         output.println("</head><body>");
-        output.println("<div id=\"wrapper\">");
-        output.println("<h1 id=\"header\"><span>Solbrille</span></h1>");
+        if (query == null) {
+            output.println("<div id=\"wrapper\">");
+            output.println("<h1 id=\"header\"><span>Solbrille</span></h1>");
+            printSearchForm(output, query);
+        } else {
+            output.println("<div id=\"wrapheader\">");
+            output.println("<img width=\"70\" height=\"50\" src=\"/media/web/img/logo.png\" />");
+            output.println("<div id=\"form\">");
+            printSearchForm(output, query);
+            output.println("</div></div>");
+            output.println("<div id=\"wrapper\">");
+        }
+
     }
 
     private void printFooter(ServletOutputStream output) throws IOException {
@@ -196,6 +210,7 @@ class SearchServlet extends HttpServlet {
         if (value == null) value = "";
         outputStream.println("<form method=\"get\" action=\"\">");
         outputStream.println("<input type=\"text\" value=\""+value+"\" name=\"query\" />");
+        outputStream.println("Clusters? <input type=\"checkbox\" name=\"cluster\" value=\"clusters?\" />");
         outputStream.println("<input type=\"submit\" value=\"Feelin' lucky?! Punk!\" />");
         outputStream.println("</form>");
     }
