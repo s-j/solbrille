@@ -7,8 +7,11 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * Stores such information as document ID counter, total number of tokens and documents, total document lenght
+ * 
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
+ * @see SystemWideInfoIndex
  */
 public class StaticInformationEntry implements IndexEntry {
 

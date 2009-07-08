@@ -8,8 +8,11 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 
 /**
+ * A representation of Document URI used by DocumentStatisticsIndex
+ * 
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
+ * @see DocumentStatisticsIndex, DocumentStatisticsEntry
  */
 public class DocumentUriEntry implements IndexKeyEntry<DocumentUriEntry> {
 

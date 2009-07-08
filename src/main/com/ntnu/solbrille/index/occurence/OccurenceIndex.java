@@ -141,7 +141,7 @@ public class OccurenceIndex extends AbstractLifecycleComponent {
     }
 
     /**
-     * Merges the new pointers into the dictionary. Probably faster than updating
+     * Merges new pointers into the dictionary. Probably faster than updating
      * one term at the time.
      * <p/>
      * Maks the new index active when the merge is done.

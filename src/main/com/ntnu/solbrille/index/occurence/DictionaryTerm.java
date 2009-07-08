@@ -6,8 +6,11 @@ import com.ntnu.solbrille.index.IndexKeyEntry;
 import java.nio.ByteBuffer;
 
 /**
+ * Dictionary Term representation for lexicon management, indexing and querying
+ * 
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
+ * @see DictionaryEntry
  */
 public class DictionaryTerm implements IndexKeyEntry<DictionaryTerm> {
 
