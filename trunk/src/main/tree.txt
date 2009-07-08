@@ -1,0 +1,183 @@
+.
+|-- com
+|   `-- ntnu
+|       `-- solbrille
+|           |-- Constants.java
+|           |-- TimeCollection.java
+|           |-- buffering
+|           |   |-- Buffer.java
+|           |   |-- BufferPool.java
+|           |   |-- FileBlockPointer.java
+|           |   `-- FileInfo.java
+|           |-- console
+|           |   |-- ConsoleApplication.java
+|           |   `-- SearchEngineMaster.java
+|           |-- feeder
+|           |   |-- DefaultFeeder.java
+|           |   |-- Feeder.java
+|           |   |-- Struct.java
+|           |   |-- outputs
+|           |   |   |-- FeederOutput.java
+|           |   |   `-- StreamOutput.java
+|           |   `-- processors
+|           |       |-- AbstractDocumentProcessor.java
+|           |       |-- ContentRetriever.java
+|           |       |-- DocumentProcessor.java
+|           |       |-- HtmlToText.java
+|           |       |-- LinkExtractor.java
+|           |       |-- PunctuationRemover.java
+|           |       |-- RemoveField.java
+|           |       |-- Stemmer.java
+|           |       |-- Termizer.java
+|           |       `-- Tokenizer.java
+|           |-- frontend
+|           |   |-- FeederServlet.java
+|           |   |-- FrontEnd.java
+|           |   `-- SearchServlet.java
+|           |-- index
+|           |   |-- BasicKeyValueIndex.java
+|           |   |-- BasicNavigableKeyValueIndex.java
+|           |   |-- Index.java
+|           |   |-- IndexEntry.java
+|           |   |-- IndexEntryDescriptor.java
+|           |   |-- IndexKeyEntry.java
+|           |   |-- IndexerOutput.java
+|           |   |-- KeyValueIndex.java
+|           |   |-- MapIndexHelper.java
+|           |   |-- NavigableKeyValueIndex.java
+|           |   |-- content
+|           |   |   |-- ContentIndex.java
+|           |   |   |-- ContentIndexBuilder.java
+|           |   |   |-- ContentIndexDataFile.java
+|           |   |   |-- ContentIndexDataFileIterator.java
+|           |   |   |-- ContentIndexDataFilePointer.java
+|           |   |   |-- ContentIndexDataFileWriter.java
+|           |   |   `-- ContentIndexOutput.java
+|           |   |-- document
+|           |   |   |-- DocumentIdEntry.java
+|           |   |   |-- DocumentIndexBuilder.java
+|           |   |   |-- DocumentStatisticsEntry.java
+|           |   |   |-- DocumentStatisticsIndex.java
+|           |   |   |-- DocumentUriEntry.java
+|           |   |   |-- StaticInformationEntry.java
+|           |   |   `-- SystemWideInfoIndex.java
+|           |   `-- occurence
+|           |       |-- DictionaryEntry.java
+|           |       |-- DictionaryTerm.java
+|           |       |-- DiskInvertedList.java
+|           |       |-- DocumentOccurence.java
+|           |       |-- InvertedDocumentInfo.java
+|           |       |-- InvertedList.java
+|           |       |-- InvertedListBuilder.java
+|           |       |-- InvertedListPointer.java
+|           |       |-- InvertedListReader.java
+|           |       |-- LookupResult.java
+|           |       |-- OccurenceIndex.java
+|           |       |-- OccurenceIndexBuilder.java
+|           |       `-- TermIterator.java
+|           |-- query
+|           |   |-- QueryRequest.java
+|           |   |-- QueryResult.java
+|           |   |-- QueryTermOccurence.java
+|           |   |-- clustering
+|           |   |   |-- Cluster.java
+|           |   |   |-- ClusterList.java
+|           |   |   |-- SuffixTree.java
+|           |   |   |-- WordList.java
+|           |   |   `-- WordSequence.java
+|           |   |-- filtering
+|           |   |   |-- Filter.java
+|           |   |   |-- Filters.java
+|           |   |   |-- NonNegativeFilter.java
+|           |   |   `-- PhraseFilter.java
+|           |   |-- matching
+|           |   |   `-- Matcher.java
+|           |   |-- preprocessing
+|           |   |   `-- QueryPreprocessor.java
+|           |   |-- processing
+|           |   |   |-- AbstractProcessingComponent.java
+|           |   |   |-- DynamicSnipletExtractor.java
+|           |   |   |-- QueryProcessingComponent.java
+|           |   |   `-- QueryProcessor.java
+|           |   `-- scoring
+|           |       |-- CosineScorer.java
+|           |       |-- OkapiScorer.java
+|           |       |-- ScoreCombiner.java
+|           |       |-- Scorer.java
+|           |       |-- SimpleScoreCombiner.java
+|           |       `-- SingleScoreCombiner.java
+|           |-- system
+|           |   `-- test
+|           `-- utils
+|               |-- AbstractLifecycleComponent.java
+|               |-- Closeable.java
+|               |-- Heap.java
+|               |-- IntArray.java
+|               |-- LifecycleComponent.java
+|               |-- LookupBlockingFifoQueue.java
+|               |-- Pair.java
+|               |-- ResultSplicer.java
+|               |-- StemmingUtil.java
+|               `-- iterators
+|                   |-- AbstractWrappingIterator.java
+|                   |-- AnnotatingIterator.java
+|                   |-- CachedIterator.java
+|                   |-- CachedIteratorAdapter.java
+|                   |-- CastingIteratorToEnumerator.java
+|                   |-- ChainedIterator.java
+|                   |-- DuplicateCollectingIterator.java
+|                   |-- IteratorMerger.java
+|                   |-- IteratorUtils.java
+|                   |-- SkipAdaptor.java
+|                   |-- SkipType.java
+|                   |-- SkippableIterator.java
+|                   `-- VoidIterator.java
+|-- org
+|   |-- carrot2
+|   |   `-- text
+|   |       `-- suffixtrees2
+|   |           |-- BitSetNode.java
+|   |           |-- BitSetNodeFactory.java
+|   |           |-- CharacterSequence.java
+|   |           |-- CounterNode.java
+|   |           |-- CounterNodeFactory.java
+|   |           |-- DefaultNodeFactory.java
+|   |           |-- DepthFirstNodeIterator.java
+|   |           |-- Edge.java
+|   |           |-- GeneralizedSuffixTree.java
+|   |           |-- INodeFactory.java
+|   |           |-- ISequence.java
+|   |           |-- IntSequence.java
+|   |           |-- Node.java
+|   |           |-- NodeEdge.java
+|   |           |-- SequenceFormatter.java
+|   |           |-- Suffix.java
+|   |           |-- SuffixTree.java
+|   |           |-- SuffixTreeFormatter.java
+|   |           `-- package.html
+|   `-- tartarus
+|       `-- snowball
+|           |-- Among.java
+|           |-- SnowballProgram.java
+|           |-- SnowballStemmer.java
+|           |-- TestApp.java
+|           `-- ext
+|               |-- danishStemmer.java
+|               |-- dutchStemmer.java
+|               |-- englishStemmer.java
+|               |-- finnishStemmer.java
+|               |-- frenchStemmer.java
+|               |-- germanStemmer.java
+|               |-- hungarianStemmer.java
+|               |-- italianStemmer.java
+|               |-- norwegianStemmer.java
+|               |-- porterStemmer.java
+|               |-- portugueseStemmer.java
+|               |-- romanianStemmer.java
+|               |-- russianStemmer.java
+|               |-- spanishStemmer.java
+|               |-- swedishStemmer.java
+|               `-- turkishStemmer.java
+`-- tree.txt
+
+31 directories, 149 files

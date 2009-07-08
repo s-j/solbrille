@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
- * Basic implementation of a in memory navigable key value index. Based on the concurrent skip list map from the JDK.
+ * Basic implementation of an in-memory navigable key value index. Based on the concurrent skip-list map from the JDK.
  *
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.

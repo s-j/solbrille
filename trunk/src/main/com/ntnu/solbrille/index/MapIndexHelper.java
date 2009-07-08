@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Helper class for serializaing in-memory indices backed by types of maps.
+ * Helper class for serializing in-memory indices backed by types of maps.
  *
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
