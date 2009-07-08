@@ -124,7 +124,7 @@ public class InvertedListReader {
         long numberOfTerms;
 
         /**
-         * Loads a term from the inverted file. And returnes the address of the next term.
+         * Loads a term from the inverted file. And returns the address of the next term.
          *
          * @param pointer The location of the term.
          * @return Pair of the term and the pointer to the next term in the file.

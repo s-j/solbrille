@@ -88,8 +88,8 @@ public class Buffer {
     }
 
     /**
-     * Returns the underlying byte buffer for modification and redaing. The caller is responsible for synchronization.
-     * The position, mark and limit of the buffer is independend of other buffers returned from this method.
+     * Returns the underlying byte buffer for modification and reading. The caller is responsible for synchronization.
+     * The position, mark and limit of the buffer is independent of other buffers returned from this method.
      *
      * @return The byte buffer underlying this buffer.
      */
@@ -98,7 +98,7 @@ public class Buffer {
     }
 
     /**
-     * Returns but does not aquire a reader lock for this buffer.
+     * Returns but does not acquire a reader lock for this buffer.
      *
      * @return Reader lock for buffer.
      */
@@ -107,7 +107,7 @@ public class Buffer {
     }
 
     /**
-     * Returns but does not aquire a writer lock for this buffer.
+     * Returns but does not acquire a writer lock for this buffer.
      *
      * @return Writer lock for buffer.
      */
