@@ -6,8 +6,12 @@ import com.ntnu.solbrille.index.IndexEntry;
 import java.nio.ByteBuffer;
 
 /**
+ * Lexicon to Inverted List Pointer representation of a Term.
+ * Contains two pointers, each referring to a versions of the inverted file.
+ * 
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
+ * @see DictionaryTerm
  */
 public class DictionaryEntry implements IndexEntry {
 

@@ -9,8 +9,11 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 
 /**
+ * An entry representation used by {@link DocumentStatisticsIndex}
+ * 
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
+ * @see DocumentStatisticsIndex
  */
 public class DocumentStatisticsEntry implements IndexEntry {
 

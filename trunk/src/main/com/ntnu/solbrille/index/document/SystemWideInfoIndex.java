@@ -11,8 +11,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
+ * A statistics index that stores such information as the total number of documents and total document length. It also generates ID of next document.
+ * 
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
+ * @see StatisticsInformationEntry
  */
 class SystemWideInfoIndex implements Index {
     private static final StaticInformationEntry.StaticInformationEntryDescriptor INFO_ENTRY_DESC

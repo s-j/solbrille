@@ -30,7 +30,7 @@ public class DocumentIndexBuilder extends AbstractLifecycleComponent {
             globalStatisticsDelta.registerNewDocumentIndexed(1, docInfo.getDocumentSize(), docInfo.getTotalTokens());
         }
         try {
-            statisticsIndex.registerDocuemntIndexed(documentId, uri.toString(), docInfo); // no need to be consistent (yet)
+            statisticsIndex.registerDocumentIndexed(documentId, uri.toString(), docInfo); // no need to be consistent (yet)
         } catch (URISyntaxException e) {
             e.printStackTrace();
             System.exit(-1);

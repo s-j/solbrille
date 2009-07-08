@@ -13,8 +13,16 @@ import java.net.URISyntaxException;
 import java.util.Map;
 
 /**
+ * A life-cycle component that provides system wide info, document statistics and document ID to URI mappings 
+ * 
+ * It wraps {@link SystemWideInfoIndex} and two mappings, {@link DocumentUriEntry} to {@link DocumentIdEntry} and {@link DocumentIdEntry} to {@link DocumentStatisticsEntry}. 
+ * It has also a reference to {@link OccurenceIndex}.
+ * 
  * @author <a href="mailto:olanatv@stud.ntnu.no">Ola Natvig</a>
  * @version $Id $.
+ * @see OccurenceIndex
+ * @see SystemWideInfoIndex
+ * @see DocumentStatisticsEntry
  */
 public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
 
@@ -50,7 +58,7 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
         this.idMappingFileNumber = idMappingFileNumber;
         this.documentStatisticFileNumber = documentStatisticFileNumber;
     }
-
+    
     public void start() {
         try {
             infoIndex.initializeFromFile(bufferPool, systemInfoFileNumber, 0);
@@ -156,7 +164,7 @@ public class DocumentStatisticsIndex extends AbstractLifecycleComponent {
         return getTotalNumberOfDocuments() == 0 ? 0 : getTotalSize() / getTotalNumberOfDocuments();
     }
 
-    void registerDocuemntIndexed(long documentId, String uri, InvertedDocumentInfo documentInfo) throws URISyntaxException {
+    void registerDocumentIndexed(long documentId, String uri, InvertedDocumentInfo documentInfo) throws URISyntaxException {
         URI docUri = new URI(uri);
         idMapping.put(new DocumentUriEntry(docUri), new DocumentIdEntry(documentId));
         statistics.put(
