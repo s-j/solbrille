@@ -1,0 +1,81 @@
+# Introduction #
+
+Solbrille has a O(1) buffer manager. It's based on java.nio direct-memory byte buffers for high performance IO.
+
+
+# Details #
+
+When a buffer pool is created the number of buffers and the block size should be specified.
+
+```
+public BufferPool(int numberOfBuffers, int bufferSize)
+```
+
+To be able to perform buffered IO against some file the file has to be added to the buffer pool. When a file is added to the pool, a file number is returned. This file number uniquely identifies the file within the buffer pool.
+
+```
+/**
+  * Add a file to the buffer. Blocks of this file may be pinned by
+  * creating a {@link FileBlockPointer} with the file number returned
+  * from this method.
+  *
+  * @param channel The file channel for the file.
+  * @param file    The concrete file object for the file.
+  * @return The file number for the file.
+  */
+public int registerFile(FileChannel channel, File file)
+```
+
+**Note:** The file channel passed should support both reading and writing.
+
+For _everyday use_ two methods of the `BufferPool` class is provided.
+
+```
+/**
+  * Pins a buffer for the supplied location.
+  *
+  * @param location The location to create a buffer for.
+  * @return A buffer pinned at location.
+  * @throws InterruptedException if the thtread is interupted while waiting for a free buffer.
+  * @throws IOException          If there were some IO error while pinning the buffer.
+  */
+public Buffer pinBuffer(FileBlockPointer location) throws InterruptedException, IOException
+
+/**
+  * Un-pinns the supplied buffer.
+  *
+  * @param buffer The buffer to be unpinned.
+  */
+public void unPinBuffer(Buffer buffer)
+```
+
+Pinning a buffer returns a buffer whose content will not be replaced before the buffer is unpinned. A buffers contet is defined by a `FileBlockPointer` object holder i `fileNumber` and a `segment`. The buffer holds `blockSize` number of bytes from the position `(segment * blockSize)`. Files are resized automatically, so pinning segment 10 of a empty file will not cause a problem.
+
+The underlying `java.nio.ByteBuffer` of the buffer may be accessed through the `getByteBuffer()` method of the `Buffer` class. When manipulating the buffer one should set the buffer to dirty using the `setIsDirty(boolean)` method of buffers.
+
+```
+public void setIsDirty(boolean dirty)
+```
+
+A buffer keeps track of how many times it has been pined, un-pining a buffer decreases the pin-count and a buffer will only be unpinned when the pin-count drops to zero. Therefor, it's very important to always unpin buffers. If multiple threads pin the same buffer and one for some reason fails before the buffer is unpinned the buffer will never be unpinned.
+
+When buffers set as dirty is unpinned they are placed in a dirty-list. Dirty buffers are cleaned in regular intervals. Buffers are pinned in a LRU fashion.
+
+## Buffer details ##
+Buffers retain a reader-writer lock which allows multiple concurrent readers but only a single writer to acquire the lock. However, **it is the users responsibility to use these locks**.
+
+```
+/**
+  * Returns but does not aquire a reader lock for this buffer.
+  *
+  * @return Reader lock for buffer.
+  */
+public ReentrantReadWriteLock.ReadLock getReadLock()
+
+/**
+  * Returns but does not aquire a writer lock for this buffer.
+  *
+  * @return Writer lock for buffer.
+  */
+public ReentrantReadWriteLock.WriteLock getWriteLock()
+```
